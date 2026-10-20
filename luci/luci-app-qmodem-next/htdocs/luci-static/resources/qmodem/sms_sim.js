@@ -1,5 +1,5 @@
 'use strict';
-'require view';
+'require baseclass';
 'require poll';
 'require ui';
 'require dom';
@@ -13,7 +13,7 @@ document.head.appendChild(E('link', {
 	'href': L.resource('qmodem/qmodem-next.css')
 }));
 
-return qmodem.withSmsTabs('sim', view.extend({
+return baseclass.extend({
 	load: function() {
 		return qmodem.getModemSections();
 	},
@@ -374,9 +374,5 @@ return qmodem.withSmsTabs('sim', view.extend({
 				}, _('Delete All'))
 			])
 		]);
-	},
-
-	handleSaveApply: null,
-	handleSave: null,
-	handleReset: null
-}));
+	}
+});

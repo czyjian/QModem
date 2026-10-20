@@ -1,11 +1,11 @@
 'use strict';
-'require view';
+'require baseclass';
 'require form';
 'require uci';
 'require ui';
 'require qmodem.qmodem as qmodem';
 
-return qmodem.withSmsTabs('forward', view.extend({
+return baseclass.extend({
 	load: function() {
 		return Promise.all([
 			uci.load('sms_forwarder'),
@@ -17,8 +17,7 @@ return qmodem.withSmsTabs('forward', view.extend({
 		var modems = data[1];
 		var m, s, o;
 
-		m = new form.Map('sms_forwarder', _('SMS Forwarder Configuration'),
-			_('Configure SMS forwarding to various notification services'));
+		m = new form.Map('sms_forwarder');
 
 		// Global settings
 		s = m.section(form.NamedSection, 'sms_forward', 'sms_forward', _('Global Settings'));
@@ -76,7 +75,37 @@ return qmodem.withSmsTabs('forward', view.extend({
 			this.showConfigModal(section_id, modems);
 		}, this);
 
-		return m.render();
+		return m.render().then(L.bind(function(node) {
+			return E('div', {}, [ node, this.renderActions(m) ]);
+		}, this));
+	},
+
+	// This panel sits inside the SMS page, which has no page footer of its own
+	renderActions: function(m) {
+		return E('div', { 'class': 'cbi-page-actions' }, [
+			E('button', {
+				'class': 'cbi-button cbi-button-apply',
+				'click': ui.createHandlerFn(this, function() {
+					return m.save().then(function() {
+						ui.changes.apply(true);
+					});
+				})
+			}, _('Save & Apply')),
+			' ',
+			E('button', {
+				'class': 'cbi-button cbi-button-save',
+				'click': ui.createHandlerFn(this, function() {
+					return m.save();
+				})
+			}, _('Save')),
+			' ',
+			E('button', {
+				'class': 'cbi-button cbi-button-reset',
+				'click': ui.createHandlerFn(this, function() {
+					return m.reset();
+				})
+			}, _('Reset'))
+		]);
 	},
 
 	showConfigModal: function(section_id, modems) {
@@ -352,4 +381,4 @@ return qmodem.withSmsTabs('forward', view.extend({
 		ui.hideModal();
 		ui.addNotification(null, E('p', _('API configuration saved. Remember to save & apply changes.')), 'info');
 	}
-}));
+});

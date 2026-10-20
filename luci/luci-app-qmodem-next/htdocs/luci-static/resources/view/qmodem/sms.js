@@ -13,7 +13,7 @@ document.head.appendChild(E('link', {
 	'href': L.resource('qmodem/qmodem-next.css')
 }));
 
-return qmodem.withSmsTabs('chat', view.extend({
+return qmodem.withSmsTabs(view.extend({
 	// Timezone offset setting utilities
 	getUtcOffsetSetting: function(type) {
 		// type: 'received' or 'sent'

@@ -72,24 +72,6 @@
 			"acl": [ "luci-app-qmodem-next" ]
 		}
 	},
-	"admin/modem/qmodem/sms/forward": {
-		"action": {
-			"type": "view",
-			"path": "qmodem/sms_forward"
-		},
-		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
-		}
-	},
-	"admin/modem/qmodem/sms/sim": {
-		"action": {
-			"type": "view",
-			"path": "qmodem/sms_sim"
-		},
-		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
-		}
-	},
 	"admin/modem/qmodem/settings": {
 		"title": "QModem Settings",
 		"order": 9,
