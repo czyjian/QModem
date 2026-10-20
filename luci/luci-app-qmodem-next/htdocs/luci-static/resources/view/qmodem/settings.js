@@ -89,7 +89,8 @@ return view.extend({
 	render: function(data) {
 		var m, s, o;
 
-		m = new form.Map('qmodem', _('QModem Settings'));
+		m = new form.Map('qmodem', _('QModem Settings'),
+			_('Configure modem detection and scanning, the modem device list and slot defaults.'));
 
 		// ===========================================
 		// Modem Probe Settings

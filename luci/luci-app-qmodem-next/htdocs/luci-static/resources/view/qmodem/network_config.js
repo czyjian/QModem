@@ -55,7 +55,8 @@ return view.extend({
 	render: function() {
 		var m, s, o;
 
-		m = new form.Map('qmodem', _('QModem Configuration'));
+		m = new form.Map('qmodem', _('NetworkConfiguration'),
+			_('Manage the QModem network service and the dial settings of each modem.'));
 
 		// Global Dial Configuration
 		s = m.section(form.NamedSection, 'main', 'main', _('Global Configuration'));

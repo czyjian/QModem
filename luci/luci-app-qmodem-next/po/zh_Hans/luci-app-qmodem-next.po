@@ -2746,3 +2746,19 @@ msgstr "操作"
 # Source: view/qmodem/sms_sim.js
 msgid "No messages to delete"
 msgstr "没有可删除的短信"
+
+# Source: view/qmodem/config_advanced.js
+msgid "Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more."
+msgstr "按调制解调器设置拨号模式、SIM卡切换、网络优先级、IMEI、锁定频段等。"
+
+# Source: view/qmodem/debug.js
+msgid "Send AT commands to the modem and view the responses."
+msgstr "向调制解调器发送 AT 命令并查看响应。"
+
+# Source: view/qmodem/network_config.js
+msgid "Manage the QModem network service and the dial settings of each modem."
+msgstr "管理 QModem 网络服务及各调制解调器的拨号设置。"
+
+# Source: view/qmodem/settings.js
+msgid "Configure modem detection and scanning, the modem device list and slot defaults."
+msgstr "配置调制解调器的探测与扫描、设备列表及插槽默认值。"

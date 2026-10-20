@@ -23,8 +23,10 @@ return view.extend({
 		}
 
 		var container = E('div', { 'class': 'cbi-map' });
-		var title = E('h2', { 'class': 'cbi-map-caption' }, _('Advanced Configuration'));
+		var title = E('h2', { 'class': 'cbi-map-caption' }, _('Advanced Modem Config'));
 		container.appendChild(title);
+		container.appendChild(E('div', { 'class': 'cbi-map-descr' },
+			_('Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more.')));
 
 		// Create modem selector section
 		var selectorSection = E('fieldset', { 'class': 'cbi-section' });
