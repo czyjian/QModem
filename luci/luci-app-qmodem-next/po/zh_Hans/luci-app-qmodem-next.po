@@ -2762,3 +2762,8 @@ msgstr "管理 QModem 网络服务及各调制解调器的拨号设置。"
 # Source: view/qmodem/settings.js
 msgid "Configure modem detection and scanning, the modem device list and slot defaults."
 msgstr "配置调制解调器的探测与扫描、设备列表及插槽默认值。"
+
+# Source: view/qmodem/overview.js (luci-base translates plain "Band" as 带宽)
+msgctxt "qmodem"
+msgid "Band"
+msgstr "频段"

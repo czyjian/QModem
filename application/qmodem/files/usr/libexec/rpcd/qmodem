@@ -20,7 +20,9 @@ try_cache() {
     current_time=$(date +%s)
     file_time=$(stat -t "$cache_file" 2>/dev/null | awk '{print $14}')
     [ -z "$file_time" ] && file_time=0
-    if [ ! -f "$cache_file" ] || [ $((current_time - file_time)) -gt $cache_timeout ]; then
+    cache_age=$((current_time - file_time))
+    # A cache stamped in the future (clock stepped back, e.g. by NTP) is stale too
+    if [ ! -f "$cache_file" ] || [ $cache_age -gt $cache_timeout ] || [ $cache_age -lt 0 ]; then
         touch "$cache_file"
         json_add_array modem_info
         $function_name
@@ -41,7 +43,9 @@ get_sms() {
     file_time=$(stat -t "$cache_file" 2>/dev/null | awk '{print $14}')
     [ -z "$file_time" ] && file_time=0
     get_sms_capabilities
-    if [ ! -f "$cache_file" ] || [ $((current_time - file_time)) -gt $cache_timeout ]; then
+    cache_age=$((current_time - file_time))
+    # A cache stamped in the future (clock stepped back, e.g. by NTP) is stale too
+    if [ ! -f "$cache_file" ] || [ $cache_age -gt $cache_timeout ] || [ $cache_age -lt 0 ]; then
         touch "$cache_file"
         tom_modem $use_ubus_flag -d "$at_port" -o r > "$cache_file"
         echo "$(cat "$cache_file" ; json_dump)" | jq -s 'add'

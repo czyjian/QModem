@@ -60,6 +60,19 @@ fibocom_hex_to_dec()
     printf "%d" "0x$value" 2>/dev/null || echo "$1"
 }
 
+# ARFCN/PCI fields of +GTCCINFO/+GTCAINFO: MediaTek firmware (FM350-GL,
+# RW350R-GL) reports them in decimal (e.g. PCI 901, ARFCN 428910), while TAC
+# and cell ID stay hex; other platforms report them in hex.
+fibocom_cell_num()
+{
+    if [ "$platform" = "mediatek" ]; then
+        echo "$1" | tr -d '" '
+        return
+    fi
+
+    fibocom_hex_to_dec "$1"
+}
+
 fibocom_normalize_nr_band()
 {
     local band=$(echo "$1" | tr -d '\r" ')
@@ -1217,8 +1230,8 @@ get_neighborcell()
                 ss_rsrp=$(echo "$line" | awk -F',' '{print $12}')
                 tac=$(fibocom_hex_to_dec "$tac")
                 cellid=$(fibocom_hex_to_dec "$cellid")
-                arfcn=$(fibocom_hex_to_dec "$arfcn")
-                pci=$(fibocom_hex_to_dec "$pci")
+                arfcn=$(fibocom_cell_num "$arfcn")
+                pci=$(fibocom_cell_num "$pci")
                 band=$(get_band "NR" "$band_num")
                 json_select "NR"
                 json_add_object ""
@@ -1244,8 +1257,8 @@ get_neighborcell()
                 rsrq=$(echo "$line" | awk -F',' '{print $12}')
                 tac=$(fibocom_hex_to_dec "$tac")
                 cellid=$(fibocom_hex_to_dec "$cellid")
-                arfcn=$(fibocom_hex_to_dec "$arfcn")
-                pci=$(fibocom_hex_to_dec "$pci")
+                arfcn=$(fibocom_cell_num "$arfcn")
+                pci=$(fibocom_cell_num "$pci")
                 bandwidth=$(get_bandwidth "LTE" "$bandwidth")
                 json_select "LTE"
                 json_add_object ""
@@ -1541,14 +1554,14 @@ cell_info()
                             scc_ul_ca=$(echo "$ca_res" | awk -F',' '{print $2}')
                             scc_band_num=$(echo "$ca_res" | awk -F',' '{print $3}')
                             scc_pci_new=$(echo "$ca_res" | awk -F',' '{print $4}')
-                            scc_pci_new=$(fibocom_hex_to_dec "$scc_pci_new")
+                            scc_pci_new=$(fibocom_cell_num "$scc_pci_new")
                             if [ -z "$scc_pci" ]; then
                                 scc_pci="$scc_pci_new"
                             else
                                 scc_pci="$scc_pci / $scc_pci_new"
                             fi
                             scc_arfcn_new=$(echo "$ca_res" | awk -F',' '{print $5}')
-                            scc_arfcn_new=$(fibocom_hex_to_dec "$scc_arfcn_new")
+                            scc_arfcn_new=$(fibocom_cell_num "$scc_arfcn_new")
                             if [ -z "$scc_arfcn" ]; then
                                 scc_arfcn="$scc_arfcn_new"
                             else
@@ -1588,9 +1601,9 @@ cell_info()
                     nr_cell_id=$(echo "$response" | awk -F',' '{print $6}')
                     nr_cell_id=$(fibocom_hex_to_dec "$nr_cell_id")
                     nr_arfcn=$(echo "$response" | awk -F',' '{print $7}')
-                    nr_arfcn=$(fibocom_hex_to_dec "$nr_arfcn")
+                    nr_arfcn=$(fibocom_cell_num "$nr_arfcn")
                     nr_physical_cell_id=$(echo "$response" | awk -F',' '{print $8}')
-                    nr_physical_cell_id=$(fibocom_hex_to_dec "$nr_physical_cell_id")
+                    nr_physical_cell_id=$(fibocom_cell_num "$nr_physical_cell_id")
                     nr_band_num=$(echo "$response" | awk -F',' '{print $9}')
                     nr_band=$(get_band "NR" ${nr_band_num})
                     nr_serving_bandwidth_num=$(echo "$response" | awk -F',' '{print $10}')
@@ -1619,9 +1632,9 @@ cell_info()
                     endc_lte_cell_id=$(echo "$response" | awk -F',' '{print $6}')
                     endc_lte_cell_id=$(fibocom_hex_to_dec "$endc_lte_cell_id")
                     endc_lte_earfcn=$(echo "$response" | awk -F',' '{print $7}')
-                    endc_lte_earfcn=$(fibocom_hex_to_dec "$endc_lte_earfcn")
+                    endc_lte_earfcn=$(fibocom_cell_num "$endc_lte_earfcn")
                     endc_lte_physical_cell_id=$(echo "$response" | awk -F',' '{print $8}')
-                    endc_lte_physical_cell_id=$(fibocom_hex_to_dec "$endc_lte_physical_cell_id")
+                    endc_lte_physical_cell_id=$(fibocom_cell_num "$endc_lte_physical_cell_id")
                     endc_lte_band_num=$(echo "$response" | awk -F',' '{print $9}')
                     endc_lte_band=$(get_band "LTE" ${endc_lte_band_num})
                     ul_bandwidth_num=$(echo "$response" | awk -F',' '{print $10}')
@@ -1643,9 +1656,9 @@ cell_info()
                     endc_nr_cell_id=$(echo "$response" | awk -F',' '{print $6}')
                     endc_nr_cell_id=$(fibocom_hex_to_dec "$endc_nr_cell_id")
                     endc_nr_arfcn=$(echo "$response" | awk -F',' '{print $7}')
-                    endc_nr_arfcn=$(fibocom_hex_to_dec "$endc_nr_arfcn")
+                    endc_nr_arfcn=$(fibocom_cell_num "$endc_nr_arfcn")
                     endc_nr_physical_cell_id=$(echo "$response" | awk -F',' '{print $8}')
-                    endc_nr_physical_cell_id=$(fibocom_hex_to_dec "$endc_nr_physical_cell_id")
+                    endc_nr_physical_cell_id=$(fibocom_cell_num "$endc_nr_physical_cell_id")
                     endc_nr_band_num=$(echo "$response" | awk -F',' '{print $9}')
                     endc_nr_band=$(get_band "NR" ${endc_nr_band_num})
                     nr_dl_bandwidth_num=$(echo "$response" | awk -F',' '{print $10}')
@@ -1668,9 +1681,9 @@ cell_info()
                     lte_cell_id=$(echo "$response" | awk -F',' '{print $6}')
                     lte_cell_id=$(fibocom_hex_to_dec "$lte_cell_id")
                     lte_earfcn=$(echo "$response" | awk -F',' '{print $7}')
-                    lte_earfcn=$(fibocom_hex_to_dec "$lte_earfcn")
+                    lte_earfcn=$(fibocom_cell_num "$lte_earfcn")
                     lte_physical_cell_id=$(echo "$response" | awk -F',' '{print $8}')
-                    lte_physical_cell_id=$(fibocom_hex_to_dec "$lte_physical_cell_id")
+                    lte_physical_cell_id=$(fibocom_cell_num "$lte_physical_cell_id")
                     lte_band_num=$(echo "$response" | awk -F',' '{print $9}')
                     lte_band=$(get_band "LTE" ${lte_band_num})
                     ul_bandwidth_num=$(echo "$response" | awk -F',' '{print $10}')
