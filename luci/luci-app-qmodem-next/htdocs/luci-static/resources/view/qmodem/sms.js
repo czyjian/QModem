@@ -4,6 +4,7 @@
 'require ui';
 'require dom';
 'require qmodem.sms as smsService';
+'require qmodem.qmodem as qmodem';
 
 // Load CSS
 document.head.appendChild(E('link', {
@@ -12,7 +13,7 @@ document.head.appendChild(E('link', {
 	'href': L.resource('qmodem/qmodem-next.css')
 }));
 
-return view.extend({
+return qmodem.withSmsTabs('chat', view.extend({
 	// Timezone offset setting utilities
 	getUtcOffsetSetting: function(type) {
 		// type: 'received' or 'sent'
@@ -753,4 +754,4 @@ setSmsStorage: function(configSection, readingSelect, writingSelect, etcSelect) 
 handleSaveApply: null,
 handleSave: null,
 handleReset: null
-});
+}));

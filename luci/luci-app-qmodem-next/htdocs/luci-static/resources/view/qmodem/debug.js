@@ -4,6 +4,13 @@
 'require dom';
 'require qmodem.qmodem as qmodem';
 
+// Load CSS
+document.head.appendChild(E('link', {
+	'rel': 'stylesheet',
+	'type': 'text/css',
+	'href': L.resource('qmodem/qmodem-next.css')
+}));
+
 return view.extend({
 	load: function() {
 		return qmodem.getModemSections();
@@ -164,6 +171,46 @@ return view.extend({
 			});
 			cmdField.appendChild(cmdInput);
 			cmdSection.appendChild(cmdField);
+
+			// Quick commands: per-modem list from the backend, picked from a
+			// dropdown that only pre-fills the AT command input above
+			var quickCmds = (cfg.at_cfg.cmds || []).filter(function(cmd) {
+				return cmd && cmd.name && cmd.value;
+			});
+			var quickSelect = null;
+
+			if (quickCmds.length > 0) {
+				var quickSection = E('div', { 'class': 'cbi-value' });
+				quickSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Quick Commands')));
+				var quickField = E('div', { 'class': 'cbi-value-field' });
+
+				quickSelect = E('select', {
+					'class': 'cbi-input-select',
+					'id': 'at_quick_' + modem.id,
+					'change': function() {
+						if (this.value === '')
+							return;
+						cmdInput.value = quickCmds[+this.value].value;
+						cmdInput.focus();
+					}
+				}, [ E('option', { 'value': '' }, '-- ' + _('Select a quick command') + ' --') ]);
+
+				quickCmds.forEach(function(cmd, idx) {
+					quickSelect.appendChild(E('option', { 'value': String(idx) }, cmd.name));
+				});
+
+				quickField.appendChild(quickSelect);
+				quickSection.appendChild(quickField);
+				container.appendChild(quickSection);
+			}
+
+			// Typing by hand detaches the input from the picked quick command
+			cmdInput.addEventListener('input', function() {
+				if (quickSelect && quickSelect.value !== '' &&
+				    quickCmds[+quickSelect.value].value !== cmdInput.value)
+					quickSelect.value = '';
+			});
+
 			container.appendChild(cmdSection);
 
 			// Response area
@@ -209,6 +256,13 @@ return view.extend({
 				}
 			}, _('Send AT Command'));
 
+			cmdInput.addEventListener('keydown', function(ev) {
+				if (ev.key === 'Enter') {
+					ev.preventDefault();
+					sendBtn.click();
+				}
+			});
+
 			responseField.appendChild(sendBtn);
 			responseField.appendChild(E('br'));
 			responseField.appendChild(E('br'));
@@ -216,27 +270,6 @@ return view.extend({
 			responseSection.appendChild(responseField);
 			container.appendChild(responseSection);
 
-			// Quick commands
-			if (cfg.at_cfg.cmds && cfg.at_cfg.cmds.length > 0) {
-				var quickSection = E('div', { 'class': 'cbi-value' });
-				quickSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Quick Commands')));
-				var quickField = E('div', { 'class': 'cbi-value-field cbi-section-actions' });
-				
-				cfg.at_cfg.cmds.forEach(function(cmd) {
-					if (cmd.name && cmd.value) {
-						quickField.appendChild(E('button', {
-							'class': 'btn cbi-button-action',
-							'click': function() {
-								document.getElementById('at_command_' + modem.id).value = cmd.value;
-							}
-						}, cmd.name));
-						quickField.appendChild(document.createTextNode(' '));
-					}
-				});
-				
-				quickSection.appendChild(quickField);
-				container.appendChild(quickSection);
-			}
 		}).catch(function(e) {
 			dom.content(portInfo, _('Error loading AT configuration: %s').format(e.message));
 		});

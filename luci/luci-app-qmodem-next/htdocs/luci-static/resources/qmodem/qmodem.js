@@ -255,7 +255,43 @@ var callSetSimSlot = rpc.declare({
 	expect: { }
 });
 
+// Model keys are stored lowercase (they index modem_support.json and vendor
+// scripts), so upper-case them for display, matching the overview page.
+function formatModemName(name, alias, fallback) {
+	var model = name ? String(name).toUpperCase() : '';
+	if (alias)
+		return model ? alias + ' (' + model + ')' : alias;
+	return model || fallback || '';
+}
+
+// Sub tabs shared by the SMS pages; each tab is its own page under .../sms
+var smsTabs = [
+	{ name: 'chat', path: 'admin/modem/qmodem/sms', title: 'SMS Conversation' },
+	{ name: 'forward', path: 'admin/modem/qmodem/sms/forward', title: 'SMS Forwarder' },
+	{ name: 'sim', path: 'admin/modem/qmodem/sms/sim', title: 'SIM Card SMS' }
+];
+
+function renderSmsTabs(active) {
+	return E('ul', { 'class': 'cbi-tabmenu', 'style': 'margin-bottom: 1em;' }, smsTabs.map(function(tab) {
+		return E('li', { 'class': tab.name === active ? 'cbi-tab' : 'cbi-tab-disabled' },
+			E('a', { 'href': L.url(tab.path) }, _(tab.title)));
+	}));
+}
+
 return L.Class.extend({
+	formatModemName: formatModemName,
+
+	// Wrap an SMS view class so its page starts with the SMS sub tabs
+	withSmsTabs: function(active, viewClass) {
+		return viewClass.extend({
+			render: function() {
+				return Promise.resolve(this.super('render', arguments)).then(function(node) {
+					return E('div', {}, [ renderSmsTabs(active), node ]);
+				});
+			}
+		});
+	},
+
 	// Get modem base information
 	getBaseInfo: function(section) {
 		return callBaseInfo(section);
@@ -447,7 +483,10 @@ return L.Class.extend({
 			uci.sections('qmodem', 'modem-device', function(s) {
 				sections.push({
 					id: s['.name'],
-					name: s.name || s['.name'],
+					// 'name' is a display label; the raw (lowercase) model key stays in 'model'
+					name: formatModemName(s.name, s.alias, s['.name']),
+					model: s.name || '',
+					alias: s.alias || '',
 					enabled: s.enabled !== '0'
 				});
 			});

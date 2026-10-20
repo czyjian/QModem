@@ -2646,3 +2646,103 @@ msgstr "模组初始化后重新发送锁小区命令"
 # Source: view/qmodem/config_advanced.js
 msgid "Delay"
 msgstr "延迟"
+
+# Source: view/qmodem/debug.js
+msgid "Select a quick command"
+msgstr "选择快速命令"
+
+# Source: view/qmodem/network_config.js
+msgid "Device State"
+msgstr "设备状态"
+
+# Source: view/qmodem/network_config.js
+msgid "Disabled"
+msgstr "已禁用"
+
+# Source: view/qmodem/network_config.js
+msgid "Ethernet"
+msgstr "以太网"
+
+# Source: view/qmodem/network_config.js
+msgid "Bridge Port"
+msgstr "桥接端口"
+
+# Source: view/qmodem/network_config.js
+msgid "Device-level bridge port for passthrough. If set, it overrides the slot default bridge port."
+msgstr "直通模式使用的设备级桥接端口。设置后将覆盖插槽的默认桥接端口。"
+
+# Source: view/qmodem/settings.js
+msgid "Scan Log Level"
+msgstr "扫描日志级别"
+
+# Source: view/qmodem/settings.js
+msgid "Notice"
+msgstr "通知"
+
+# Source: view/qmodem/settings.js
+msgid "Scan Workers"
+msgstr "扫描线程数"
+
+# Source: view/qmodem/settings.js
+msgid "AT Probe Workers"
+msgstr "AT 探测线程数"
+
+# Source: view/qmodem/settings.js
+msgid "Fast AT Timeout"
+msgstr "快速 AT 超时"
+
+# Source: view/qmodem/settings.js
+msgid "Model AT Timeout"
+msgstr "型号识别 AT 超时"
+
+# Source: view/qmodem/settings.js
+msgid "Hotplug Add Delay"
+msgstr "热插拔添加延迟"
+
+# Source: view/qmodem/settings.js
+msgid "Add Retry Delay"
+msgstr "添加重试间隔"
+
+# Source: view/qmodem/settings.js
+msgid "Add Retry Max"
+msgstr "添加最大重试次数"
+
+# Source: view/qmodem/settings.js
+msgid "Default bridge port for passthrough. Device-level bridge_port overrides this slot default."
+msgstr "直通模式使用的默认桥接端口。设备级的 bridge_port 会覆盖此插槽默认值。"
+
+# Source: view/qmodem/sim_switch.js
+msgid "Slot %s"
+msgstr "插槽 %s"
+
+# Source: view/qmodem/sms.js
+msgid "SMS Mode"
+msgstr "短信模式"
+
+# Source: view/qmodem/sms.js
+msgid "Direct modem access"
+msgstr "直接访问模组"
+
+# Source: view/qmodem/sms.js
+msgid "Database with polling"
+msgstr "数据库（轮询）"
+
+# Source: view/qmodem/sms.js
+msgid "Database with URC"
+msgstr "数据库（URC 上报）"
+
+# Source: view/qmodem/sms_sim.js
+msgid "Sender"
+msgstr "发件人"
+
+# Source: view/qmodem/sms_sim.js
+msgid "Content"
+msgstr "内容"
+
+# Source: view/qmodem/sms_sim.js
+msgid "Actions"
+msgstr "操作"
+
+# Source: view/qmodem/sms_sim.js
+msgid "No messages to delete"
+msgstr "没有可删除的短信"

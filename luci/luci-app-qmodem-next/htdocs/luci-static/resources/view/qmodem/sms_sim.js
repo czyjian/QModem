@@ -13,7 +13,7 @@ document.head.appendChild(E('link', {
 	'href': L.resource('qmodem/qmodem-next.css')
 }));
 
-return view.extend({
+return qmodem.withSmsTabs('sim', view.extend({
 	load: function() {
 		return qmodem.getModemSections();
 	},
@@ -379,4 +379,4 @@ return view.extend({
 	handleSaveApply: null,
 	handleSave: null,
 	handleReset: null
-});
+}));

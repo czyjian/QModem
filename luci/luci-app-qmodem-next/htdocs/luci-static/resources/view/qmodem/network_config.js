@@ -8,6 +8,13 @@
 'require dom';
 'require poll';
 
+// Load CSS
+document.head.appendChild(E('link', {
+	'rel': 'stylesheet',
+	'type': 'text/css',
+	'href': L.resource('qmodem/qmodem-next.css')
+}));
+
 var callInitAction = rpc.declare({
 	object: 'luci',
 	method: 'setInitAction',
@@ -146,7 +153,7 @@ return view.extend({
 				);
 			}
 			
-			buttons.push(E('span', { 'style': 'margin: 0 8px;' }, ' | '));
+			buttons.push(E('span', { 'style': 'opacity: .5;' }, '|'));
 
 			// Enabled control: show Enable if not enabled, show Disable if enabled
 			if (!enabled) {
@@ -189,7 +196,10 @@ return view.extend({
 				);
 			}
 			
-			return E('div', { id: 'rc-control-container' }, buttons);
+			return E('div', {
+				'id': 'rc-control-container',
+				'style': 'display: flex; flex-wrap: wrap; align-items: center; gap: 8px;'
+			}, buttons);
 		}, this);
 
 	// Dial Configuration Section (Per-Modem)
@@ -199,7 +209,7 @@ return view.extend({
 	s.modaltitle = L.bind(function(section_id) {
 		var name = uci.get('qmodem', section_id, 'name');
 		var alias = uci.get('qmodem', section_id, 'alias');
-		return _('Dial Configuration') + ': ' + (alias || name || section_id);
+		return _('Dial Configuration') + ': ' + qmodem.formatModemName(name, alias, section_id);
 	}, this);
 
 	// Connection Status Indicator
@@ -231,10 +241,10 @@ return view.extend({
 		
 		return E('div', {
 			'id': 'status-indicator-' + section_id,
-			'style': 'text-align: center;'
+			'style': 'text-align: left;'
 		}, [
 			E('span', {
-				'style': 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ' + color + ';',
+				'style': 'display: inline-block; width: 12px; height: 12px; margin-left: calc(1em - 6px); vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
 				'title': title
 			})
 		]);
@@ -256,9 +266,13 @@ return view.extend({
 			return uci.get('qmodem', section_id, 'alias') || '-';
 		};
 
-	o = s.option(form.DummyValue, 'state', _('Status'));
+	o = s.option(form.DummyValue, 'state', _('Device State'));
 	o.cfgvalue = function(section_id) {
 		var state = uci.get('qmodem', section_id, 'state');
+		switch (state) {
+		case 'enabled': return _('Enabled');
+		case 'disabled': return _('Disabled');
+		}
 		return state ? _(state.toUpperCase()) : _('Unknown');
 	};
 
@@ -294,6 +308,7 @@ return view.extend({
 			
 			return E('div', { 
 				'class': 'cbi-value-field', 
+				'style': 'display: flex; flex-wrap: wrap; align-items: center; gap: 8px;',
 				'id': 'dial-controls-' + section_id,
 				'data-section': section_id
 			}, [
@@ -687,7 +702,7 @@ return view.extend({
 			}
 			container.appendChild(
 				E('span', {
-					'style': 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ' + color + ';',
+					'style': 'display: inline-block; width: 12px; height: 12px; margin-left: calc(1em - 6px); vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
 					'title': title
 				})
 			);
@@ -698,7 +713,7 @@ return view.extend({
 			}
 			container.appendChild(
 				E('span', {
-					'style': 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #FFA500;',
+					'style': 'display: inline-block; width: 12px; height: 12px; margin-left: calc(1em - 6px); vertical-align: middle; border-radius: 50%; background-color: #FFA500;',
 					'title': _('Error: ') + err.message
 				})
 			);
@@ -816,7 +831,7 @@ return view.extend({
 					);
 				}
 
-				buttons.push(E('span', { 'style': 'margin: 0 8px;' }, ' | '));
+				buttons.push(E('span', { 'style': 'opacity: .5;' }, '|'));
 
 				// Enabled control: show Enable if not enabled, show Disable if enabled
 				if (!enabled) {
@@ -876,7 +891,7 @@ return view.extend({
 	showDialLogDialog: function(section_id) {
 		var name = uci.get('qmodem', section_id, 'name');
 		var alias = uci.get('qmodem', section_id, 'alias');
-		var title = (alias || name || section_id) + ' - ' + _('Dial Log');
+		var title = qmodem.formatModemName(name, alias, section_id) + ' - ' + _('Dial Log');
 		
 		var logContent = E('div', { 'style': 'min-height: 300px;' }, [
 			E('div', { 'style': 'text-align: center; padding: 20px;' }, [

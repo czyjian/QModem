@@ -64,7 +64,6 @@
 		}
 	},
 	"admin/modem/qmodem/sms/conversation/*": {
-		"title": "SMS Conversation",
 		"action": {
 			"type": "view",
 			"path": "qmodem/sms_conversation"
@@ -73,20 +72,7 @@
 			"acl": [ "luci-app-qmodem-next" ]
 		}
 	},
-	"admin/modem/qmodem/sms_sim": {
-		"title": "SIM Card SMS",
-		"order": 5.3,
-		"action": {
-			"type": "view",
-			"path": "qmodem/sms_sim"
-		},
-		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
-		}
-	},
-	"admin/modem/qmodem/sms_forward": {
-		"title": "SMS Forwarder",
-		"order": 5.5,
+	"admin/modem/qmodem/sms/forward": {
 		"action": {
 			"type": "view",
 			"path": "qmodem/sms_forward"
@@ -95,12 +81,10 @@
 			"acl": [ "luci-app-qmodem-next" ]
 		}
 	},
-	"admin/modem/qmodem/sim_switch": {
-		"title": "SIM Switch",
-		"order": 5.6,
+	"admin/modem/qmodem/sms/sim": {
 		"action": {
 			"type": "view",
-			"path": "qmodem/sim_switch"
+			"path": "qmodem/sms_sim"
 		},
 		"depends": {
 			"acl": [ "luci-app-qmodem-next" ]
@@ -108,7 +92,7 @@
 	},
 	"admin/modem/qmodem/settings": {
 		"title": "QModem Settings",
-		"order": 6,
+		"order": 9,
 		"action": {
 			"type": "view",
 			"path": "qmodem/settings"

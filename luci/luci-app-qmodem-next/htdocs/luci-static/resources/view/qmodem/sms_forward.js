@@ -5,7 +5,7 @@
 'require ui';
 'require qmodem.qmodem as qmodem';
 
-return view.extend({
+return qmodem.withSmsTabs('forward', view.extend({
 	load: function() {
 		return Promise.all([
 			uci.load('sms_forwarder'),
@@ -352,4 +352,4 @@ return view.extend({
 		ui.hideModal();
 		ui.addNotification(null, E('p', _('API configuration saved. Remember to save & apply changes.')), 'info');
 	}
-});
+}));
