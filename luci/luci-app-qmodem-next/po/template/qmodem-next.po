@@ -2136,13 +2136,6 @@ msgstr ""
 msgid "New IMEI"
 msgstr ""
 
-#: view/qmodem/network_config.js:85
-#: view/qmodem/network_config.js:86
-#: view/qmodem/network_config.js:766
-#: view/qmodem/network_config.js:767
-msgid "No"
-msgstr ""
-
 #: view/qmodem/config_advanced.js:1185
 msgid "No bands available for this modem"
 msgstr ""
