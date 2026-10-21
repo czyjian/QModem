@@ -50,7 +50,7 @@ msgstr ""
 msgid "16-bit (Unicode)"
 msgstr ""
 
-#: view/qmodem/settings.js:494
+#: view/qmodem/settings.js:496
 msgid "5G Ethernet Interface"
 msgstr ""
 
@@ -184,7 +184,7 @@ msgstr ""
 msgid "Advanced Modem Config"
 msgstr ""
 
-#: view/qmodem/settings.js:464
+#: view/qmodem/settings.js:466
 msgid "After setting this option, the first module loaded into this slot will automatically be assigned this default alias."
 msgstr ""
 
@@ -261,7 +261,7 @@ msgstr ""
 msgid "Are you sure you want to remove this modem device? this cannot be roll back with uci machanism."
 msgstr ""
 
-#: view/qmodem/settings.js:514
+#: view/qmodem/settings.js:516
 msgid "Associated USB"
 msgstr ""
 
@@ -393,7 +393,7 @@ msgid "Bridge Mode"
 msgstr ""
 
 #: view/qmodem/network_config.js:351
-#: view/qmodem/settings.js:504
+#: view/qmodem/settings.js:506
 msgid "Bridge Port"
 msgstr ""
 
@@ -754,15 +754,15 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#: view/qmodem/settings.js:463
+#: view/qmodem/settings.js:465
 msgid "Default Alias"
 msgstr ""
 
-#: view/qmodem/settings.js:468
+#: view/qmodem/settings.js:470
 msgid "Default Metric"
 msgstr ""
 
-#: view/qmodem/settings.js:505
+#: view/qmodem/settings.js:507
 msgid "Default bridge port for passthrough. Device-level bridge_port overrides this slot default."
 msgstr ""
 
@@ -1103,7 +1103,7 @@ msgstr ""
 msgid "Error loading mode: %s"
 msgstr ""
 
-#: view/qmodem/overview.js:474
+#: view/qmodem/overview.js:473
 msgid "Error loading modem information: %s"
 msgstr ""
 
@@ -1145,7 +1145,7 @@ msgstr ""
 msgid "Error: "
 msgstr ""
 
-#: qmodem/qmodem.js:318
+#: qmodem/qmodem.js:324
 #: view/qmodem/config_advanced.js:281
 #: view/qmodem/config_advanced.js:420
 #: view/qmodem/config_advanced.js:598
@@ -1341,11 +1341,11 @@ msgstr ""
 msgid "Feishu webhook URL from your bot configuration"
 msgstr ""
 
-#: view/qmodem/settings.js:495
+#: view/qmodem/settings.js:497
 msgid "For 5G modules using the Ethernet PHY connection, please specify the network interface name (e.g., eth0, eth1)"
 msgstr ""
 
-#: view/qmodem/settings.js:515
+#: view/qmodem/settings.js:517
 msgid "For M.2 slots with both PCIe and USB support, specify the associated USB port (for ttyUSB access)"
 msgstr ""
 
@@ -1382,15 +1382,15 @@ msgstr ""
 msgid "Full scan failed"
 msgstr ""
 
-#: view/qmodem/settings.js:530
+#: view/qmodem/settings.js:532
 msgid "GPIO Value(Modem Power Down)"
 msgstr ""
 
-#: view/qmodem/settings.js:535
+#: view/qmodem/settings.js:537
 msgid "GPIO Value(Modem Power Up)"
 msgstr ""
 
-#: view/qmodem/settings.js:526
+#: view/qmodem/settings.js:528
 msgid "GPIO pin for power control"
 msgstr ""
 
@@ -1621,11 +1621,11 @@ msgstr ""
 msgid "Invalid message index"
 msgstr ""
 
-#: view/qmodem/settings.js:475
+#: view/qmodem/settings.js:477
 msgid "LED indicator for SIM card status"
 msgstr ""
 
-#: view/qmodem/settings.js:485
+#: view/qmodem/settings.js:487
 msgid "LED indicator for network connection status"
 msgstr ""
 
@@ -1654,8 +1654,8 @@ msgstr ""
 msgid "Last Message"
 msgstr ""
 
-#: view/qmodem/overview.js:469
-#: view/qmodem/overview.js:527
+#: view/qmodem/overview.js:468
+#: view/qmodem/overview.js:526
 msgid "Last update"
 msgstr ""
 
@@ -1680,7 +1680,7 @@ msgstr ""
 msgid "Loading messages..."
 msgstr ""
 
-#: view/qmodem/overview.js:358
+#: view/qmodem/overview.js:357
 msgid "Loading modem information..."
 msgstr ""
 
@@ -1688,7 +1688,7 @@ msgstr ""
 msgid "Loading reboot capabilities..."
 msgstr ""
 
-#: qmodem/qmodem.js:334
+#: qmodem/qmodem.js:340
 #: qmodem/sms_sim.js:74
 #: qmodem/sms_sim.js:83
 #: qmodem/sms_sim.js:239
@@ -1964,7 +1964,7 @@ msgstr ""
 #: qmodem/sms_sim.js:40
 #: view/qmodem/config_advanced.js:37
 #: view/qmodem/debug.js:37
-#: view/qmodem/overview.js:494
+#: view/qmodem/overview.js:493
 #: view/qmodem/sms.js:65
 #: view/qmodem/sms_conversation.js:82
 msgid "Modem Name"
@@ -1978,7 +1978,7 @@ msgstr ""
 msgid "Modem Probe Settings"
 msgstr ""
 
-#: view/qmodem/settings.js:437
+#: view/qmodem/settings.js:439
 msgid "Modem Slot"
 msgstr ""
 
@@ -2066,7 +2066,7 @@ msgstr ""
 msgid "Network Information"
 msgstr ""
 
-#: view/qmodem/settings.js:484
+#: view/qmodem/settings.js:486
 msgid "Network LED"
 msgstr ""
 
@@ -2191,7 +2191,7 @@ msgid "No modem information available"
 msgstr ""
 
 #: qmodem/sms_sim.js:31
-#: view/qmodem/overview.js:484
+#: view/qmodem/overview.js:483
 #: view/qmodem/sms.js:56
 #: view/qmodem/sms_conversation.js:72
 msgid "No modems configured or all modems are disabled."
@@ -2302,7 +2302,7 @@ msgstr ""
 msgid "PCI and ARFCN are required"
 msgstr ""
 
-#: view/qmodem/settings.js:442
+#: view/qmodem/settings.js:444
 msgid "PCIe"
 msgstr ""
 
@@ -2395,7 +2395,7 @@ msgstr ""
 msgid "Physical Channel"
 msgstr ""
 
-#: view/qmodem/settings.js:447
+#: view/qmodem/settings.js:449
 msgid "Physical slot identifier (e.g., 1-1.4 for USB, 0000:01:00.0 for PCIe)"
 msgstr ""
 
@@ -2441,7 +2441,7 @@ msgstr ""
 msgid "Post Init Delay"
 msgstr ""
 
-#: view/qmodem/settings.js:525
+#: view/qmodem/settings.js:527
 msgid "Power GPIO"
 msgstr ""
 
@@ -2793,7 +2793,7 @@ msgstr ""
 msgid "SIM Information"
 msgstr ""
 
-#: view/qmodem/settings.js:474
+#: view/qmodem/settings.js:476
 msgid "SIM LED"
 msgstr ""
 
@@ -3153,11 +3153,11 @@ msgstr ""
 msgid "Slot %s"
 msgstr ""
 
-#: view/qmodem/settings.js:446
+#: view/qmodem/settings.js:448
 msgid "Slot ID"
 msgstr ""
 
-#: view/qmodem/settings.js:440
+#: view/qmodem/settings.js:442
 msgid "Slot Type"
 msgstr ""
 
@@ -3303,7 +3303,7 @@ msgstr ""
 msgid "Temperature"
 msgstr ""
 
-#: view/qmodem/settings.js:469
+#: view/qmodem/settings.js:471
 msgid "The first module loaded into this slot will automatically be assigned this default metric."
 msgstr ""
 
@@ -3418,7 +3418,7 @@ msgstr ""
 msgid "UMobile (MY)"
 msgstr ""
 
-#: view/qmodem/settings.js:441
+#: view/qmodem/settings.js:443
 msgid "USB"
 msgstr ""
 
@@ -3581,10 +3581,10 @@ msgstr ""
 #: view/qmodem/settings.js:412
 #: view/qmodem/settings.js:417
 #: view/qmodem/settings.js:422
-#: view/qmodem/settings.js:465
-#: view/qmodem/settings.js:471
-#: view/qmodem/settings.js:532
-#: view/qmodem/settings.js:537
+#: view/qmodem/settings.js:467
+#: view/qmodem/settings.js:473
+#: view/qmodem/settings.js:534
+#: view/qmodem/settings.js:539
 msgid "e.g."
 msgstr ""
 
