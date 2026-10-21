@@ -1,5 +1,6 @@
 'use strict';
 'require rpc';
+'require qmodem.qmodem as qmodem';
 
 var callList = rpc.declare({ object: 'qmodem.sms', method: 'list', params: [ 'modem_id', 'limit', 'offset' ], expect: { } });
 var callSync = rpc.declare({ object: 'qmodem.sms', method: 'sync', params: [ 'modem_id' ], expect: { } });
@@ -68,9 +69,18 @@ function parseStorage(result) {
 
 return L.Class.extend({
 	getModems: function() {
-		return callModemList().then(function(result) {
-			return (result.modems || []).map(function(modem) {
-				return { id: modem.modem_id, name: modem.name || modem.modem_id, enabled: !!modem.enabled };
+		// Label modems like the other qmodem pages (upper-case model, alias)
+		return Promise.all([ callModemList(), qmodem.getModemSections() ]).then(function(results) {
+			var labels = {};
+			(results[1] || []).forEach(function(section) {
+				labels[section.id] = section.name;
+			});
+			return (results[0].modems || []).map(function(modem) {
+				return {
+					id: modem.modem_id,
+					name: labels[modem.modem_id] || qmodem.formatModemName(modem.name, '', modem.modem_id),
+					enabled: !!modem.enabled
+				};
 			});
 		});
 	},

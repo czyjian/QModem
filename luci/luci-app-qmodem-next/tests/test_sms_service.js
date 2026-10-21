@@ -7,7 +7,7 @@ const path = require('path');
 const source = fs.readFileSync(path.join(__dirname,
 	'../htdocs/luci-static/resources/qmodem/sms.js'), 'utf8');
 
-function createService(listResults, syncResult) {
+function createService(listResults, syncResult, modemList, sections) {
 	let listCalls = 0;
 	const rpc = {
 		declare: function(spec) {
@@ -16,12 +16,20 @@ function createService(listResults, syncResult) {
 					return Promise.resolve(listResults[listCalls++]);
 				if (spec.method === 'sync')
 					return Promise.resolve(syncResult);
+				if (spec.method === 'modem_list')
+					return Promise.resolve(modemList || {});
 				return Promise.resolve({});
 			};
 		}
 	};
+	const qmodem = {
+		getModemSections: function() { return Promise.resolve(sections || []); },
+		formatModemName: function(name, alias, fallback) {
+			return name ? String(name).toUpperCase() : fallback;
+		}
+	};
 	const L = { Class: { extend: function(service) { return service; } } };
-	const service = new Function('rpc', 'L', '_', source)(rpc, L, function(value) { return value; });
+	const service = new Function('rpc', 'qmodem', 'L', '_', source)(rpc, qmodem, L, function(value) { return value; });
 	return { service: service, listCalls: function() { return listCalls; } };
 }
 
@@ -47,6 +55,17 @@ async function main() {
 	assert.strictEqual(result.total, 1);
 	assert.strictEqual(result.conversations[0].contact, '10086');
 	console.log('PASS: SMS service propagates sync errors and renders refreshed messages');
+
+	const labelled = createService([], null, { modems: [
+		{ modem_id: '2_1', name: 'rw350r-gl', enabled: true },
+		{ modem_id: '3_1', name: 'rm520n-gl', enabled: false }
+	] }, [ { id: '2_1', name: 'Home (RW350R-GL)' } ]);
+	const modems = await labelled.service.getModems();
+	assert.deepStrictEqual(modems, [
+		{ id: '2_1', name: 'Home (RW350R-GL)', enabled: true },
+		{ id: '3_1', name: 'RM520N-GL', enabled: false }
+	]);
+	console.log('PASS: SMS modem list uses the shared modem labels');
 }
 
 main().catch(function(error) {
