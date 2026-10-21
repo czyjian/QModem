@@ -1760,6 +1760,39 @@ check_logfile_line()
     fi
 }
 
+# Keep the IPv6 default route alive. It comes from the modem's RA, and many
+# modems only send an RA in reply to a Router Solicitation, so the route
+# expires once its router lifetime runs out (e.g. 65535 s on RW350R-GL)
+# while the prefix stays: LAN clients keep addresses but lose IPv6.
+refresh_ipv6_router()
+{
+    local status=$(ubus call network.interface.$interface6_name status 2>/dev/null)
+    local ifup_time=$(echo "$status" | jsonfilter -e '@.uptime' 2>/dev/null)
+    local origin_device=$(uci -q get network.$interface_name.device 2>/dev/null)
+    [ -n "$origin_device" ] || return
+    [ "${ifup_time:-0}" -ge 5 ] || return
+
+    if command -v rdisc6 >/dev/null 2>&1; then
+        # The RS makes the modem answer with an RA, which odhcp6c picks up
+        rdisc6 -1 -q "$origin_device" >/dev/null 2>&1 &
+        command -v ndisc6 >/dev/null 2>&1 && ndisc6 -1 -q fe80::1 "$origin_device" >/dev/null 2>&1 &
+        return
+    fi
+
+    # Without rdisc6, restart DHCPv6 (odhcp6c sends an RS on start) when the
+    # default route is missing or about to expire
+    local valid=$(echo "$status" | jsonfilter -e '@.route[@.target="::"].valid' 2>/dev/null | head -n1)
+    if [ -z "$valid" ] || [ "$valid" -lt 600 ]; then
+        [ "$ifup_time" -ge 60 ] || return
+        if [ -n "$valid" ]; then
+            m_debug "IPv6 default route expires in ${valid}s and rdisc6 is not installed, restarting $interface6_name"
+        else
+            m_debug "IPv6 default route is missing and rdisc6 is not installed, restarting $interface6_name"
+        fi
+        ifup "$interface6_name"
+    fi
+}
+
 unexpected_response_count=0
 at_dial_monitor()
 {
@@ -1812,11 +1845,7 @@ at_dial_monitor()
 
                 pdp_type=$(echo $pdp_type | tr 'A-Z' 'a-z')
                 if [ "$pdp_type" = "ipv4v6" ]; then
-                    local ifup_time=$(ubus call network.interface.$interface6_name status 2>/dev/null | jsonfilter -e '@.uptime' 2>/dev/null || echo 0)
-                    local origin_device=$(uci -q get network.$interface_name.device 2>/dev/null || echo "")
-                    [ "$ifup_time" -lt 5 ] && continue
-                    rdisc6 $origin_device &
-                    ndisc6 fe80::1 $origin_device &
+                    refresh_ipv6_router
                 fi
                 sleep 15
                 ;;
