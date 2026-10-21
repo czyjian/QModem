@@ -82,8 +82,8 @@ return view.extend({
 			var running = status.running === true || status.running === 'true';
 			
 			return E('div', { id: 'rc-status-container' }, [
-				E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No'))),
-				E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No')))
+				E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No', 'qmodem'))),
+				E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No', 'qmodem')))
 			]);
 		}, this);
 
@@ -763,8 +763,8 @@ return view.extend({
 				var running = status.running === true || status.running === 'true';
 
 				statusContainer.appendChild(E('div', {}, [
-					E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No'))),
-					E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No')))
+					E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No', 'qmodem'))),
+					E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No', 'qmodem')))
 				]));
 
 				// Update control buttons

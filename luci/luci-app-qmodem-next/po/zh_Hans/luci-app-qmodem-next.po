@@ -2767,3 +2767,8 @@ msgstr "配置调制解调器的探测与扫描、设备列表及插槽默认值
 msgctxt "qmodem"
 msgid "Band"
 msgstr "频段"
+
+# Source: view/qmodem/network_config.js (luci-base translates plain "No" as 不)
+msgctxt "qmodem"
+msgid "No"
+msgstr "否"
