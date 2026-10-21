@@ -255,10 +255,16 @@ var callSetSimSlot = rpc.declare({
 	expect: { }
 });
 
+// "-" is qmodem's placeholder for "no alias" (see modem_dial.sh)
+function realAlias(alias) {
+	return (alias && alias !== '-') ? alias : '';
+}
+
 // Model keys are stored lowercase (they index modem_support.json and vendor
 // scripts), so upper-case them for display, matching the overview page.
 function formatModemName(name, alias, fallback) {
 	var model = name ? String(name).toUpperCase() : '';
+	alias = realAlias(alias);
 	if (alias)
 		return model ? alias + ' (' + model + ')' : alias;
 	return model || fallback || '';
@@ -346,6 +352,7 @@ function renderSmsTabs(chatNode) {
 
 return L.Class.extend({
 	formatModemName: formatModemName,
+	realAlias: realAlias,
 
 	// Wrap the SMS view so its page holds the SMS sub tabs
 	withSmsTabs: function(viewClass) {
@@ -550,7 +557,7 @@ return L.Class.extend({
 					// 'name' is a display label; the raw (lowercase) model key stays in 'model'
 					name: formatModemName(s.name, s.alias, s['.name']),
 					model: s.name || '',
-					alias: s.alias || '',
+					alias: realAlias(s.alias),
 					enabled: s.enabled !== '0'
 				});
 			});

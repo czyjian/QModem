@@ -227,8 +227,7 @@ return view.extend({
 		
 		sections.forEach(function(section) {
 			if (section.state !== 'disabled' && section.at_port) {
-				var name = section.name ? section.name.toUpperCase() : 'Unknown';
-				var displayName = section.alias ? section.alias + ' (' + name + ')' : name;
+				var displayName = qmodem.formatModemName(section.name, section.alias, 'Unknown');
 				
 				modems.push({
 					id: section['.name'],

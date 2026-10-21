@@ -434,6 +434,8 @@ return view.extend({
 	s.modaltitle = L.bind(function(section_id) {
 		var slotId = uci.get('qmodem', section_id, 'slot');
 		var alias = uci.get('qmodem', section_id, 'alias');
+		if (alias === '-')
+			alias = '';
 		return _('Modem Slot') + ': ' + (alias || slotId || section_id);
 	}, this);
 

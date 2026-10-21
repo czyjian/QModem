@@ -980,7 +980,7 @@ return view.extend({
 		return qmodem.getDialLog(section_id).then(function(result) {
 			if (result && result.log) {
 				var name = uci.get('qmodem', section_id, 'name') || section_id;
-				var alias = uci.get('qmodem', section_id, 'alias') || '';
+				var alias = qmodem.realAlias(uci.get('qmodem', section_id, 'alias'));
 				var filename = 'dial_log_' + (alias || name) + '_' + 
 					new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5) + '.txt';
 				
