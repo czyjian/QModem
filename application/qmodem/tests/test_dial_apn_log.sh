@@ -90,6 +90,30 @@ imsi_response=460110123456789
 at_dial > /dev/null
 [ "$apn" = ctnet ]
 
+# RW350R-GL: three-carrier Auto APN, manual override and model isolation.
+for model in rw350r-gl RW350R-GL; do
+    modem_model=$model
+    for plmn in 46000 46002 46004 46007 46008 46013 46001 46006 46009 46003 46005 46011; do
+        imsi_response="${plmn}0123456789" apn=auto
+        resolve_auto_apn
+        [ "$apn" = internet ]
+    done
+done
+apn=private.example
+resolve_auto_apn
+[ "$apn" = private.example ]
+imsi_response=460150123456789 apn=auto
+resolve_auto_apn
+[ "$apn" = cbnet ]
+imsi_response=460110123456789 apn=auto
+at_dial > /dev/null
+grep -Fxq 'AT+CGDCONT=0,"IPV4V6","internet"' "$fixture/commands"
+grep -Fxq 'AT+CGACT=1,0' "$fixture/commands"
+modem_model=fm350-gl apn=auto
+resolve_auto_apn
+[ "$apn" = ctnet ]
+modem_model=''
+
 ip_response=$(printf '+CGPADDR: 0,"10.162.254.120","36.14.18.52.0.0.0.0.0.0.0.0.0.0.0.1"\r\nOK\r\n')
 check_ip
 [ "$ipv4" = 10.162.254.120 ]

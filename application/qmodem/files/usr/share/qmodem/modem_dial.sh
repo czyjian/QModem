@@ -492,6 +492,7 @@ update_config()
     config_get metric $modem_config metric
     config_get at_port $modem_config at_port
     config_get manufacturer $modem_config manufacturer
+    config_get modem_model $modem_config name
     config_get platform $modem_config platform
     config_get use_ubus $modem_config use_ubus 1
     config_get force_set_apn $modem_config force_set_apn
@@ -577,6 +578,21 @@ resolve_auto_apn()
         { sub(/^[[:space:]]*\+CIMI:[[:space:]]*/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, "") }
         /^[0-9]+$/ && length($0) >= 14 && length($0) <= 16 { print; exit }')
     plmn=$(printf '%.5s' "$imsi")
+    # RW350R-GL USB data sessions use internet on China's three carriers.
+    # Explicit APNs have already returned above.
+    local model
+    model=$(printf '%s' "${modem_model:-}" | tr '[:upper:]' '[:lower:]')
+    case "$model" in
+        rw350r-gl)
+            case "$plmn" in
+                46000|46002|46004|46007|46008|46013|46001|46006|46009|46003|46005|46011)
+                    apn=internet
+                    m_debug "auto APN resolved: sim_slot=$sim_slot, home_plmn=$plmn, apn=$apn"
+                    return 0
+                    ;;
+            esac
+            ;;
+    esac
     # Default data APNs from the bundled apns.json; never choose IMS/MMS.
     case "$plmn" in
         46000|46002|46004|46007|46008|46013) apn=cmnet ;;
