@@ -722,7 +722,7 @@ EOF
                         json_add_object result
                         log_file="/var/run/qmodem/${config_section}_dir/dial_log"
                         if [ -f "$log_file" ]; then
-                            echo "" > "$log_file"
+                            qmodem_dial_log clear "$log_file"
                             json_add_string status "1"
                         else
                             json_add_string status "0"
@@ -744,7 +744,7 @@ EOF
                         json_init
                         log_file="/var/run/qmodem/${config_section}_dir/dial_log"
                         if [ -f "$log_file" ]; then
-                            log_content=$(cat "$log_file" | tail -n 100)
+                            log_content=$(qmodem_dial_log read "$log_file")
                             json_add_string log "$log_content"
                         else
                             json_add_string log ""

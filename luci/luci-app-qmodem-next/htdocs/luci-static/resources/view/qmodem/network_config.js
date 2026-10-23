@@ -939,10 +939,23 @@ return view.extend({
 					'click': ui.hideModal
 				}, _('Close'))
 			])
-		], 'cbi-modal');
+		], 'cbi-modal', 'qmodem-dial-log-modal');
 
-		// Load log content
-		this.loadDialLog(section_id, logContent);
+		// Scale the populated dialog to 160% width and 130% height.
+		this.loadDialLog(section_id, logContent).then(function() {
+			var textarea = logContent.querySelector('.dial-log-content');
+			if (!textarea)
+				return;
+			var bounds = dialog.getBoundingClientRect();
+			var logBounds = textarea.getBoundingClientRect();
+			var width = Math.min(bounds.width * 1.6, document.documentElement.clientWidth - 32);
+			var height = Math.min(logBounds.height + bounds.height * 0.3,
+				Math.max(120, document.documentElement.clientHeight - 32 - (bounds.height - logBounds.height)));
+			// These rules disappear with this dialog, without resizing other modals.
+			dialog.appendChild(E('style', {},
+				'.modal.qmodem-dial-log-modal { box-sizing: border-box; width: ' + width + 'px !important; max-width: calc(100vw - 2rem) !important; }' +
+				'.qmodem-dial-log-modal .dial-log-content { box-sizing: border-box; height: ' + height + 'px; max-height: none; }'));
+		});
 	},
 
 	loadDialLog: function(section_id, container) {
@@ -958,7 +971,7 @@ return view.extend({
 					);
 				} else {
 					container.appendChild(
-							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20','maxlength':'160' }, result.log)
+							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20' }, result.log)
 					);
 				}
 			} else {
