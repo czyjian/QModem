@@ -274,8 +274,8 @@ function formatModemName(name, alias, fallback) {
 // are modules loaded on first use, so switching tabs never reloads the page.
 var smsTabs = [
 	{ name: 'chat', title: 'SMS Conversation' },
-	{ name: 'forward', title: 'SMS Forwarder', module: 'qmodem.sms_forward' },
-	{ name: 'sim', title: 'SIM Card SMS', module: 'qmodem.sms_sim' }
+	{ name: 'sim', title: 'SIM Card SMS', module: 'qmodem.sms_sim' },
+	{ name: 'forward', title: 'SMS Forwarder', module: 'qmodem.sms_forward' }
 ];
 
 function loadSmsPanel(tab, panel) {

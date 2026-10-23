@@ -169,6 +169,30 @@ fastat()
   fi
 )
 
+# Serialize readers, writers and explicit clears. Keep recent history instead
+# of periodically erasing the entire file, including logs from hang processes.
+qmodem_dial_log()
+(
+    local action="$1" path="$2" message="${3:-}" retained
+    exec 8>"${path}.lock" || return 1
+    flock -x 8 || return 1
+    case "$action" in
+        read) [ ! -f "$path" ] || cat "$path" ;;
+        clear) : > "$path" ;;
+        write)
+            printf '%s\n' "$message" >> "$path"
+            if [ "$(wc -l < "$path")" -gt 1000 ]; then
+                retained=$(mktemp "${path}.XXXXXX") || return 1
+                if tail -n 1000 "$path" > "$retained"; then
+                    cat "$retained" > "$path"
+                fi
+                rm -f "$retained"
+            fi
+            ;;
+        *) return 1 ;;
+    esac
+)
+
 log2file()
 {
 	local subject="$1"
@@ -177,7 +201,10 @@ log2file()
 
 	#打印日志
     local update_time=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[${update_time}] ${subject}:${msg} " >> "${path}"
+    case "$path" in
+        */dial_log) qmodem_dial_log write "$path" "[${update_time}] ${subject}:${msg}" ;;
+        *) printf '[%s] %s:%s\n' "$update_time" "$subject" "$msg" >> "$path" ;;
+    esac
 }
 
 log2sys()

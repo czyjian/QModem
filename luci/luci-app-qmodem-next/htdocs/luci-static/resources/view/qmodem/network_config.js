@@ -243,10 +243,10 @@ return view.extend({
 		
 		return E('div', {
 			'id': 'status-indicator-' + section_id,
-			'style': 'text-align: left;'
+			'style': 'text-align: center;'
 		}, [
 			E('span', {
-				'style': 'display: inline-block; width: 12px; height: 12px; margin-left: calc(1em - 6px); vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
+				'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
 				'title': title
 			})
 		]);
@@ -310,7 +310,7 @@ return view.extend({
 			
 			return E('div', { 
 				'class': 'cbi-value-field', 
-				'style': 'display: flex; flex-wrap: wrap; align-items: center; gap: 8px;',
+				'style': 'display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;',
 				'id': 'dial-controls-' + section_id,
 				'data-section': section_id
 			}, [
@@ -704,7 +704,7 @@ return view.extend({
 			}
 			container.appendChild(
 				E('span', {
-					'style': 'display: inline-block; width: 12px; height: 12px; margin-left: calc(1em - 6px); vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
+					'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
 					'title': title
 				})
 			);
@@ -715,7 +715,7 @@ return view.extend({
 			}
 			container.appendChild(
 				E('span', {
-					'style': 'display: inline-block; width: 12px; height: 12px; margin-left: calc(1em - 6px); vertical-align: middle; border-radius: 50%; background-color: #FFA500;',
+					'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: #FFA500;',
 					'title': _('Error: ') + err.message
 				})
 			);
@@ -939,10 +939,23 @@ return view.extend({
 					'click': ui.hideModal
 				}, _('Close'))
 			])
-		], 'cbi-modal');
+		], 'cbi-modal', 'qmodem-dial-log-modal');
 
-		// Load log content
-		this.loadDialLog(section_id, logContent);
+		// Scale the populated dialog to 160% width and 130% height.
+		this.loadDialLog(section_id, logContent).then(function() {
+			var textarea = logContent.querySelector('.dial-log-content');
+			if (!textarea)
+				return;
+			var bounds = dialog.getBoundingClientRect();
+			var logBounds = textarea.getBoundingClientRect();
+			var width = Math.min(bounds.width * 1.6, document.documentElement.clientWidth - 32);
+			var height = Math.min(logBounds.height + bounds.height * 0.3,
+				Math.max(120, document.documentElement.clientHeight - 32 - (bounds.height - logBounds.height)));
+			// These rules disappear with this dialog, without resizing other modals.
+			dialog.appendChild(E('style', {},
+				'.modal.qmodem-dial-log-modal { box-sizing: border-box; width: ' + width + 'px !important; max-width: calc(100vw - 2rem) !important; }' +
+				'.qmodem-dial-log-modal .dial-log-content { box-sizing: border-box; height: ' + height + 'px; max-height: none; }'));
+		});
 	},
 
 	loadDialLog: function(section_id, container) {
@@ -958,7 +971,7 @@ return view.extend({
 					);
 				} else {
 					container.appendChild(
-							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20','maxlength':'160' }, result.log)
+							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20' }, result.log)
 					);
 				}
 			} else {

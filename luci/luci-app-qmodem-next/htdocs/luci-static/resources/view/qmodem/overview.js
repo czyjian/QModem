@@ -380,8 +380,11 @@ return view.extend({
 				var copyrightInfo = copyrightData.copyright;
 				var copyrightText = [];
 				for (var key in copyrightInfo) {
-					copyrightText.push(_(key) + ': ' + copyrightInfo[key]);
+					if (key === 'Maintainer')
+						continue;
+					copyrightText.push((key === 'Author' ? '原作者' : _(key)) + ': ' + copyrightInfo[key]);
 				}
+				copyrightText.push('修改: czyjian <czyjian@gmail.com>');
 				copyrightElement.textContent = copyrightText.join(' | ');
 				copyrightElement.style.display = '';
 			} else if (copyrightElement) {

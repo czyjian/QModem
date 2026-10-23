@@ -567,6 +567,42 @@ update_config()
     fi
 }
 
+resolve_auto_apn()
+{
+    case "$apn" in ''|auto|AUTO) ;; *) return 0;; esac
+    local imsi plmn response
+    # Use the SIM's home network, not COPS (which may be a roaming network).
+    response=$(cmd_dial_cimi_query "$at_port")
+    imsi=$(printf '%s\n' "$response" | tr -d '\r"' | awk '
+        { sub(/^[[:space:]]*\+CIMI:[[:space:]]*/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, "") }
+        /^[0-9]+$/ && length($0) >= 14 && length($0) <= 16 { print; exit }')
+    plmn=$(printf '%.5s' "$imsi")
+    # Default data APNs from the bundled apns.json; never choose IMS/MMS.
+    case "$plmn" in
+        46000|46002|46004|46007|46008|46013) apn=cmnet ;;
+        46001|46009) apn=3gnet ;;
+        46003|46011) apn=ctnet ;;
+        46015) apn=cbnet ;;
+        46060) apn=cmnet ;;
+        *)
+            # For other networks, retain a usable APN on the selected context.
+            response=$(cmd_dial_cgdcont_query "$at_port")
+            apn=$(printf '%s\n' "$response" | tr -d '\r' | awk -F '"' -v cid="$pdp_index" '
+                /^\+CGDCONT:/ {
+                    split($1, fields, ","); sub(/^\+CGDCONT:[[:space:]]*/, "", fields[1])
+                    gsub(/[[:space:]]/, "", fields[1])
+                    if (fields[1] == cid && $4 ~ /^[A-Za-z0-9_.-]+$/ &&
+                        tolower($4) !~ /^(ims|sos|.*mms)$/) { print $4; exit }
+                }')
+            ;;
+    esac
+    if [ -n "$apn" ]; then
+        m_debug "auto APN resolved: sim_slot=$sim_slot, home_plmn=$plmn, apn=$apn"
+    else
+        m_debug "auto APN unresolved: sim_slot=$sim_slot, home_plmn=$plmn; using network default"
+    fi
+}
+
 check_dial_prepare()
 {
     sim_fullfill=0
@@ -625,6 +661,10 @@ check_dial_prepare()
 
 check_ip()
 {
+    local response
+    ipv4=""
+    ipv6=""
+    check_ip_command="AT+CGPADDR=$pdp_index"
     case $manufacturer in
             "simcom")
                 case $platform in
@@ -651,16 +691,13 @@ check_ip()
             ipaddr=$(echo "$config" | grep "ipv4address:" | awk '{print $2}' | cut -d'/' -f1)
             ipaddr="$ipaddr $(echo "$config" | grep "ipv6address:" | awk '{print $2}' | cut -d'/' -f1)"
         else
-            ipaddr=$(cmd_dial_command "$at_port" "$check_ip_command" | grep +CGPADDR:)
+            response=$(cmd_dial_command "$at_port" "$check_ip_command")
+            ipaddr=$(printf '%s\n' "$response" | grep -F '+CGPADDR:' || :)
         fi
 
         if [ -n "$ipaddr" ];then
-            ipv6=$(echo $ipaddr | grep -oE "\b([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\b")
+            ipv6=$(get_cgpaddr_ipv6 "$ipaddr")
             ipv4=$(get_cgpaddr_ipv4 "$ipaddr")
-            if [ "$manufacturer" = "simcom" ];then
-                ipv4=$(echo $ipaddr | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" | grep -v "0\.0\.0\.0" | head -n 1)
-                ipv6=$(echo $ipaddr | grep -oE "\b([0-9a-fA-F]{0,4}.){2,7}[0-9a-fA-F]{0,4}\b")
-            fi
             # disallow_ipv4="0.0.0.0"
             # #remove the disallow ip
             # if [[ "$ipv4" == *"$disallow_ipv4"* ]];then
@@ -678,7 +715,7 @@ check_ip()
             fi
         else
             connection_status="-1"
-            m_debug "at port response unexpected $ipaddr"
+            m_debug "at port response unexpected: command=$check_ip_command; response=$(printf '%s' "$response" | tr '\r\n' '  ')"
         fi
 }
 
@@ -1067,6 +1104,7 @@ dial(){
     mv "$MODEM_RUNDIR/${modem_config}_dir/backend.json.tmp" "$MODEM_RUNDIR/${modem_config}_dir/backend.json"
     m_debug "dialing $modem_path driver $driver"
     exec_pre_dial $modem_config
+    resolve_auto_apn
     case $driver in
         "qmi")
             qmi_dial
@@ -1284,6 +1322,8 @@ qmi_dial()
 
 at_dial()
 {
+    # Retry identification if CIMI was temporarily unavailable at startup.
+    resolve_auto_apn
     if [ -z "$pdp_type" ];then
         pdp_type="IP"
     fi
@@ -1722,10 +1762,16 @@ quectel_qualcomm_ethernet()
 
 handle_ip_change()
 {
+    local ipv6_field="ipv6_address"
     export ipv4
     export ipv6
     export connection_status
-    m_debug  "ip changed from $ipv6_cache,$ipv4_cache to $ipv6,$ipv4"
+    # CGPADDR may expose only the modem's IID. It is not the host address
+    # obtained on eth2 through RA/DHCPv6, and must never be labelled as such.
+    case "$ipv6" in
+        0:0:0:0:*|::*) ipv6_field="ipv6_iid_without_prefix" ;;
+    esac
+    m_debug "modem PDP changed: ipv4=${ipv4:-none}; $ipv6_field=${ipv6:-none}; source=modem"
     case $manufacturer in
         "fibocom")
             case $platform in
@@ -1735,6 +1781,27 @@ handle_ip_change()
             esac
             ;;
     esac
+}
+
+# Observe netifd independently of CGPADDR: RA/DHCPv6 can complete later or
+# renumber the host without changing the modem's IID. Do not cache RPC errors
+# as an address loss, or log countdowns such as route valid/uptime every poll.
+log_host_ipv6_state()
+{
+    local status snapshot
+    [ -n "${interface6_name:-}" ] || return 0
+    status=$(ubus call "network.interface.$interface6_name" status 2>/dev/null) || return 0
+    snapshot=$(printf '%s\n' "$status" | jq -er '
+        def list: sort | unique | if length == 0 then "none" else join(",") end;
+        if type == "object" and has("up") then
+            "up=\(.up); addresses=\([.["ipv6-address"][]? | "\(.address)/\(.mask)"] | list); " +
+            "delegated_prefixes=\([.["ipv6-prefix"][]? | "\(.address)/\(.mask)"] | list); " +
+            "default_gateway=\([.route[]? | select(.target == "::" and .mask == 0) | .nexthop // empty] | list)"
+        else empty end' 2>/dev/null) || return 0
+    if [ "$snapshot" != "${host_ipv6_state_cache:-}" ]; then
+        m_debug "host IPv6 status: interface=$interface6_name; $snapshot; source=netifd"
+        host_ipv6_state_cache="$snapshot"
+    fi
 }
 
 check_cfun(){
@@ -1748,15 +1815,6 @@ check_cfun(){
         at_command="AT+CFUN=1"
         response=$(cmd_dial_command "$at_port" "${at_command}")
         return 1
-    fi
-}
-
-check_logfile_line()
-{
-    local line=$(wc -l $log_file | awk '{print $1}')
-    if [ $line -gt 300 ];then
-        echo "" > $log_file
-        m_debug  "log file line is over 300,clear it"
     fi
 }
 
@@ -1814,6 +1872,7 @@ at_dial_monitor()
     if [ $auto_dial_support -eq 0 ]; then
         m_debug "dialing service is managed by modem(auto dial), do not need monitor"
         while true; do
+            log_host_ipv6_state
             sleep 30
         done
     fi
@@ -1823,6 +1882,7 @@ at_dial_monitor()
     sleep 5
     while true; do
         check_ip
+        log_host_ipv6_state
         case $connection_status in
             0)
                 at_dial
@@ -1850,7 +1910,6 @@ at_dial_monitor()
                 sleep 15
                 ;;
         esac
-        check_logfile_line
     done
 }
 

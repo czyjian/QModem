@@ -555,9 +555,32 @@ get_rat()
 # FM350 reports IPv6 in dotted decimal notation after the IPv4 address.
 get_cgpaddr_ipv4()
 {
-    echo "$1" | tr -d '"' | tr ',' '\n' \
+    echo "$1" | tr -d '\r"' | tr ', ' '\n\n' \
         | grep -oE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' \
         | grep -v '^0\.0\.0\.0$' | head -n 1
+}
+
+# Accept both colon notation and the 16 decimal octets returned by FM350.
+get_cgpaddr_ipv6()
+{
+    printf '%s\n' "$1" | tr -d '\r"' | tr ', ' '\n\n' | awk '
+        /^[0-9A-Fa-f:]+$/ && /:.*:/ {
+            value = $0; gsub(/[:0]/, "", value)
+            if (value != "") { print tolower($0); exit }
+        }
+        /^[0-9.]+$/ {
+            count = split($0, octets, ".")
+            if (count != 16) next
+            valid = 1; nonzero = 0; address = ""
+            for (i = 1; i <= 16; i++) {
+                if (octets[i] == "" || octets[i] + 0 > 255) valid = 0
+                nonzero += octets[i]
+            }
+            if (!valid || !nonzero) next
+            for (i = 1; i <= 16; i += 2)
+                address = address (i == 1 ? "" : ":") sprintf("%x", octets[i] * 256 + octets[i+1])
+            print address; exit
+        }'
 }
 
 #获取连接状态

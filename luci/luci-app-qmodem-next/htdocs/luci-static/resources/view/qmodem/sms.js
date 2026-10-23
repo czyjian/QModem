@@ -678,6 +678,13 @@ loadSmsStorage: function(configSection, readingSelect, writingSelect, etcSelect)
 		}
 		
 		var storage = result.storage;
+
+		// The loading entry is only a temporary placeholder, not a storage type.
+		[readingSelect, writingSelect, etcSelect].forEach(function(select) {
+			var loadingOption = select.querySelector('option[value="Loading"]');
+			if (loadingOption)
+				loadingOption.remove();
+		});
 		
 		// Update select values with current storage
 		if (storage.mem1) {
