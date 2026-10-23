@@ -349,12 +349,12 @@ return view.extend({
 		});
 	},
 
-	updateModemInfo: function(modemId, tables_map, infoContainer, updateTimeElement, copyrightElement) {
+	updateModemInfo: function(modemId, tables_map, infoContainer, updateTimeElement, copyrightElement, loadingElement) {
 		var self = this;
 		
 		// Show loading state
 		if (Object.keys(tables_map).length === 0) {
-			dom.content(infoContainer, E('div', { 'class': 'spinning' }, _('Loading modem information...')));
+			loadingElement.style.display = '';
 		}
 		
 		// Fetch all modem info
@@ -407,10 +407,7 @@ return view.extend({
 			});
 
 			// Clear loading animation if present
-			var loadingDiv = infoContainer.querySelector('.spinning');
-			if (loadingDiv) {
-				infoContainer.removeChild(loadingDiv);
-			}
+			loadingElement.style.display = 'none';
 
 			// Remove obsolete tables from DOM and map
 			for (var existingClass in tables_map) {
@@ -472,6 +469,7 @@ return view.extend({
 			}
 		}).catch(function(e) {
 			console.error('Error fetching modem info:', e);
+			loadingElement.style.display = 'none';
 			dom.content(infoContainer, E('div', { 'class': 'alert-message warning' },
 				_('Error loading modem information: %s').format(e.message)));
 		});
@@ -523,11 +521,20 @@ return view.extend({
 		
 		// Create update time display
 		var updateTimeSection = E('fieldset', { 'class': 'cbi-section' });
+		var updateStatusRow = E('div', {
+			'style': 'display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;'
+		});
+		var loadingDiv = E('div', {
+			'class': 'spinning',
+			'style': 'display: none; padding: 5px;'
+		}, _('Loading modem information...'));
 		var updateTimeDiv = E('div', { 
-			'style': 'text-align: right; padding: 5px; color: #888;',
+			'style': 'text-align: right; padding: 5px; color: #888; margin-left: auto;',
 			'id': 'update_time_display'
 		}, _('Last update') + ': -');
-		updateTimeSection.appendChild(updateTimeDiv);
+		updateStatusRow.appendChild(loadingDiv);
+		updateStatusRow.appendChild(updateTimeDiv);
+		updateTimeSection.appendChild(updateStatusRow);
 		container.appendChild(updateTimeSection);
 		
 		// Create info container
@@ -551,7 +558,7 @@ return view.extend({
 				tables_map = {};
 			}
 			
-			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv);
+			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv);
 		};
 		
 		// Selector change handler
@@ -565,7 +572,7 @@ return view.extend({
 		// Start polling (every 10 seconds)
 		poll.add(function() {
 			var selectedModem = select.value;
-			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv);
+			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv);
 		}, 10);
 		
 		return container;
