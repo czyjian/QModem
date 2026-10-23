@@ -891,6 +891,7 @@ return view.extend({
 	},
 
 	showDialLogDialog: function(section_id) {
+		var self = this;
 		var name = uci.get('qmodem', section_id, 'name');
 		var alias = uci.get('qmodem', section_id, 'alias');
 		var title = qmodem.formatModemName(name, alias, section_id) + ' - ' + _('Dial Log');
@@ -942,7 +943,7 @@ return view.extend({
 		], 'cbi-modal', 'qmodem-dial-log-modal');
 
 		// Scale the populated dialog to 160% width and 130% height.
-		this.loadDialLog(section_id, logContent).then(function() {
+		var initialLoad = this.loadDialLog(section_id, logContent).then(function() {
 			var textarea = logContent.querySelector('.dial-log-content');
 			if (!textarea)
 				return;
@@ -955,11 +956,38 @@ return view.extend({
 			dialog.appendChild(E('style', {},
 				'.modal.qmodem-dial-log-modal { box-sizing: border-box; width: ' + width + 'px !important; max-width: calc(100vw - 2rem) !important; }' +
 				'.qmodem-dial-log-modal .dial-log-content { box-sizing: border-box; height: ' + height + 'px; max-height: none; }'));
+			textarea.scrollTop = textarea.scrollHeight;
+		});
+
+		// Return the request promise so LuCI never overlaps refresh requests.
+		var refresh = function() {
+			if (!logContent.isConnected || !logContent.getClientRects().length) {
+				poll.remove(refresh);
+				return;
+			}
+			return self.loadDialLog(section_id, logContent);
+		};
+		initialLoad.then(function() {
+			if (logContent.isConnected && logContent.getClientRects().length)
+				poll.add(refresh, 2);
 		});
 	},
 
 	loadDialLog: function(section_id, container) {
 		return qmodem.getDialLog(section_id).then(function(result) {
+			if (!result || typeof result.log !== 'string')
+				throw new Error(_('Failed to load log'));
+
+			var textarea = container.querySelector('.dial-log-content');
+			if (textarea) {
+				var follow = textarea.scrollHeight - textarea.clientHeight - textarea.scrollTop <= 16;
+				var scrollTop = textarea.scrollTop;
+				if (textarea.value !== result.log) {
+					textarea.value = result.log;
+					textarea.scrollTop = follow ? textarea.scrollHeight : scrollTop;
+				}
+				return;
+			}
 			while (container.firstChild) {
 				container.removeChild(container.firstChild);
 			}
@@ -973,6 +1001,8 @@ return view.extend({
 					container.appendChild(
 							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20' }, result.log)
 					);
+					textarea = container.querySelector('.dial-log-content');
+					textarea.scrollTop = textarea.scrollHeight;
 				}
 			} else {
 				container.appendChild(
@@ -980,6 +1010,9 @@ return view.extend({
 				);
 			}
 		}).catch(function(err) {
+			// A transient RPC failure must not erase the log being read.
+			if (container.querySelector('.dial-log-content'))
+				return;
 			while (container.firstChild) {
 				container.removeChild(container.firstChild);
 			}
