@@ -58,7 +58,7 @@ function deleteMany(modem, ids) {
 
 function parseStorage(result) {
 	var storage = { mem1: result.configured || 'SM', mem2: 'SM', mem3: 'SM', ME: { used: 0, total: 0 }, SM: { used: 0, total: 0 } };
-	var match = (result.response || '').match(/\+CPMS:\s*"?([^",]+)"?,(\d+),(\d+),"?([^",]+)"?,(\d+),(\d+)(?:,"?([^",]+)"?,(\d+),(\d+))?/);
+	var match = (result.response || '').match(/\+CPMS:\s*"?([^",]+)"?\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*"?([^",]+)"?\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*"?([^",]+)"?\s*,\s*(\d+)\s*,\s*(\d+))?/);
 	if (!match) return storage;
 	storage.mem1 = match[1]; storage.mem2 = match[4]; storage.mem3 = match[7] || match[4];
 	[ [ match[1], match[2], match[3] ], [ match[4], match[5], match[6] ], [ match[7], match[8], match[9] ] ].forEach(function(values) {

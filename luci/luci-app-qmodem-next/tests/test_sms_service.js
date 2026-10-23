@@ -7,7 +7,7 @@ const path = require('path');
 const source = fs.readFileSync(path.join(__dirname,
 	'../htdocs/luci-static/resources/qmodem/sms.js'), 'utf8');
 
-function createService(listResults, syncResult, modemList, sections) {
+function createService(listResults, syncResult, modemList, sections, storageResult) {
 	let listCalls = 0;
 	const rpc = {
 		declare: function(spec) {
@@ -18,6 +18,8 @@ function createService(listResults, syncResult, modemList, sections) {
 					return Promise.resolve(syncResult);
 				if (spec.method === 'modem_list')
 					return Promise.resolve(modemList || {});
+				if (spec.method === 'storage_get')
+					return Promise.resolve(storageResult || {});
 				return Promise.resolve({});
 			};
 		}
@@ -66,6 +68,18 @@ async function main() {
 		{ id: '3_1', name: 'RM520N-GL', enabled: false }
 	]);
 	console.log('PASS: SMS modem list uses the shared modem labels');
+
+	const stored = createService([], null, null, null, {
+		configured: 'ME',
+		status: 'success',
+		response: 'AT+CPMS?\r\n\r\n+CPMS: "ME", 0, 50, "ME", 0, 50, "ME", 0, 50\r\n\r\nOK\r\n'
+	});
+	const storage = (await stored.service.getSmsStorage('2_1')).storage;
+	assert.strictEqual(storage.mem1, 'ME');
+	assert.strictEqual(storage.mem2, 'ME');
+	assert.strictEqual(storage.mem3, 'ME');
+	assert.deepStrictEqual(storage.ME, { used: 0, total: 50 });
+	console.log('PASS: SMS storage parser accepts modem responses with spaces');
 }
 
 main().catch(function(error) {
