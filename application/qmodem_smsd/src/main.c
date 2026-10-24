@@ -32,6 +32,7 @@ struct modem_config {
     char mode[32];
     char storage[8];
     char legacy_dir[256];
+    char default_country[3];
     int use_ubus;
     int auto_delete;
     int forwarding;
@@ -86,6 +87,8 @@ enum {
     ARG_SUCCESS,
     ARG_ERROR,
     ARG_REQUEST_ID,
+    ARG_DEFAULT_COUNTRY,
+    ARG_INTERNATIONAL,
     __ARG_MAX
 };
 
@@ -108,6 +111,8 @@ static const struct blobmsg_policy policy[] = {
     [ARG_SUCCESS] = { .name = "success", .type = BLOBMSG_TYPE_BOOL },
     [ARG_ERROR] = { .name = "error", .type = BLOBMSG_TYPE_STRING },
     [ARG_REQUEST_ID] = { .name = "request_id", .type = BLOBMSG_TYPE_STRING },
+    [ARG_DEFAULT_COUNTRY] = { .name = "default_country", .type = BLOBMSG_TYPE_STRING },
+    [ARG_INTERNATIONAL] = { .name = "international", .type = BLOBMSG_TYPE_BOOL },
 };
 
 static int valid_id(const char *value)
@@ -228,6 +233,8 @@ static int load_config(const char *section_name, struct modem_config *cfg)
     cfg->auto_delete = strcmp(option_string(uci, section,
                               "sms_auto_delete_from_sim", "1"), "0") != 0;
     cfg->forwarding = !strcmp(option_string(uci, section, "sms_forwarding", "0"), "1");
+    snprintf(cfg->default_country, sizeof(cfg->default_country), "%s",
+             option_string(uci, section, "sms_default_country", ""));
     value = option_string(uci, section, "sms_poll_interval", "300");
     cfg->poll_interval = atoi(value);
     if (cfg->poll_interval < 60 || cfg->poll_interval > 3600)
@@ -609,7 +616,7 @@ static int configure_method(struct ubus_context *ctx, struct ubus_object *obj,
     struct modem_config cfg;
     struct blob_buf b = {};
     const char *section, *mode_name;
-    const char *options[5], *values[5];
+    const char *options[6], *values[6];
     char number[24];
     size_t option_count = 0;
     int pending = 0;
@@ -641,6 +648,14 @@ static int configure_method(struct ubus_context *ctx, struct ubus_object *obj,
     if (tb[ARG_AUTO_DELETE]) {
         options[option_count] = "sms_auto_delete_from_sim";
         values[option_count++] = blobmsg_get_bool(tb[ARG_AUTO_DELETE]) ? "1" : "0";
+    }
+    if (tb[ARG_DEFAULT_COUNTRY]) {
+        const char *country = blobmsg_get_string(tb[ARG_DEFAULT_COUNTRY]);
+        if (*country && (strlen(country) != 2 || country[0] < 'A' || country[0] > 'Z' ||
+                         country[1] < 'A' || country[1] > 'Z'))
+            return UBUS_STATUS_INVALID_ARGUMENT;
+        options[option_count] = "sms_default_country";
+        values[option_count++] = country;
     }
     if (option_count && set_uci_options(section, options, values, option_count) != 0)
         goto error;
@@ -679,6 +694,7 @@ static int config_get_method(struct ubus_context *ctx, struct ubus_object *obj,
     blobmsg_add_u8(&b, "use_ubus", cfg.use_ubus);
     blobmsg_add_u8(&b, "auto_delete", cfg.auto_delete);
     blobmsg_add_u8(&b, "forwarding", cfg.forwarding);
+    blobmsg_add_string(&b, "default_country", cfg.default_country);
     blobmsg_add_u32(&b, "poll_interval", cfg.poll_interval);
     ubus_send_reply(ctx, req, b.head);
     blob_buf_free(&b);
@@ -826,6 +842,7 @@ static int send_method(struct ubus_context *ctx, struct ubus_object *obj,
     unsigned char pdus[SMS_MAX_PARTS][SMS_MAX_PDU_LENGTH];
     int lengths[SMS_MAX_PARTS];
     char hex[SMS_MAX_PDU_LENGTH * 2 + 1];
+    char international_recipient[22];
     const char *recipient, *content, *number, *request_id = NULL;
     int parts, success = 1, managed, managed_record_created = 0;
     char *output = NULL;
@@ -858,8 +875,14 @@ static int send_method(struct ubus_context *ctx, struct ubus_object *obj,
     for (const char *p = number; *p; p++)
         if (*p < '0' || *p > '9')
             return UBUS_STATUS_INVALID_ARGUMENT;
-    parts = pdu_encode_ucs2_parts(number, content, pdus, lengths, SMS_MAX_PARTS,
-                                  (unsigned int)time(NULL));
+    /* Keep new international history unambiguous across later region changes. */
+    if (tb[ARG_INTERNATIONAL] && blobmsg_get_bool(tb[ARG_INTERNATIONAL])) {
+        snprintf(international_recipient, sizeof(international_recipient), "+%s", number);
+        recipient = international_recipient;
+    }
+    parts = pdu_encode_ucs2_parts_typed(number, content, pdus, lengths, SMS_MAX_PARTS,
+                                  (unsigned int)time(NULL), tb[ARG_INTERNATIONAL] ?
+                                  blobmsg_get_bool(tb[ARG_INTERNATIONAL]) : strlen(number) >= 6);
     if (parts < 1)
         goto error;
     if (managed) {

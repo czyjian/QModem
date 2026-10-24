@@ -22,6 +22,10 @@ int pdu_encode(const char* service_center_number, const char* phone_number, cons
 	      unsigned char* pdu, int pdu_size);
 
 #define SMS_MAX_PARTS 16
+/* Digits only; international selects TP-DA TON (0x91 versus 0x81). */
+int pdu_encode_ucs2_parts_typed(const char *phone_number, const char *utf8_text,
+			  unsigned char pdus[][SMS_MAX_PDU_LENGTH], int lengths[],
+			  int max_parts, unsigned int reference, int international);
 int pdu_encode_ucs2_parts(const char *phone_number, const char *utf8_text,
 			  unsigned char pdus[][SMS_MAX_PDU_LENGTH], int lengths[],
 			  int max_parts, unsigned int reference);

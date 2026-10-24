@@ -1,20 +1,22 @@
 'use strict';
 'require rpc';
 'require qmodem.qmodem as qmodem';
+'require qmodem.phone as phone';
 
 var callList = rpc.declare({ object: 'qmodem.sms', method: 'list', params: [ 'modem_id', 'limit', 'offset' ], expect: { } });
 var callSync = rpc.declare({ object: 'qmodem.sms', method: 'sync', params: [ 'modem_id' ], expect: { } });
-var callSend = rpc.declare({ object: 'qmodem.sms', method: 'send', params: [ 'modem_id', 'recipient', 'content' ], expect: { } });
+var callSend = rpc.declare({ object: 'qmodem.sms', method: 'send', params: [ 'modem_id', 'recipient', 'content', 'international' ], expect: { } });
 var callDelete = rpc.declare({ object: 'qmodem.sms', method: 'delete', params: [ 'modem_id', 'id', 'index' ], expect: { } });
 var callMarkRead = rpc.declare({ object: 'qmodem.sms', method: 'mark_read', params: [ 'modem_id', 'id' ], expect: { } });
 var callStorageGet = rpc.declare({ object: 'qmodem.sms', method: 'storage_get', params: [ 'modem_id' ], expect: { } });
 var callStorageSet = rpc.declare({ object: 'qmodem.sms', method: 'storage_set', params: [ 'modem_id', 'mem1', 'mem2', 'mem3' ], expect: { } });
-var callConfigure = rpc.declare({ object: 'qmodem.sms', method: 'configure', params: [ 'modem_id', 'mode', 'poll_interval', 'forwarding', 'auto_delete' ], expect: { } });
+var callConfigure = rpc.declare({ object: 'qmodem.sms', method: 'configure', params: [ 'modem_id', 'mode', 'poll_interval', 'forwarding', 'auto_delete', 'default_country' ], expect: { } });
 var callModemList = rpc.declare({ object: 'qmodem.sms', method: 'modem_list', expect: { } });
 var callConfigGet = rpc.declare({ object: 'qmodem.sms', method: 'config_get', params: [ 'modem_id' ], expect: { } });
 
 function messagesFrom(result) {
 	return (result.messages || result.msg || result.received || []).map(function(message) {
+		message = Object.assign({}, message);
 		if (!message.type) message.type = 'received';
 		if (message.is_read == null) message.is_read = false;
 		if (message.success != null && message.is_success == null) message.is_success = message.success;
@@ -22,10 +24,10 @@ function messagesFrom(result) {
 	});
 }
 
-function conversations(messages) {
-	var grouped = {};
+function conversations(messages, country) {
+	var grouped = Object.create(null);
 	messages.forEach(function(message) {
-		var contact = message.type === 'received' ? message.sender : message.recipient;
+		var contact = phone.identify(message.type === 'received' ? message.sender : message.recipient, country).key;
 		if (!grouped[contact]) grouped[contact] = { contact: contact, messages: [], last_timestamp: 0, unread_count: 0 };
 		grouped[contact].messages.push(message);
 		grouped[contact].last_timestamp = Math.max(grouped[contact].last_timestamp, message.timestamp || 0);
@@ -68,6 +70,15 @@ function parseStorage(result) {
 }
 
 return L.Class.extend({
+	getCountries: function() { return phone.countries(); },
+	getCountryCallingCode: function(country) { return phone.countryCallingCode(country); },
+	getNumberContext: function(modem) {
+		// Re-read the SIM identity rather than caching a country across a SIM swap.
+		return callConfigGet(modem).then(function(config) {
+			if (config.default_country) return config.default_country;
+			return qmodem.getSimInfo(modem).then(function(result) { return phone.regionFromSim(result); }, function() { return undefined; });
+		});
+	},
 	getModems: function() {
 		// Label modems like the other qmodem pages (upper-case model, alias)
 		return Promise.all([ callModemList(), qmodem.getModemSections() ]).then(function(results) {
@@ -85,11 +96,11 @@ return L.Class.extend({
 		});
 	},
 	getConfig: function(configSection) { return callConfigGet(configSection || 'modem_1'); },
-	configure: function(configSection, mode, pollInterval, forwarding, autoDelete) {
+	configure: function(configSection, mode, pollInterval, forwarding, autoDelete, defaultCountry) {
 		var modem = configSection || 'modem_1';
 		return callConfigGet(modem).then(function(current) {
 			return callConfigure(modem, mode, pollInterval,
-				forwarding == null ? !!current.forwarding : forwarding, autoDelete);
+				forwarding == null ? !!current.forwarding : forwarding, autoDelete, defaultCountry);
 		}).then(function(result) {
 			if (result.status === 'error') return Promise.reject(new Error(result.error || 'SMS configuration failed'));
 			return result;
@@ -97,23 +108,33 @@ return L.Class.extend({
 	},
 	listSms: function(configSection) {
 		var modem = configSection || 'modem_1';
-		return listRaw(modem).then(function(first) {
+		var self = this;
+		return Promise.all([self.getNumberContext(modem), listRaw(modem).then(function(first) {
 			var refresh = first.mode === 'database_poll' ? syncRaw(modem) : Promise.resolve();
 			return refresh.then(function() { return first.mode === 'database_poll' ? listRaw(modem) : first; });
-		}).then(function(result) {
+		})]).then(function(results) {
+			var country = results[0], result = results[1];
 			var messages = messagesFrom(result);
-			return { conversations: conversations(messages), total: messages.length, mode: result.mode };
+			return { conversations: conversations(messages, country), total: messages.length, mode: result.mode, country: country };
 		});
 	},
 	getConversation: function(configSection, contact) {
 		return this.listSms(configSection).then(function(result) {
-			var found = result.conversations.filter(function(item) { return item.contact === contact; })[0];
+			var key = phone.identify(contact, result.country).key;
+			var found = result.conversations.filter(function(item) { return item.contact === key; })[0];
 			return { messages: found ? found.messages : [] };
 		});
 	},
 	sync: function(configSection) { return syncRaw(configSection || 'modem_1'); },
 	sendSms: function(configSection, recipient, message) {
-		return callSend(configSection || 'modem_1', recipient, message).then(function(result) { result.success = result.status === 'success'; return result; });
+		var modem = configSection || 'modem_1';
+		return this.getNumberContext(modem).then(function(country) {
+			var number = phone.identify(recipient, country);
+			if (!/^\d{1,20}$/.test(number.recipient) ||
+				(!number.international && (String(recipient).trim()[0] === '+' || number.recipient.length > 6 && !(country === 'CN' && /^10\d+$/.test(number.recipient)))))
+				throw new Error(_('Cannot determine the destination country. Select a default country or enter a valid number with +country code.'));
+			return callSend(modem, number.recipient, message, number.international);
+		}).then(function(result) { result.success = result.status === 'success'; return result; });
 	},
 	deleteSms: function(configSection, type, ids) { return deleteMany(configSection || 'modem_1', ids); },
 	markRead: function(configSection, ids) {
@@ -143,6 +164,7 @@ return L.Class.extend({
 	},
 	formatPhoneNumber: function(number) {
 		if (!number) return '';
+		if (String(number)[0] === '+') return phone.identify(number).display;
 		var digits = number.replace(/\D/g, '');
 		return digits.length === 11 && digits.startsWith('1') ? digits.substring(0, 3) + ' ' + digits.substring(3, 7) + ' ' + digits.substring(7) : number;
 	},
@@ -156,7 +178,14 @@ return L.Class.extend({
 		return callStorageSet(configSection || 'modem_1', mem1, mem2, mem3 || mem2).then(function(result) { result.success = result.status !== 'error'; return result; });
 	},
 	getSimSms: function(configSection) {
-		return listRaw(configSection || 'modem_1').then(function(result) { return { messages: result.msg || result.received || result.messages || [] }; });
+		var modem = configSection || 'modem_1';
+		return Promise.all([this.getNumberContext(modem), listRaw(modem)]).then(function(results) {
+			var result = results[1];
+			return { messages: (result.msg || result.received || result.messages || []).map(function(message) {
+				var contact = message.type === 'sent' ? message.recipient : message.sender;
+				return Object.assign({}, message, { display_sender: phone.identify(contact, results[0]).display });
+			}) };
+		});
 	},
 	deleteSimSms: function(configSection, index) {
 		return callDelete(configSection || 'modem_1', index, index).then(function(result) { result.success = result.status === 'success'; return result; });

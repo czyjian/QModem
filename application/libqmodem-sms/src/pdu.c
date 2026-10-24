@@ -467,15 +467,19 @@ static int utf8_to_utf16(const char *text, unsigned short *units, int capacity)
 	return count;
 }
 
-int pdu_encode_ucs2_parts(const char *phone_number, const char *utf8_text,
+int pdu_encode_ucs2_parts_typed(const char *phone_number, const char *utf8_text,
 			  unsigned char pdus[][SMS_MAX_PDU_LENGTH], int lengths[],
-			  int max_parts, unsigned int reference)
+			  int max_parts, unsigned int reference, int international)
 {
 	unsigned short units[SMS_MAX_PARTS * 67];
 	int unit_count, total, offset = 0;
 	if (!phone_number || !*phone_number || !utf8_text || !pdus || !lengths ||
 	    max_parts < 1 || max_parts > SMS_MAX_PARTS)
 		return -1;
+	if (strlen(phone_number) > 20)
+		return -1;
+	for (const char *p = phone_number; *p; p++)
+		if (*p < '0' || *p > '9') return -1;
 	unit_count = utf8_to_utf16(utf8_text, units, (int)(sizeof(units) / sizeof(units[0])));
 	if (unit_count < 0)
 		return -1;
@@ -506,7 +510,7 @@ int pdu_encode_ucs2_parts(const char *phone_number, const char *utf8_text,
 		out[1] = SMS_SUBMIT | (total > 1 ? 0x40 : 0);
 		out[2] = 0;
 		out[3] = (unsigned char)strlen(phone_number);
-		out[4] = strlen(phone_number) < 6 ? TYPE_OF_ADDRESS_UNKNOWN : TYPE_OF_ADDRESS_INTERNATIONAL_PHONE;
+		out[4] = international ? TYPE_OF_ADDRESS_INTERNATIONAL_PHONE : TYPE_OF_ADDRESS_UNKNOWN;
 		length = EncodePhoneNumber(phone_number, out + 5, SMS_MAX_PDU_LENGTH - 5);
 		if (length < 0)
 			return -1;
@@ -529,6 +533,15 @@ int pdu_encode_ucs2_parts(const char *phone_number, const char *utf8_text,
 		offset += take;
 	}
 	return total;
+}
+
+/* Preserve the legacy API for other clients of the shared library. */
+int pdu_encode_ucs2_parts(const char *phone_number, const char *utf8_text,
+			  unsigned char pdus[][SMS_MAX_PDU_LENGTH], int lengths[],
+			  int max_parts, unsigned int reference)
+{
+	return pdu_encode_ucs2_parts_typed(phone_number, utf8_text, pdus, lengths,
+		max_parts, reference, phone_number && strlen(phone_number) >= 6);
 }
 
 int pdu_decode(const unsigned char* buffer, int buffer_length,

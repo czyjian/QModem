@@ -2772,3 +2772,15 @@ msgstr "频段"
 msgctxt "qmodem"
 msgid "No"
 msgstr "否"
+
+msgid "Automatic (SIM home country)"
+msgstr "自动（SIM 卡归属地）"
+
+msgid "Default country for SMS numbers"
+msgstr "短信号码默认国家/地区"
+
+msgid "Used for local phone numbers. For other countries, enter +country code."
+msgstr "用于识别不带国家码的本地号码。发送至其他国家时，请输入 +国家码。"
+
+msgid "Cannot determine the destination country. Select a default country or enter a valid number with +country code."
+msgstr "无法确定收件号码的国家/地区。请选择默认国家/地区，或输入带 +国家码的有效号码。"
