@@ -3,6 +3,7 @@
 'require ui';
 'require dom';
 'require qmodem.qmodem as qmodem';
+'require qmodem.neighbor-cell as neighborCell';
 
 // Load CSS
 document.head.appendChild(E('link', {
@@ -1014,6 +1015,7 @@ return view.extend({
 
 	createNeighborCellRow: function(modem, ratType, cellInfo, ratValue) {
 		var self = this;
+		var details = neighborCell.describe(ratType, cellInfo);
 		
 		var row = E('tr', { 'class': 'tr cbi-section-table-row' });
 
@@ -1030,14 +1032,12 @@ return view.extend({
 		// Cell info column
 		var infoCell = E('td', { 'class': 'td cbi-section-table-cell' });
 		var infoParts = [];
-		for (var key in cellInfo) {
-			if (cellInfo[key] !== '' && cellInfo[key] !== null && cellInfo[key] !== undefined) {
-				infoParts.push(E('span', { 'style': 'margin-right: 10px;' }, [
-					E('strong', {}, key + ': '),
-					E('span', { 'style': 'font-family: monospace;' }, cellInfo[key].toString())
-				]));
-			}
-		}
+		details.values.forEach(function(field) {
+			infoParts.push(E('span', { 'style': 'margin-right: 10px;' }, [
+				E('strong', {}, field.key + ': '),
+				E('span', { 'style': 'font-family: monospace;' }, field.value)
+			]));
+		});
 		var infoWrapper = E('div', { 'style': 'display: flex; flex-wrap: wrap;' });
 		infoParts.forEach(function(part) {
 			infoWrapper.appendChild(part);
@@ -1049,7 +1049,10 @@ return view.extend({
 		var actionCell = E('td', { 'class': 'td cbi-section-table-cell' });
 		var copyButton = E('button', {
 			'class': 'btn cbi-button cbi-button-apply',
+			'disabled': details.canCopy ? null : 'disabled',
+			'title': details.canCopy ? '' : _('Valid PCI and ARFCN are required to copy cell parameters'),
 			'click': function() {
+				if (!details.canCopy) return;
 				if (!self.neighborCellInputs || !self.neighborCellInputs[modem.id]) {
 					ui.addNotification(null, E('p', _('Configuration inputs not found')), 'error');
 					return;
@@ -1057,9 +1060,9 @@ return view.extend({
 
 				var inputs = self.neighborCellInputs[modem.id];
 				inputs.rat.value = ratValue.toString();
-				inputs.pci.value = cellInfo.pci || '';
-				inputs.arfcn.value = cellInfo.arfcn || '';
-				inputs.band.value = cellInfo.band || '';
+				inputs.pci.value = String(cellInfo.pci);
+				inputs.arfcn.value = String(cellInfo.arfcn);
+				inputs.band.value = details.copyBand;
 				
 				// Show/hide NR fields based on RAT
 				if (ratValue === 1) {
@@ -1070,7 +1073,9 @@ return view.extend({
 					inputs.scsRow.style.display = 'none';
 				}
 
-				ui.addNotification(null, E('p', _('Cell parameters copied to settings')), 'info');
+				ui.addNotification(null, E('p', details.needsBand ?
+					_('PCI and ARFCN copied. The modem did not report a band; confirm and enter it before locking.') :
+					_('Cell parameters copied to settings')), details.needsBand ? 'warning' : 'info');
 			}
 		}, _('Copy'));
 		actionCell.appendChild(copyButton);

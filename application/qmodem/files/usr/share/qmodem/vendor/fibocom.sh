@@ -1201,6 +1201,13 @@ set_lockband_lte()
     res=$(cmd_gtact_set "$at_port" "$lock_band")
 }
 
+fibocom_neighbor_identity()
+{
+    local value=$(printf '%s' "$1" | tr -d '\r" ' | tr '[:upper:]' '[:lower:]' | sed 's/^0x//;s/^0*//')
+    case "$value" in ffffff|fffffff|ffffffff|fffffffff) return ;; esac
+    fibocom_hex_to_dec "$1"
+}
+
 get_neighborcell()
 {
     m_debug "Fibocom get neighborcell info"
@@ -1228,8 +1235,8 @@ get_neighborcell()
                 ss_sinr=$(echo "$line" | awk -F',' '{print $10}')
                 rxlev=$(echo "$line" | awk -F',' '{print $11}')
                 ss_rsrp=$(echo "$line" | awk -F',' '{print $12}')
-                tac=$(fibocom_hex_to_dec "$tac")
-                cellid=$(fibocom_hex_to_dec "$cellid")
+                tac=$(fibocom_neighbor_identity "$tac")
+                cellid=$(fibocom_neighbor_identity "$cellid")
                 arfcn=$(fibocom_cell_num "$arfcn")
                 pci=$(fibocom_cell_num "$pci")
                 band=$(get_band "NR" "$band_num")
@@ -1255,8 +1262,8 @@ get_neighborcell()
                 rxlev=$(echo "$line" | awk -F',' '{print $10}')
                 rsrp=$(echo "$line" | awk -F',' '{print $11}')
                 rsrq=$(echo "$line" | awk -F',' '{print $12}')
-                tac=$(fibocom_hex_to_dec "$tac")
-                cellid=$(fibocom_hex_to_dec "$cellid")
+                tac=$(fibocom_neighbor_identity "$tac")
+                cellid=$(fibocom_neighbor_identity "$cellid")
                 arfcn=$(fibocom_cell_num "$arfcn")
                 pci=$(fibocom_cell_num "$pci")
                 bandwidth=$(get_bandwidth "LTE" "$bandwidth")

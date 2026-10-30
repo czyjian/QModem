@@ -2784,3 +2784,15 @@ msgstr "用于识别不带国家码的本地号码。发送至其他国家时，
 
 msgid "Cannot determine the destination country. Select a default country or enter a valid number with +country code."
 msgstr "无法确定收件号码的国家/地区。请选择默认国家/地区，或输入带 +国家码的有效号码。"
+
+msgid "Reported by modem"
+msgstr "模组上报"
+
+msgid "Estimated from ARFCN; confirm before locking"
+msgstr "按 ARFCN 推算，锁定前需确认"
+
+msgid "Valid PCI and ARFCN are required to copy cell parameters"
+msgstr "PCI 和 ARFCN 无效，无法复制小区参数"
+
+msgid "PCI and ARFCN copied. The modem did not report a band; confirm and enter it before locking."
+msgstr "已复制 PCI 和 ARFCN。模组未上报频段，请确认并填写后再锁定。"
