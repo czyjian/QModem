@@ -107,6 +107,93 @@
 	justify-content: center;
 }
 
+/* Shared destination panel for conversation replies and compose dialogs. */
+.qmodem-sms-address {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 560px;
+	padding: 14px 16px;
+	border: 1px solid var(--border-color-low, #e2e5ed);
+	border-radius: 10px;
+	background: var(--background-color-medium, #f8f9fc);
+}
+
+.qmodem-sms-address-controls,
+.qmodem-sms-address-status {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.qmodem-sms-address-controls input {
+	box-sizing: border-box;
+	width: 150px;
+	max-width: 100%;
+}
+
+.qmodem-sms-address-controls button {
+	white-space: nowrap;
+}
+
+.qmodem-sms-address-status {
+	margin-top: 14px;
+	justify-content: space-between;
+}
+
+.qmodem-sms-address .qmodem-sms-address-auto {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	line-height: 1.5;
+}
+
+.qmodem-sms-address-auto input[type="checkbox"] {
+	flex-shrink: 0;
+	margin: 0;
+}
+
+.qmodem-sms-address-preview {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	padding: 5px 10px;
+	border-radius: 6px;
+	background: var(--background-color-high, #ffffff);
+	line-height: 1.5;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+.qmodem-sms-address-caption {
+	color: var(--text-color-secondary, #697386);
+	white-space: nowrap;
+}
+
+.qmodem-sms-address-preview > span:last-child {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.qmodem-sms-address-help {
+	margin-top: 12px;
+	padding-top: 10px;
+	border-top: 1px solid var(--border-color-low, #e2e5ed);
+	color: var(--text-color-secondary, #697386);
+	font-size: var(--text-sm, 0.9em);
+	line-height: 1.6;
+}
+
+.qmodem-sms-address-help summary {
+	cursor: pointer;
+	width: fit-content;
+}
+
+.qmodem-sms-address-help p {
+	margin: 8px 0 0;
+}
+
 /* SMS Interface Styles */
 .qmodem-connection-status {
 	text-align: center;

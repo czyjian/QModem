@@ -159,7 +159,7 @@ return view.extend({
 				}
 			}, '← ' + _('Back')),
 			E('h2', { 'style': 'display: inline-block; margin: 0;' }, 
-				_('Conversation with ') + smsService.formatPhoneNumber(contact))
+				_('Conversation with %s').format(smsService.formatPhoneNumber(contact)))
 		]);
 		container.appendChild(headerDiv);
 

@@ -2832,3 +2832,9 @@ msgstr "自动识别 SIM 归属国家"
 
 msgid "Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination."
 msgstr "自动识别使用默认国家或 SIM 归属国家。填写国家码可覆盖自动识别，关闭自动识别则按原号码发送。预览显示实际收件地址。"
+
+msgid "Conversation with %s"
+msgstr "与 %s 的会话"
+
+msgid "About number recognition"
+msgstr "号码识别说明"

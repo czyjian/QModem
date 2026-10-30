@@ -3641,3 +3641,9 @@ msgstr ""
 
 msgid "Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination."
 msgstr ""
+
+msgid "Conversation with %s"
+msgstr ""
+
+msgid "About number recognition"
+msgstr ""

@@ -10,14 +10,17 @@ return L.Class.extend({
 		var code = E('input', { 'type': 'text', 'class': 'cbi-input-text',
 			'placeholder': _('As entered'), 'maxlength': '4', 'aria-label': _('Country calling code (optional)') });
 		var preview = E('span');
-		var save = E('button', { 'type': 'button', 'class': 'cbi-button cbi-button-apply' }, _('Save for this modem'));
+		var save = E('button', { 'type': 'button', 'class': 'cbi-button cbi-button-neutral' }, _('Save for this modem'));
 		var field = E('div', { 'class': 'cbi-value' }, [
 			E('label', { 'class': 'cbi-value-title' }, _('Country calling code (optional)')),
-			E('div', { 'class': 'cbi-value-field' }, [ code, ' ', save,
-				E('div', { 'class': 'cbi-value-description' },
-					_('Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination.')),
-				E('label', {}, [ automatic, ' ', _('Automatically identify country from SIM') ]),
-				E('div', {}, [ _('Send to:') + ' ', preview ]) ])
+			E('div', { 'class': 'cbi-value-field' }, [ E('div', { 'class': 'qmodem-sms-address' }, [
+				E('div', { 'class': 'qmodem-sms-address-controls' }, [ code, save ]),
+				E('div', { 'class': 'qmodem-sms-address-status' }, [
+					E('label', { 'class': 'qmodem-sms-address-auto' }, [ automatic, _('Automatically identify country from SIM') ]),
+					E('div', { 'class': 'qmodem-sms-address-preview' }, [ E('span', { 'class': 'qmodem-sms-address-caption' }, _('Send to:')), preview ]) ]),
+				E('details', { 'class': 'qmodem-sms-address-help' }, [
+					E('summary', {}, _('About number recognition')),
+					E('p', {}, _('Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination.')) ]) ]) ])
 		]);
 		function recipient() {
 			if (pending) throw new Error('Loading country calling code');
