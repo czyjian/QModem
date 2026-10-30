@@ -503,6 +503,8 @@ update_config()
     [ -z "$pdp_index" ] && pdp_index=$suggest_pdp_index
     config_get ra_master $modem_config ra_master
     config_get extend_prefix $modem_config extend_prefix
+    config_get ipv6_sourcefilter $modem_config ipv6_sourcefilter 1
+    [ "$ipv6_sourcefilter" = "0" ] || ipv6_sourcefilter=1
     config_get en_bridge $modem_config en_bridge
     config_get bridge_manager $modem_config bridge_manager
     config_get do_not_add_dns $modem_config do_not_add_dns 1
@@ -913,6 +915,10 @@ set_if()
             network_reload_flag=1
             firewall_reload_flag=1
             m_debug "create interface $interface6_name with proto $protov6 and metric $metric"
+        fi
+        if [ "$(uci -q get network.${interface6_name}.sourcefilter)" != "${ipv6_sourcefilter:-1}" ]; then
+            uci set network.${interface6_name}.sourcefilter="${ipv6_sourcefilter:-1}"
+            network_reload_flag=1
         fi
         if [ "$ra_master" = "1" ];then
             uci set dhcp.${interface6_name}='dhcp'

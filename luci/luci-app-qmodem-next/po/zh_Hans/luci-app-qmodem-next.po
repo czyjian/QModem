@@ -2785,6 +2785,12 @@ msgstr "用于识别不带国家码的本地号码。发送至其他国家时，
 msgid "Cannot determine the destination country. Select a default country or enter a valid number with +country code."
 msgstr "无法确定收件号码的国家/地区。请选择默认国家/地区，或输入带 +国家码的有效号码。"
 
+msgid "IPv6 source routing"
+msgstr "IPv6 源路由"
+
+msgid "Automatically handle multiple uplink interfaces using source-based policy routing."
+msgstr "使用基于源地址的策略路由自动处理多个上行链路接口。"
+
 msgid "Reported by modem"
 msgstr "模组上报"
 

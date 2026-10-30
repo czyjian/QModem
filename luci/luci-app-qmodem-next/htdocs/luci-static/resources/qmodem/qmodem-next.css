@@ -108,6 +108,16 @@
 }
 
 /* SMS Interface Styles */
+.qmodem-connection-status {
+	text-align: center;
+}
+
+/* Only the edit dialog aligns its indicator with the other form values. */
+.modal .qmodem-connection-status {
+	text-align: left;
+	width: 100%;
+}
+
 .sms-conversations {
 	margin: 20px 0;
 }

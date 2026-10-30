@@ -243,7 +243,7 @@ return view.extend({
 		
 		return E('div', {
 			'id': 'status-indicator-' + section_id,
-			'style': 'text-align: center;'
+			'class': 'qmodem-connection-status'
 		}, [
 			E('span', {
 				'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
@@ -379,6 +379,12 @@ return view.extend({
 	o = s.option(form.Flag, 'extend_prefix', _('Extend Prefix'));
 	o.description = _('Once checking, the prefix will be apply to lan zone');
 	o.default = '0';
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'ipv6_sourcefilter', _('IPv6 source routing'));
+	o.description = _('Automatically handle multiple uplink interfaces using source-based policy routing.');
+	o.default = '1';
 	o.rmempty = false;
 	o.modalonly = true;
 

@@ -44,6 +44,7 @@ jobs:
           sh -n application/qmodem/tests/test_core_cmds.sh
           sh -n application/qmodem/tests/test_dial_apn_log.sh
           sh -n application/qmodem/tests/test_dial_ipv6_log.sh
+          bash -n application/qmodem/tests/test_ipv6_sourcefilter.sh
           sh -n application/qmodem/tests/test_sms_forwarder_conflicts.sh
           sh -n application/qmodem/tests/test_sms_transport_modes.sh
           bash -n application/qmodem/tests/test_collect_encryption.sh
@@ -59,6 +60,7 @@ jobs:
           application/qmodem/tests/test_core_cmds.sh
           sh application/qmodem/tests/test_dial_apn_log.sh
           sh application/qmodem/tests/test_dial_ipv6_log.sh
+          bash application/qmodem/tests/test_ipv6_sourcefilter.sh
           application/qmodem/tests/test_sms_forwarder_conflicts.sh
           application/qmodem/tests/test_sms_transport_modes.sh
           node luci/luci-app-qmodem-next/tests/test_sms_service.js
