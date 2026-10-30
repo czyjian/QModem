@@ -1,5 +1,5 @@
 'use strict';
-'require view';
+'require baseclass';
 'require poll';
 'require ui';
 'require dom';
@@ -10,10 +10,11 @@
 document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
-	'href': L.resource('qmodem/qmodem-next.css')
+	// versioned like the view scripts, so a package upgrade never serves stale CSS
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '')
 }));
 
-return view.extend({
+return baseclass.extend({
 	load: function() {
 		return qmodem.getModemSections();
 	},
@@ -171,7 +172,7 @@ return view.extend({
 				var msg = messages[i];
 				
 				var index = msg.index != null ? String(msg.index) : '-';
-				var sender = smsService.formatPhoneNumber(msg.sender || '-');
+				var sender = msg.display_sender || smsService.formatPhoneNumber(msg.sender || '-');
 				var time = msg.timestamp ? smsService.formatTimestamp(msg.timestamp) : '-';
 				var content = smsService.truncateMessage(msg.content || msg.sms_text || '', 80);
 				
@@ -374,9 +375,5 @@ return view.extend({
 				}, _('Delete All'))
 			])
 		]);
-	},
-
-	handleSaveApply: null,
-	handleSave: null,
-	handleReset: null
+	}
 });

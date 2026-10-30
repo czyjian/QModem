@@ -3,6 +3,15 @@
 'require ui';
 'require dom';
 'require qmodem.qmodem as qmodem';
+'require qmodem.neighbor-cell as neighborCell';
+
+// Load CSS
+document.head.appendChild(E('link', {
+	'rel': 'stylesheet',
+	'type': 'text/css',
+	// versioned like the view scripts, so a package upgrade never serves stale CSS
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '')
+}));
 
 return view.extend({
 	load: function() {
@@ -16,8 +25,10 @@ return view.extend({
 		}
 
 		var container = E('div', { 'class': 'cbi-map' });
-		var title = E('h2', { 'class': 'cbi-map-caption' }, _('Advanced Configuration'));
+		var title = E('h2', { 'class': 'cbi-map-caption' }, _('Advanced Modem Config'));
 		container.appendChild(title);
+		container.appendChild(E('div', { 'class': 'cbi-map-descr' },
+			_('Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more.')));
 
 		// Create modem selector section
 		var selectorSection = E('fieldset', { 'class': 'cbi-section' });
@@ -92,6 +103,10 @@ return view.extend({
 				name: _('Dial Mode'),
 				handler: function() { return self.createDialModeTab(modem); }
 			},
+			'SimSwitch': {
+				name: _('SIM Switch'),
+				handler: function() { return self.createSimSwitchTab(modem); }
+			},
 			'RatPrefer': {
 				name: _('Network Preference'),
 				handler: function() { return self.createRatPreferTab(modem); }
@@ -139,17 +154,19 @@ return view.extend({
 			var feature = enabledFeatures[key];
 			
 			// Create tab button
+			// Use the standard LuCI tab markup (<li><a>) so themes style it natively
 			var tabButton = E('li', {
 				'class': index === 0 ? 'cbi-tab' : 'cbi-tab-disabled',
 				'data-tab': key,
 				'click': function(ev) {
+					ev.preventDefault();
 					// Switch active tab
 					tabMenu.querySelectorAll('li').forEach(function(tab) {
 						tab.classList.remove('cbi-tab');
 						tab.classList.add('cbi-tab-disabled');
 					});
-					ev.target.classList.remove('cbi-tab-disabled');
-					ev.target.classList.add('cbi-tab');
+					ev.currentTarget.classList.remove('cbi-tab-disabled');
+					ev.currentTarget.classList.add('cbi-tab');
 					
 					// Show corresponding content
 					for (var k in tabContents) {
@@ -157,7 +174,7 @@ return view.extend({
 					}
 					tabContents[key].style.display = '';
 				}
-			}, feature.name);
+			}, E('a', { 'href': '#' }, feature.name));
 			
 			tabMenu.appendChild(tabButton);
 			
@@ -299,7 +316,7 @@ return view.extend({
 			}
 
 			// Update current mode display
-			currentModeValue.textContent = currentMode || _('Unknown');
+			currentModeValue.textContent = currentMode ? currentMode.toUpperCase() : _('Unknown');
 
 			// Create radio buttons for mode selection
 			if (availableModes.length === 0) {
@@ -307,9 +324,9 @@ return view.extend({
 				return;
 			}
 
-			var radioContainer = E('div', { 'class': 'cbi-value-field' });
+			var radioContainer = E('div', { 'class': 'qmodem-dial-mode-options' });
 			availableModes.forEach(function(mode) {
-				var radioWrapper = E('div', { 'style': 'margin: 5px 0; display: flex;' });
+				var radioWrapper = E('div', { 'class': 'qmodem-dial-mode-option' });
 				var radio = E('input', {
 					'type': 'radio',
 					'name': 'mode_' + modem.id,
@@ -318,8 +335,7 @@ return view.extend({
 					'checked': mode === currentMode ? 'checked' : null
 				});
 				var label = E('label', {
-					'for': 'mode_' + modem.id + '_' + mode,
-					'style': 'margin-left: 5px;'
+					'for': 'mode_' + modem.id + '_' + mode
 				}, mode.toUpperCase());
 				
 				radioWrapper.appendChild(radio);
@@ -448,7 +464,7 @@ return view.extend({
 
 			var checkboxContainer = E('div', { 'class': 'cbi-value-field' });
 			availableNetworks.forEach(function(network) {
-				var checkboxWrapper = E('div', { 'style': 'margin: 5px 0;' });
+				var checkboxWrapper = E('div', { 'style': 'margin: 0 0 5px 0;' });
 				var checkbox = E('input', {
 					'type': 'checkbox',
 					'name': 'network_' + modem.id,
@@ -999,6 +1015,7 @@ return view.extend({
 
 	createNeighborCellRow: function(modem, ratType, cellInfo, ratValue) {
 		var self = this;
+		var details = neighborCell.describe(ratType, cellInfo);
 		
 		var row = E('tr', { 'class': 'tr cbi-section-table-row' });
 
@@ -1015,14 +1032,12 @@ return view.extend({
 		// Cell info column
 		var infoCell = E('td', { 'class': 'td cbi-section-table-cell' });
 		var infoParts = [];
-		for (var key in cellInfo) {
-			if (cellInfo[key] !== '' && cellInfo[key] !== null && cellInfo[key] !== undefined) {
-				infoParts.push(E('span', { 'style': 'margin-right: 10px;' }, [
-					E('strong', {}, key + ': '),
-					E('span', { 'style': 'font-family: monospace;' }, cellInfo[key].toString())
-				]));
-			}
-		}
+		details.values.forEach(function(field) {
+			infoParts.push(E('span', { 'style': 'margin-right: 10px;' }, [
+				E('strong', {}, field.key + ': '),
+				E('span', { 'style': 'font-family: monospace;' }, field.value)
+			]));
+		});
 		var infoWrapper = E('div', { 'style': 'display: flex; flex-wrap: wrap;' });
 		infoParts.forEach(function(part) {
 			infoWrapper.appendChild(part);
@@ -1034,7 +1049,10 @@ return view.extend({
 		var actionCell = E('td', { 'class': 'td cbi-section-table-cell' });
 		var copyButton = E('button', {
 			'class': 'btn cbi-button cbi-button-apply',
+			'disabled': details.canCopy ? null : 'disabled',
+			'title': details.canCopy ? '' : _('Valid PCI and ARFCN are required to copy cell parameters'),
 			'click': function() {
+				if (!details.canCopy) return;
 				if (!self.neighborCellInputs || !self.neighborCellInputs[modem.id]) {
 					ui.addNotification(null, E('p', _('Configuration inputs not found')), 'error');
 					return;
@@ -1042,9 +1060,9 @@ return view.extend({
 
 				var inputs = self.neighborCellInputs[modem.id];
 				inputs.rat.value = ratValue.toString();
-				inputs.pci.value = cellInfo.pci || '';
-				inputs.arfcn.value = cellInfo.arfcn || '';
-				inputs.band.value = cellInfo.band || '';
+				inputs.pci.value = String(cellInfo.pci);
+				inputs.arfcn.value = String(cellInfo.arfcn);
+				inputs.band.value = details.copyBand;
 				
 				// Show/hide NR fields based on RAT
 				if (ratValue === 1) {
@@ -1055,7 +1073,9 @@ return view.extend({
 					inputs.scsRow.style.display = 'none';
 				}
 
-				ui.addNotification(null, E('p', _('Cell parameters copied to settings')), 'info');
+				ui.addNotification(null, E('p', details.needsBand ?
+					_('PCI and ARFCN copied. The modem did not report a band; confirm and enter it before locking.') :
+					_('Cell parameters copied to settings')), details.needsBand ? 'warning' : 'info');
 			}
 		}, _('Copy'));
 		actionCell.appendChild(copyButton);
@@ -1249,7 +1269,7 @@ return view.extend({
 				bandData.available_band.forEach(function(band) {
 					var bandWrapper = E('div', { 
 						'class': 'band-container',
-						'style': 'display: flex; align-items: center; margin: 5px 15px 5px 0; min-width: 100px;'
+						'style': 'display: flex; align-items: center; margin: 0 15px 10px 0; min-width: 100px;'
 					});
 
 					var checkbox = E('input', {
@@ -1540,6 +1560,152 @@ return view.extend({
 		}).catch(function(e) {
 			dom.content(rebootField, E('div', { 'class': 'alert-message error' },
 				_('Error loading reboot capabilities: %s').format(e.message)));
+		});
+	},
+
+	createSimSwitchTab: function(modem) {
+		var self = this;
+		var container = E('fieldset', { 'class': 'cbi-section' });
+		container.appendChild(E('legend', {}, _('SIM Switch')));
+		container.appendChild(E('div', { 'class': 'cbi-section-descr' },
+			_('Switch between SIM card slots. Note: Some modems may require a reboot after switching SIM slots.')));
+
+		// Status section - shows support and current slot
+		var statusSection = E('div', { 'class': 'cbi-value' });
+		statusSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('SIM Switch Status')));
+		var statusField = E('div', { 'class': 'cbi-value-field' });
+		statusField.appendChild(E('div', { 'class': 'spinning' }, _('Loading...')));
+		statusSection.appendChild(statusField);
+		container.appendChild(statusSection);
+
+		// SIM slot buttons container
+		var buttonsSection = E('div', { 'class': 'cbi-value' });
+		buttonsSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Select SIM Slot')));
+		var buttonsField = E('div', { 'class': 'cbi-value-field' });
+		buttonsSection.appendChild(buttonsField);
+		container.appendChild(buttonsSection);
+
+		// Result section
+		var resultSection = E('div', { 'class': 'cbi-value', 'id': 'sim_result_section_' + modem.id, 'style': 'display: none;' });
+		resultSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Result')));
+		var resultField = E('div', { 'class': 'cbi-value-field', 'id': 'sim_result_' + modem.id });
+		resultSection.appendChild(resultField);
+		container.appendChild(resultSection);
+
+		// Load SIM switch support and current slot
+		Promise.all([
+			qmodem.callGetSimSwitchCapabilities(modem.id),
+			qmodem.getSimSlot(modem.id)
+		]).then(function(results) {
+			var supportResult = results[0];
+			var slotResult = results[1];
+
+			var supported = supportResult && supportResult.supportSwitch === '1';
+			var currentSlot = slotResult && slotResult.sim_slot ? slotResult.sim_slot : 'N/A';
+			var slots = (supportResult && Array.isArray(supportResult.simSlots)) ? supportResult.simSlots : [];
+			var hideButtons = !supported || currentSlot === 'N/A' || slots.length === 0;
+
+			// Update status
+			var statusInfo = [];
+			statusInfo.push(E('div', {}, [
+				E('strong', {}, _('Support') + ': '),
+				E('span', { 'class': supported ? 'label-success' : 'label-warning' },
+					supported ? _('Supported') : _('Not Supported'))
+			]));
+			statusInfo.push(E('div', { 'style': 'margin-top: 5px;' }, [
+				E('strong', {}, _('Current SIM Slot') + ': '),
+				E('span', {}, self.formatSlotDisplay(currentSlot))
+			]));
+
+			dom.content(statusField, statusInfo);
+
+			// Create SIM slot buttons dynamically based on capabilities
+			var btns = [];
+			if (!hideButtons) {
+				slots.forEach(function(slotVal, idx) {
+					var label = _('Slot %s').format(slotVal);
+					var btn = E('button', {
+						'class': 'btn cbi-button' + (currentSlot == slotVal ? ' cbi-button-positive' : ' cbi-button-action'),
+						'data-slot': slotVal,
+						'click': supported ? function() { self.switchSimSlot(modem.id, slotVal, btns); } : null,
+						'style': (!supported ? 'opacity: 0.5; cursor: not-allowed;' : '') + (idx > 0 ? ' margin-left: 10px;' : '')
+					}, label);
+					btns.push(btn);
+				});
+			}
+			dom.content(buttonsField, btns);
+
+			if (!supported) {
+				buttonsField.appendChild(E('div', { 'style': 'margin-top: 10px; color: #999;' },
+					_('This modem does not support SIM switching.')));
+			}
+
+			// Display ExtraInfo if available
+			var extraInfo = supportResult && supportResult.ExtraInfo;
+			if (extraInfo) {
+				statusInfo.push(E('div', { 'style': 'margin-top: 5px; color: #f0ad4e;' }, [
+					E('strong', {}, _('Note') + ': '),
+					E('span', {}, _(extraInfo))
+				]));
+				dom.content(statusField, statusInfo);
+			}
+
+		}).catch(function(e) {
+			dom.content(statusField, E('span', { 'class': 'error' },
+				_('Error loading SIM switch information: %s').format(e.message)));
+
+			// No buttons on error; show info only
+			dom.content(buttonsField, []);
+		});
+
+		return container;
+	},
+
+	formatSlotDisplay: function(slot) {
+		if (!slot)
+			return 'N/A';
+		return _('Slot %s').format(slot);
+	},
+
+	switchSimSlot: function(modemId, slot, buttons) {
+		var self = this;
+		var resultSection = document.getElementById('sim_result_section_' + modemId);
+		var resultField = document.getElementById('sim_result_' + modemId);
+
+		// Show loading state
+		resultSection.style.display = '';
+		dom.content(resultField, E('div', { 'class': 'spinning' }, _('Switching SIM slot...')));
+
+		// Disable buttons during switch
+		(buttons || []).forEach(function(b){ b.disabled = true; b.style.opacity = '0.5'; });
+
+		qmodem.setSimSlot(modemId, slot).then(function(result) {
+			// Re-enable buttons
+			(buttons || []).forEach(function(b){ b.disabled = false; b.style.opacity = ''; });
+
+			if (result && result.success === true) {
+				dom.content(resultField, E('div', { 'class': 'alert-message success' }, [
+					E('span', {}, _('SIM slot switched to Slot %s successfully.').format(slot)),
+					E('br'),
+					E('span', { 'style': 'font-size: 0.9em;' },
+						_('Note: Some modems may require a reboot for the change to take effect.'))
+				]));
+
+				// Update button styles to reflect new slot
+				(buttons || []).forEach(function(b){
+					var bs = b.getAttribute('data-slot');
+					b.className = 'btn cbi-button' + (bs == slot ? ' cbi-button-positive' : ' cbi-button-action');
+				});
+			} else {
+				dom.content(resultField, E('div', { 'class': 'alert-message warning' },
+					_('Failed to switch SIM slot. Please check modem status.')));
+			}
+		}).catch(function(e) {
+			// Re-enable buttons
+			(buttons || []).forEach(function(b){ b.disabled = false; b.style.opacity = ''; });
+
+			dom.content(resultField, E('div', { 'class': 'alert-message error' },
+				_('Error switching SIM slot: %s').format(e.message)));
 		});
 	},
 

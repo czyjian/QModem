@@ -8,6 +8,14 @@
 'require dom';
 'require poll';
 
+// Load CSS
+document.head.appendChild(E('link', {
+	'rel': 'stylesheet',
+	'type': 'text/css',
+	// versioned like the view scripts, so a package upgrade never serves stale CSS
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '')
+}));
+
 var callInitAction = rpc.declare({
 	object: 'luci',
 	method: 'setInitAction',
@@ -48,7 +56,8 @@ return view.extend({
 	render: function() {
 		var m, s, o;
 
-		m = new form.Map('qmodem', _('QModem Configuration'));
+		m = new form.Map('qmodem', _('NetworkConfiguration'),
+			_('Manage the QModem network service and the dial settings of each modem.'));
 
 		// Global Dial Configuration
 		s = m.section(form.NamedSection, 'main', 'main', _('Global Configuration'));
@@ -73,8 +82,8 @@ return view.extend({
 			var running = status.running === true || status.running === 'true';
 			
 			return E('div', { id: 'rc-status-container' }, [
-				E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No'))),
-				E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No')))
+				E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No', 'qmodem'))),
+				E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No', 'qmodem')))
 			]);
 		}, this);
 
@@ -146,7 +155,7 @@ return view.extend({
 				);
 			}
 			
-			buttons.push(E('span', { 'style': 'margin: 0 8px;' }, ' | '));
+			buttons.push(E('span', { 'style': 'opacity: .5;' }, '|'));
 
 			// Enabled control: show Enable if not enabled, show Disable if enabled
 			if (!enabled) {
@@ -189,7 +198,10 @@ return view.extend({
 				);
 			}
 			
-			return E('div', { id: 'rc-control-container' }, buttons);
+			return E('div', {
+				'id': 'rc-control-container',
+				'style': 'display: flex; flex-wrap: wrap; align-items: center; gap: 8px;'
+			}, buttons);
 		}, this);
 
 	// Dial Configuration Section (Per-Modem)
@@ -199,7 +211,7 @@ return view.extend({
 	s.modaltitle = L.bind(function(section_id) {
 		var name = uci.get('qmodem', section_id, 'name');
 		var alias = uci.get('qmodem', section_id, 'alias');
-		return _('Dial Configuration') + ': ' + (alias || name || section_id);
+		return _('Dial Configuration') + ': ' + qmodem.formatModemName(name, alias, section_id);
 	}, this);
 
 	// Connection Status Indicator
@@ -231,10 +243,10 @@ return view.extend({
 		
 		return E('div', {
 			'id': 'status-indicator-' + section_id,
-			'style': 'text-align: center;'
+			'class': 'qmodem-connection-status'
 		}, [
 			E('span', {
-				'style': 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ' + color + ';',
+				'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
 				'title': title
 			})
 		]);
@@ -256,9 +268,13 @@ return view.extend({
 			return uci.get('qmodem', section_id, 'alias') || '-';
 		};
 
-	o = s.option(form.DummyValue, 'state', _('Status'));
+	o = s.option(form.DummyValue, 'state', _('Device State'));
 	o.cfgvalue = function(section_id) {
 		var state = uci.get('qmodem', section_id, 'state');
+		switch (state) {
+		case 'enabled': return _('Enabled');
+		case 'disabled': return _('Disabled');
+		}
 		return state ? _(state.toUpperCase()) : _('Unknown');
 	};
 
@@ -294,6 +310,7 @@ return view.extend({
 			
 			return E('div', { 
 				'class': 'cbi-value-field', 
+				'style': 'display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;',
 				'id': 'dial-controls-' + section_id,
 				'data-section': section_id
 			}, [
@@ -362,6 +379,12 @@ return view.extend({
 	o = s.option(form.Flag, 'extend_prefix', _('Extend Prefix'));
 	o.description = _('Once checking, the prefix will be apply to lan zone');
 	o.default = '0';
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'ipv6_sourcefilter', _('IPv6 source routing'));
+	o.description = _('Automatically handle multiple uplink interfaces using source-based policy routing.');
+	o.default = '1';
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -687,7 +710,7 @@ return view.extend({
 			}
 			container.appendChild(
 				E('span', {
-					'style': 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ' + color + ';',
+					'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: ' + color + ';',
 					'title': title
 				})
 			);
@@ -698,7 +721,7 @@ return view.extend({
 			}
 			container.appendChild(
 				E('span', {
-					'style': 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #FFA500;',
+					'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: #FFA500;',
 					'title': _('Error: ') + err.message
 				})
 			);
@@ -746,8 +769,8 @@ return view.extend({
 				var running = status.running === true || status.running === 'true';
 
 				statusContainer.appendChild(E('div', {}, [
-					E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No'))),
-					E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No')))
+					E('span', {}, _('Enabled') + ': ' + (enabled ? _('Yes') : _('No', 'qmodem'))),
+					E('span', { 'style': 'margin-left: 12px;' }, _('Running') + ': ' + (running ? _('Yes') : _('No', 'qmodem')))
 				]));
 
 				// Update control buttons
@@ -816,7 +839,7 @@ return view.extend({
 					);
 				}
 
-				buttons.push(E('span', { 'style': 'margin: 0 8px;' }, ' | '));
+				buttons.push(E('span', { 'style': 'opacity: .5;' }, '|'));
 
 				// Enabled control: show Enable if not enabled, show Disable if enabled
 				if (!enabled) {
@@ -874,9 +897,10 @@ return view.extend({
 	},
 
 	showDialLogDialog: function(section_id) {
+		var self = this;
 		var name = uci.get('qmodem', section_id, 'name');
 		var alias = uci.get('qmodem', section_id, 'alias');
-		var title = (alias || name || section_id) + ' - ' + _('Dial Log');
+		var title = qmodem.formatModemName(name, alias, section_id) + ' - ' + _('Dial Log');
 		
 		var logContent = E('div', { 'style': 'min-height: 300px;' }, [
 			E('div', { 'style': 'text-align: center; padding: 20px;' }, [
@@ -922,14 +946,54 @@ return view.extend({
 					'click': ui.hideModal
 				}, _('Close'))
 			])
-		], 'cbi-modal');
+		], 'cbi-modal', 'qmodem-dial-log-modal');
 
-		// Load log content
-		this.loadDialLog(section_id, logContent);
+		// Scale the populated dialog to 160% width and 130% height.
+		var initialLoad = this.loadDialLog(section_id, logContent).then(function() {
+			var textarea = logContent.querySelector('.dial-log-content');
+			if (!textarea)
+				return;
+			var bounds = dialog.getBoundingClientRect();
+			var logBounds = textarea.getBoundingClientRect();
+			var width = Math.min(bounds.width * 1.6, document.documentElement.clientWidth - 32);
+			var height = Math.min(logBounds.height + bounds.height * 0.3,
+				Math.max(120, document.documentElement.clientHeight - 32 - (bounds.height - logBounds.height)));
+			// These rules disappear with this dialog, without resizing other modals.
+			dialog.appendChild(E('style', {},
+				'.modal.qmodem-dial-log-modal { box-sizing: border-box; width: ' + width + 'px !important; max-width: calc(100vw - 2rem) !important; }' +
+				'.qmodem-dial-log-modal .dial-log-content { box-sizing: border-box; height: ' + height + 'px; max-height: none; }'));
+			textarea.scrollTop = textarea.scrollHeight;
+		});
+
+		// Return the request promise so LuCI never overlaps refresh requests.
+		var refresh = function() {
+			if (!logContent.isConnected || !logContent.getClientRects().length) {
+				poll.remove(refresh);
+				return;
+			}
+			return self.loadDialLog(section_id, logContent);
+		};
+		initialLoad.then(function() {
+			if (logContent.isConnected && logContent.getClientRects().length)
+				poll.add(refresh, 2);
+		});
 	},
 
 	loadDialLog: function(section_id, container) {
 		return qmodem.getDialLog(section_id).then(function(result) {
+			if (!result || typeof result.log !== 'string')
+				throw new Error(_('Failed to load log'));
+
+			var textarea = container.querySelector('.dial-log-content');
+			if (textarea) {
+				var follow = textarea.scrollHeight - textarea.clientHeight - textarea.scrollTop <= 16;
+				var scrollTop = textarea.scrollTop;
+				if (textarea.value !== result.log) {
+					textarea.value = result.log;
+					textarea.scrollTop = follow ? textarea.scrollHeight : scrollTop;
+				}
+				return;
+			}
 			while (container.firstChild) {
 				container.removeChild(container.firstChild);
 			}
@@ -941,8 +1005,10 @@ return view.extend({
 					);
 				} else {
 					container.appendChild(
-							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20','maxlength':'160' }, result.log)
+							E('textarea', { 'class': 'dial-log-content','readonly':'readonly','rows':'20' }, result.log)
 					);
+					textarea = container.querySelector('.dial-log-content');
+					textarea.scrollTop = textarea.scrollHeight;
 				}
 			} else {
 				container.appendChild(
@@ -950,6 +1016,9 @@ return view.extend({
 				);
 			}
 		}).catch(function(err) {
+			// A transient RPC failure must not erase the log being read.
+			if (container.querySelector('.dial-log-content'))
+				return;
 			while (container.firstChild) {
 				container.removeChild(container.firstChild);
 			}
@@ -963,7 +1032,7 @@ return view.extend({
 		return qmodem.getDialLog(section_id).then(function(result) {
 			if (result && result.log) {
 				var name = uci.get('qmodem', section_id, 'name') || section_id;
-				var alias = uci.get('qmodem', section_id, 'alias') || '';
+				var alias = qmodem.realAlias(uci.get('qmodem', section_id, 'alias'));
 				var filename = 'dial_log_' + (alias || name) + '_' + 
 					new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5) + '.txt';
 				

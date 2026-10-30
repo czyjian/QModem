@@ -5,7 +5,8 @@
 
 return L.Class.extend({
 	create: function(getNumber, getModem) {
-		var pending = false, sequence = 0;
+		var pending = false, sequence = 0, country;
+		var automatic = E('input', { 'type': 'checkbox', 'checked': 'checked' });
 		var code = E('input', { 'type': 'text', 'class': 'cbi-input-text',
 			'placeholder': _('As entered'), 'maxlength': '4', 'aria-label': _('Country calling code (optional)') });
 		var preview = E('span');
@@ -14,18 +15,20 @@ return L.Class.extend({
 			E('label', { 'class': 'cbi-value-title' }, _('Country calling code (optional)')),
 			E('div', { 'class': 'cbi-value-field' }, [ code, ' ', save,
 				E('div', { 'class': 'cbi-value-description' },
-					_('Leave empty to send as entered, including service numbers. Use + for a complete international number. When adding a country code, omit the domestic trunk prefix.')),
+					_('Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination.')),
+				E('label', {}, [ automatic, ' ', _('Automatically identify country from SIM') ]),
 				E('div', {}, [ _('Send to:') + ' ', preview ]) ])
 		]);
 		function recipient() {
 			if (pending) throw new Error('Loading country calling code');
-			return smsNumber.normalize(getNumber(), code.value);
+			return smsService.resolveRecipient(getNumber(), code.value, country, automatic.checked);
 		}
 		function update() {
 			try { preview.textContent = recipient(); }
 			catch (e) { preview.textContent = getNumber() ? _(e.message) : '—'; }
 		}
-		code.addEventListener('input', update);
+		code.addEventListener('input', function() { automatic.checked = false; update(); });
+		automatic.addEventListener('change', update);
 		save.addEventListener('click', function() {
 			var selectedModem = getModem(), normalized;
 			try { normalized = smsNumber.normalizeCode(code.value); }
@@ -38,10 +41,13 @@ return L.Class.extend({
 		});
 		function load() {
 			var current = ++sequence;
-			pending = true; code.disabled = true; save.disabled = true; code.value = ''; update();
-			return smsService.getCountryCode(getModem()).then(function(value) {
+			pending = true; code.disabled = true; save.disabled = true; code.value = ''; country = undefined; automatic.checked = false; update();
+			return Promise.all([smsService.getCountryCode(getModem()), smsService.getNumberContext(getModem())]).then(function(values) {
+				var value = values[0];
 				if (current !== sequence) return;
+				country = values[1];
 				value = smsNumber.normalizeCode(value);
+				automatic.checked = !value;
 				code.value = value ? '+' + value : '';
 				pending = false; code.disabled = false; save.disabled = false; update();
 			}).catch(function(err) {

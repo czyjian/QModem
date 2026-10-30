@@ -3591,3 +3591,53 @@ msgstr ""
 #: view/qmodem/network_config.js:345
 msgid "quectel-CM will append the DNS server to the resolv.conf file by default.if you do not want to modify the resolv.conf file, please check this option."
 msgstr ""
+
+#: view/qmodem/config_advanced.js:27
+msgid "Advanced Modem Config"
+msgstr ""
+
+#: view/qmodem/settings.js:93
+msgid "Configure modem detection and scanning, the modem device list and slot defaults."
+msgstr ""
+
+#: view/qmodem/network_config.js:271
+msgid "Device State"
+msgstr ""
+
+#: view/qmodem/network_config.js:276
+msgid "Disabled"
+msgstr ""
+
+#: view/qmodem/network_config.js:60
+msgid "Manage the QModem network service and the dial settings of each modem."
+msgstr ""
+
+#: view/qmodem/network_config.js:59
+msgid "NetworkConfiguration"
+msgstr ""
+
+#: view/qmodem/config_advanced.js:30
+msgid "Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more."
+msgstr ""
+
+#: qmodem/sms_forward.js:107
+msgid "Reset"
+msgstr ""
+
+#: qmodem/sms_forward.js:93
+msgid "Save & Apply"
+msgstr ""
+
+#: view/qmodem/debug.js:201
+msgid "Select a quick command"
+msgstr ""
+
+#: view/qmodem/debug.js:30
+msgid "Send AT commands to the modem and view the responses."
+msgstr ""
+
+msgid "Automatically identify country from SIM"
+msgstr ""
+
+msgid "Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination."
+msgstr ""

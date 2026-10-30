@@ -28,43 +28,6 @@
 	text-overflow: ellipsis;
 }
 
-/* Advanced Config Tab Styles */
-.cbi-tabmenu {
-	list-style: none;
-	padding: 0;
-	margin: 0 0 1em 0;
-	display: flex;
-	flex-wrap: wrap;
-	border-bottom: 2px solid var(--border-color-medium, #cccccc);
-}
-
-.cbi-tabmenu li {
-	padding: 0.5rem 1rem;
-	margin: 0 0.25rem -2px 0;
-	cursor: pointer;
-	border: 1px solid transparent;
-	border-radius: 4px 4px 0 0;
-	background: var(--background-color-medium, #f5f5f5);
-	transition: all 0.2s;
-}
-
-.cbi-tabmenu li.cbi-tab {
-	background: var(--background-color-high, #ffffff);
-	border-color: var(--border-color-medium, #cccccc);
-	border-bottom-color: var(--background-color-high, #ffffff);
-	font-weight: bold;
-	color: var(--primary-color-medium, #0066cc);
-}
-
-.cbi-tabmenu li.cbi-tab-disabled {
-	color: var(--text-color-secondary, #666666);
-}
-
-.cbi-tabmenu li.cbi-tab-disabled:hover {
-	background: var(--background-color-high, #e8e8e8);
-	border-color: var(--border-color-low, #dddddd);
-}
-
 /* Dial Mode Radio Buttons and Network Preference Checkboxes */
 .cbi-value-field input[type="radio"],
 .cbi-value-field input[type="checkbox"] {
@@ -78,10 +41,27 @@
 }
 
 /* Lock Band Styles */
+.qmodem-dial-mode-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 5px 0;
+}
+
+.qmodem-dial-mode-option input[type="radio"] {
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.qmodem-dial-mode-option label {
+	margin: 0;
+	line-height: inherit;
+}
+
 .band-container {
 	display: flex;
 	align-items: center;
-	margin: 5px 15px 5px 0;
+	margin: 0 15px 10px 0;
 	min-width: 100px;
 }
 
@@ -111,7 +91,33 @@
 	background-color: var(--background-color-medium, #f5f5f5);
 }
 
+/* Keep every Dial Configuration column aligned with its heading. */
+#cbi-qmodem-modem-device .cbi-section-table th,
+#cbi-qmodem-modem-device .cbi-section-table td {
+	text-align: center;
+}
+
+#cbi-qmodem-modem-device .cbi-section-table input[type="checkbox"] {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#cbi-qmodem-modem-device .cbi-section-table .cbi-value-field {
+	justify-content: center;
+}
+
 /* SMS Interface Styles */
+.qmodem-connection-status {
+	text-align: center;
+}
+
+/* Only the edit dialog aligns its indicator with the other form values. */
+.modal .qmodem-connection-status {
+	text-align: left;
+	width: 100%;
+}
+
 .sms-conversations {
 	margin: 20px 0;
 }
@@ -260,17 +266,17 @@
 
 .cbi-section.draggable > legend,
 .cbi-section.draggable > .panel-title {
-	padding-left: 30px;
 	position: relative;
 }
 
+/* The handle flows inline before the title text: some themes (shadcn)
+   reset the title padding, so an absolutely placed handle would overlap it */
 .cbi-section.draggable > legend::before,
 .cbi-section.draggable > .panel-title::before {
 	content: '≡';
-	position: absolute;
-	left: 10px;
-	top: 50%;
-	transform: translateY(-50%);
+	display: inline-block;
+	margin-right: .5em;
+	line-height: 1;
 	font-size: 1.2em;
 	color: var(--text-color-secondary, #888888);
 }
@@ -285,4 +291,26 @@
 	font-size: 0.9em;
 	color: var(--text-color-secondary, #666666);
 	text-align: center;
+}
+
+/* Theme text size and label alignment */
+/* Themes such as shadcn give form text a smaller size than the page body and
+   pad the field title so it lines up with an input box. Fields that only hold
+   plain text get the same size and padding so they line up with the title;
+   fields holding checkboxes or radios keep their line box (that is what the
+   theme aligns them by) and only shrink the text beside the controls. Themes
+   without these variables are left unchanged. */
+.cbi-value > .cbi-value-field:not(:has(input:not([type="hidden"]), select, textarea, button, .cbi-dropdown)),
+.cbi-value > .cbi-value-field:has(> .band-container) {
+	padding-top: calc(var(--spacing, 0px) * 1);
+}
+
+.cbi-value > .cbi-value-field:not(:has(input:not([type="hidden"]), select, textarea, button, .cbi-dropdown)) {
+	font-size: var(--text-sm, inherit);
+	line-height: var(--text-sm--line-height, inherit);
+}
+
+.cbi-value-field :is(span, label, strong, li),
+#update_time_display {
+	font-size: var(--text-sm, inherit);
 }

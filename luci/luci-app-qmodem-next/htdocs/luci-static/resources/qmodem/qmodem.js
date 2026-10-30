@@ -255,7 +255,114 @@ var callSetSimSlot = rpc.declare({
 	expect: { }
 });
 
+// "-" is qmodem's placeholder for "no alias" (see modem_dial.sh)
+function realAlias(alias) {
+	return (alias && alias !== '-') ? alias : '';
+}
+
+// Model keys are stored lowercase (they index modem_support.json and vendor
+// scripts), so upper-case them for display, matching the overview page.
+function formatModemName(name, alias, fallback) {
+	var model = name ? String(name).toUpperCase() : '';
+	alias = realAlias(alias);
+	if (alias)
+		return model ? alias + ' (' + model + ')' : alias;
+	return model || fallback || '';
+}
+
+// Sub tabs of the SMS page. The first tab is the SMS view itself; the others
+// are modules loaded on first use, so switching tabs never reloads the page.
+var smsTabs = [
+	{ name: 'chat', title: 'SMS Conversation' },
+	{ name: 'sim', title: 'SIM Card SMS', module: 'qmodem.sms_sim' },
+	{ name: 'forward', title: 'SMS Forwarder', module: 'qmodem.sms_forward' }
+];
+
+function loadSmsPanel(tab, panel) {
+	return L.require(tab.module).then(function(mod) {
+		return Promise.resolve(mod.load()).then(function(data) {
+			return mod.render(data);
+		});
+	}).then(function(node) {
+		panel.innerHTML = '';
+		panel.appendChild(node);
+	});
+}
+
+function renderSmsTabs(chatNode) {
+	var menu = E('ul', { 'class': 'cbi-tabmenu', 'style': 'margin-bottom: 1em;' });
+	var container = E('div', {}, [ menu ]);
+	var panels = {};
+	var loaded = { chat: true };
+
+	var show = function(name) {
+		if (!panels[name])
+			name = 'chat';
+
+		menu.querySelectorAll('li').forEach(function(li) {
+			li.className = (li.getAttribute('data-tab') === name) ? 'cbi-tab' : 'cbi-tab-disabled';
+		});
+
+		for (var k in panels)
+			panels[k].style.display = (k === name) ? '' : 'none';
+
+		// Remember the tab in the URL so a reload stays on it
+		history.replaceState(null, '', location.pathname + location.search + (name === 'chat' ? '' : '#' + name));
+
+		if (loaded[name])
+			return;
+
+		loaded[name] = true;
+		smsTabs.forEach(function(tab) {
+			if (tab.name !== name)
+				return;
+
+			loadSmsPanel(tab, panels[name]).catch(function(e) {
+				loaded[name] = false;
+				panels[name].innerHTML = '';
+				panels[name].appendChild(E('div', { 'class': 'alert-message error' },
+					_('Error: %s').format(e.message)));
+			});
+		});
+	};
+
+	smsTabs.forEach(function(tab) {
+		menu.appendChild(E('li', { 'class': 'cbi-tab-disabled', 'data-tab': tab.name },
+			E('a', {
+				'href': '#' + tab.name,
+				'click': function(ev) {
+					ev.preventDefault();
+					show(tab.name);
+				}
+			}, _(tab.title))));
+
+		panels[tab.name] = (tab.name === 'chat') ? E('div', {}, [ chatNode ])
+			: E('div', {}, E('div', { 'class': 'spinning' }, _('Loading...')));
+		container.appendChild(panels[tab.name]);
+	});
+
+	// Follow hand-edited URLs and back/forward; replaceState() does not fire this
+	window.addEventListener('hashchange', function() {
+		show(location.hash.replace(/^#/, ''));
+	});
+
+	show(location.hash.replace(/^#/, ''));
+	return container;
+}
+
 return L.Class.extend({
+	formatModemName: formatModemName,
+	realAlias: realAlias,
+
+	// Wrap the SMS view so its page holds the SMS sub tabs
+	withSmsTabs: function(viewClass) {
+		return viewClass.extend({
+			render: function() {
+				return Promise.resolve(this.super('render', arguments)).then(renderSmsTabs);
+			}
+		});
+	},
+
 	// Get modem base information
 	getBaseInfo: function(section) {
 		return callBaseInfo(section);
@@ -447,7 +554,10 @@ return L.Class.extend({
 			uci.sections('qmodem', 'modem-device', function(s) {
 				sections.push({
 					id: s['.name'],
-					name: s.name || s['.name'],
+					// 'name' is a display label; the raw (lowercase) model key stays in 'model'
+					name: formatModemName(s.name, s.alias, s['.name']),
+					model: s.name || '',
+					alias: realAlias(s.alias),
 					enabled: s.enabled !== '0'
 				});
 			});

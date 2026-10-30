@@ -2336,8 +2336,8 @@ static int mbim_get_imsi(char *imsi_buf, size_t buf_len) {
     err = mbim_send_command(pRequest, &pCmdDone, mbim_default_timeout);
 
     if (err || !pCmdDone || le32toh(pCmdDone->Status) != MBIM_STATUS_SUCCESS) {
-        mbim_debug("%s failed: send_command err=%d, response status=%d\n", __func__, err, 
-                   pCmdDone ? le32toh(pCmdDone->Status) : -1);
+        mbim_debug("%s failed: send_command err=%d, response status=%lld\n", __func__, err,
+                   pCmdDone ? (long long)le32toh(pCmdDone->Status) : -1LL);
         mbim_free(pRequest);
         mbim_free(pCmdDone);
         return (err != 0) ? err : -1;

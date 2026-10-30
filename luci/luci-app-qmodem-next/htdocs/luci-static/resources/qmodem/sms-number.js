@@ -30,11 +30,12 @@ function key(number) {
 
 /* Only an explicit reply associates a local address with a longer one.
  * Conflicting associations remain separate; never match number suffixes. */
-function conversations(messages) {
+function conversations(messages, canonicalize) {
+	function contactKey(value) { return key(canonicalize ? canonicalize(value) : value); }
 	var links = Object.create(null), addresses = Object.create(null), grouped = Object.create(null);
 	messages.forEach(function(message) {
 		var address = message.type === 'received' ? message.sender : message.recipient;
-		var target = key(address), source = message.conversation_contact && key(message.conversation_contact);
+		var target = contactKey(address), source = message.conversation_contact && contactKey(message.conversation_contact);
 		if (!addresses[target] || String(address).charAt(0) === '+') addresses[target] = address;
 		if (message.type === 'sent' && source && source !== target)
 			links[source] = links[source] === undefined || links[source] === target ? target : null;
@@ -46,11 +47,11 @@ function conversations(messages) {
 	}
 	messages.forEach(function(message) {
 		var address = message.type === 'received' ? message.sender : message.recipient;
-		var id = resolve(key(address));
+		var id = resolve(contactKey(address));
 		if (!grouped[id]) grouped[id] = { contact: addresses[id] || address, contacts: [], messages: [], last_timestamp: 0, unread_count: 0 };
 		var group = grouped[id];
 		group.contacts.push(address);
-		if (message.conversation_contact && resolve(key(message.conversation_contact)) === id)
+		if (message.conversation_contact && resolve(contactKey(message.conversation_contact)) === id)
 			group.contacts.push(message.conversation_contact);
 		group.messages.push(message);
 		group.last_timestamp = Math.max(group.last_timestamp, message.timestamp || 0);

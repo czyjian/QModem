@@ -97,6 +97,8 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 async function testCountryCodeField() {
 	const loads = [], saves = [], notifications = [];
 	const service = {
+		getNumberContext() { return Promise.resolve(undefined); },
+		resolveRecipient(value, code) { return smsNumber.normalize(value, code); },
 		getCountryCode(modem) { return new Promise((resolve, reject) => loads.push({ modem, resolve, reject })); },
 		setCountryCode(modem, code) { saves.push({ modem, code }); return Promise.resolve({}); }
 	};
@@ -138,8 +140,8 @@ async function testService() {
 		calls.push({ spec, args });
 		return Promise.resolve({ status: 'success', success: true, country_code: '44' });
 	}; } };
-	const service = new Function('L', 'rpc', 'smsNumber', 'pduParser', '_',
-		fs.readFileSync(path.join(root, 'sms.js'), 'utf8'))(L, rpc, smsNumber, pduParser, identity);
+	const service = new Function('L', 'rpc', 'smsNumber', 'pduParser', 'qmodem', 'phone', '_',
+		fs.readFileSync(path.join(root, 'sms.js'), 'utf8'))(L, rpc, smsNumber, pduParser, { getSimInfo: () => Promise.resolve({}) }, { regionFromSim: () => undefined, identify: value => ({ key: value }) }, identity);
 	assert.strictEqual(await service.getCountryCode('modem_2'), '44');
 	await service.setCountryCode('modem_2', '+49');
 	assert.deepStrictEqual(calls[1].args, ['modem_2', '49']);

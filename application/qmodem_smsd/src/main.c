@@ -33,6 +33,7 @@ struct modem_config {
     char storage[8];
     char legacy_dir[256];
     char country_code[8];
+    char default_country[3];
     int use_ubus;
     int auto_delete;
     int forwarding;
@@ -89,6 +90,7 @@ enum {
     ARG_REQUEST_ID,
     ARG_CONVERSATION_CONTACT,
     ARG_COUNTRY_CODE,
+    ARG_DEFAULT_COUNTRY,
     __ARG_MAX
 };
 
@@ -113,6 +115,7 @@ static const struct blobmsg_policy policy[] = {
     [ARG_REQUEST_ID] = { .name = "request_id", .type = BLOBMSG_TYPE_STRING },
     [ARG_CONVERSATION_CONTACT] = { .name = "conversation_contact", .type = BLOBMSG_TYPE_STRING },
     [ARG_COUNTRY_CODE] = { .name = "country_code", .type = BLOBMSG_TYPE_STRING },
+    [ARG_DEFAULT_COUNTRY] = { .name = "default_country", .type = BLOBMSG_TYPE_STRING },
 };
 
 static int valid_id(const char *value)
@@ -235,6 +238,8 @@ static int load_config(const char *section_name, struct modem_config *cfg)
     cfg->auto_delete = strcmp(option_string(uci, section,
                               "sms_auto_delete_from_sim", "1"), "0") != 0;
     cfg->forwarding = !strcmp(option_string(uci, section, "sms_forwarding", "0"), "1");
+    snprintf(cfg->default_country, sizeof(cfg->default_country), "%s",
+             option_string(uci, section, "sms_default_country", ""));
     value = option_string(uci, section, "sms_poll_interval", "300");
     cfg->poll_interval = atoi(value);
     if (cfg->poll_interval < 60 || cfg->poll_interval > 3600)
@@ -616,7 +621,7 @@ static int configure_method(struct ubus_context *ctx, struct ubus_object *obj,
     struct modem_config cfg;
     struct blob_buf b = {};
     const char *section, *mode_name;
-    const char *options[6], *values[6];
+    const char *options[8], *values[8];
     char number[24];
     size_t option_count = 0;
     int pending = 0;
@@ -655,6 +660,14 @@ static int configure_method(struct ubus_context *ctx, struct ubus_object *obj,
         if (*code && sms_resolve_number("1", code, checked, sizeof(checked)) != 0)
             return UBUS_STATUS_INVALID_ARGUMENT;
         options[option_count] = "sms_country_code"; values[option_count++] = code;
+    }
+    if (tb[ARG_DEFAULT_COUNTRY]) {
+        const char *country = blobmsg_get_string(tb[ARG_DEFAULT_COUNTRY]);
+        if (*country && (strlen(country) != 2 || country[0] < 'A' || country[0] > 'Z' ||
+                         country[1] < 'A' || country[1] > 'Z'))
+            return UBUS_STATUS_INVALID_ARGUMENT;
+        options[option_count] = "sms_default_country";
+        values[option_count++] = country;
     }
     if (option_count && set_uci_options(section, options, values, option_count) != 0)
         goto error;
@@ -695,6 +708,7 @@ static int config_get_method(struct ubus_context *ctx, struct ubus_object *obj,
     blobmsg_add_u8(&b, "use_ubus", cfg.use_ubus);
     blobmsg_add_u8(&b, "auto_delete", cfg.auto_delete);
     blobmsg_add_u8(&b, "forwarding", cfg.forwarding);
+    blobmsg_add_string(&b, "default_country", cfg.default_country);
     blobmsg_add_u32(&b, "poll_interval", cfg.poll_interval);
     blobmsg_add_string(&b, "country_code", cfg.country_code);
     ubus_send_reply(ctx, req, b.head);

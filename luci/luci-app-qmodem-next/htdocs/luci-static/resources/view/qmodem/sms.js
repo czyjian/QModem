@@ -5,15 +5,17 @@
 'require dom';
 'require qmodem.sms as smsService';
 'require qmodem.sms-address as smsAddress';
+'require qmodem.qmodem as qmodem';
 
 // Load CSS
 document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
-	'href': L.resource('qmodem/qmodem-next.css')
+	// versioned like the view scripts, so a package upgrade never serves stale CSS
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '')
 }));
 
-return view.extend({
+return qmodem.withSmsTabs(view.extend({
 	// Timezone offset setting utilities
 	getUtcOffsetSetting: function(type) {
 		// type: 'received' or 'sent'
@@ -124,6 +126,21 @@ return view.extend({
 	timezoneSentRow.appendChild(timezoneSentLabel);
 	timezoneSentRow.appendChild(timezoneSentCell);
 	selectorBody.appendChild(timezoneSentRow);
+
+	var smsCountrySelect = E('select', { 'class': 'cbi-input-select', 'id': 'sms_default_country' }, [
+		E('option', { 'value': '' }, _('Automatic (SIM home country)'))
+	]);
+	var countryNames = typeof Intl !== 'undefined' && Intl.DisplayNames ?
+		new Intl.DisplayNames([document.documentElement.lang || 'en'], { type: 'region' }) : null;
+	smsService.getCountries().forEach(function(country) {
+		smsCountrySelect.appendChild(E('option', { 'value': country },
+			(countryNames ? countryNames.of(country) : country) + ' (+' + smsService.getCountryCallingCode(country) + ')'));
+	});
+	selectorBody.appendChild(E('tr', { 'class': 'tr' }, [
+		E('td', { 'class': 'td', 'width': '33%' }, _('Default country for SMS numbers')),
+		E('td', { 'class': 'td' }, [smsCountrySelect,
+			E('div', { 'class': 'cbi-value-description' }, _('Used for local phone numbers. For other countries, enter +country code.'))])
+	]));
 
 	var smsModeRow = E('tr', { 'class': 'tr' });
 	var smsModeLabel = E('td', { 'class': 'td', 'width': '33%' }, _('SMS Mode'));
@@ -273,7 +290,7 @@ return view.extend({
 	var selectedModem = select.value;
 	
 	// Load UCI config for selected modem
-	this.loadBackendConfig(selectedModem, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox);
+	this.loadBackendConfig(selectedModem, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox, smsCountrySelect);
 		// Load SMS storage info
 	this.loadSmsStorage(selectedModem, readingSelect, writingSelect, etcSelect);
 		this.loadSmsList(contentArea, loadingDiv, selectedModem);
@@ -281,7 +298,7 @@ return view.extend({
 	// Selector change handler
 	select.addEventListener('change', function() {
 		// Load UCI config for selected modem
-		self.loadBackendConfig(select.value, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox);
+		self.loadBackendConfig(select.value, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox, smsCountrySelect);
 		
 		// Load SMS storage info
 		self.loadSmsStorage(select.value, readingSelect, writingSelect, etcSelect);
@@ -310,8 +327,11 @@ return view.extend({
 	function saveBackendConfig() {
 		var interval = +pollIntervalInput.value;
 		return smsService.configure(select.value, smsModeSelect.value, interval, null,
-			smsAutoDeleteCheckbox.checked).then(function() {
+			smsAutoDeleteCheckbox.checked, smsCountrySelect.value).then(function() {
 			ui.addNotification(null, E('p', _('Configuration saved')), 'info');
+			var loading = E('div', { 'class': 'spinning' }, _('Loading...'));
+			dom.content(contentArea, loading);
+			return self.loadSmsList(contentArea, loading, select.value);
 		}).catch(function(err) {
 			ui.addNotification(null, E('p', _('Failed to save configuration: ') + err.message), 'error');
 		});
@@ -319,6 +339,7 @@ return view.extend({
 	smsModeSelect.addEventListener('change', saveBackendConfig);
 	pollIntervalInput.addEventListener('change', saveBackendConfig);
 	smsAutoDeleteCheckbox.addEventListener('change', saveBackendConfig);
+	smsCountrySelect.addEventListener('change', saveBackendConfig);
 
 	// Start polling for new messages
 	poll.add(function() {
@@ -329,7 +350,7 @@ return view.extend({
 	loadSmsList: function(contentArea, loadingDiv, configSection) {
 		var self = this;
 
-		smsService.listSms(configSection).then(function(result) {
+		return smsService.listSms(configSection).then(function(result) {
 			// Adjust timestamps if UTC offset is enabled (based on message type)
 			if (result.conversations && result.conversations.length > 0) {
 				result.conversations.forEach(function(conv) {
@@ -653,11 +674,12 @@ return view.extend({
 	encodingSelect.addEventListener('change', updateCounter);
 },
 
-loadBackendConfig: function(configSection, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox) {
+loadBackendConfig: function(configSection, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox, smsCountrySelect) {
 	return smsService.getConfig(configSection).then(function(config) {
 		smsModeSelect.value = config.mode || 'database_poll';
 		pollIntervalInput.value = config.poll_interval || 300;
 		smsAutoDeleteCheckbox.checked = !!config.auto_delete;
+		if (smsCountrySelect) smsCountrySelect.value = config.default_country || '';
 	});
 },
 
@@ -682,6 +704,13 @@ loadSmsStorage: function(configSection, readingSelect, writingSelect, etcSelect)
 		}
 		
 		var storage = result.storage;
+
+		// The loading entry is only a temporary placeholder, not a storage type.
+		[readingSelect, writingSelect, etcSelect].forEach(function(select) {
+			var loadingOption = select.querySelector('option[value="Loading"]');
+			if (loadingOption)
+				loadingOption.remove();
+		});
 		
 		// Update select values with current storage
 		if (storage.mem1) {
@@ -759,4 +788,4 @@ setSmsStorage: function(configSection, readingSelect, writingSelect, etcSelect) 
 handleSaveApply: null,
 handleSave: null,
 handleReset: null
-});
+}));

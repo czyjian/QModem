@@ -10,7 +10,8 @@
 document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
-	'href': L.resource('qmodem/qmodem-next.css')
+	// versioned like the view scripts, so a package upgrade never serves stale CSS
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '')
 }));
 
 // Check if cbi-progressbar class exists
@@ -34,6 +35,13 @@ function hasCssClass(className) {
 }
 
 var progressbar_className = hasCssClass('.cbi-progressbar') ? 'cbi-progressbar' : 'compat-progressbar';
+
+// Translate a modem field name, preferring the "qmodem" context: generic words
+// such as "Band" are translated differently by other catalogs (luci-base)
+function trField(name) {
+	var translated = _(name, 'qmodem');
+	return (translated !== name) ? translated : _(name);
+}
 
 // LuciTable class for rendering modem info tables
 var LuciTable = function() {
@@ -74,7 +82,7 @@ LuciTable.prototype = {
 				var extra_info = data.extra_info;
 				
 				// Translate full_name and extra_info
-				var translatedName = _(full_name);
+				var translatedName = trField(full_name);
 				var displayName = extra_info ? translatedName + ' (' + extra_info + ')' : translatedName;
 				
 				this.rows[index].left.textContent = displayName;
@@ -102,7 +110,7 @@ LuciTable.prototype = {
 				percentage = Math.max(0, Math.min(100, percentage));
 				
 				// Translate full_name and extra_info
-				var translatedName = _(full_name);
+				var translatedName = trField(full_name);
 				var displayName = extra_info ? translatedName + ' (' + extra_info + ')' : translatedName;
 				
 				this.rows[index].left.textContent = displayName;
@@ -219,8 +227,7 @@ return view.extend({
 		
 		sections.forEach(function(section) {
 			if (section.state !== 'disabled' && section.at_port) {
-				var name = section.name ? section.name.toUpperCase() : 'Unknown';
-				var displayName = section.alias ? section.alias + ' (' + name + ')' : name;
+				var displayName = qmodem.formatModemName(section.name, section.alias, 'Unknown');
 				
 				modems.push({
 					id: section['.name'],
@@ -342,12 +349,12 @@ return view.extend({
 		});
 	},
 
-	updateModemInfo: function(modemId, tables_map, infoContainer, updateTimeElement, copyrightElement) {
+	updateModemInfo: function(modemId, tables_map, infoContainer, updateTimeElement, copyrightElement, loadingElement) {
 		var self = this;
 		
 		// Show loading state
 		if (Object.keys(tables_map).length === 0) {
-			dom.content(infoContainer, E('div', { 'class': 'spinning' }, _('Loading modem information...')));
+			loadingElement.style.display = '';
 		}
 		
 		// Fetch all modem info
@@ -373,8 +380,11 @@ return view.extend({
 				var copyrightInfo = copyrightData.copyright;
 				var copyrightText = [];
 				for (var key in copyrightInfo) {
-					copyrightText.push(_(key) + ': ' + copyrightInfo[key]);
+					if (key === 'Maintainer')
+						continue;
+					copyrightText.push((key === 'Author' ? '原作者' : _(key)) + ': ' + copyrightInfo[key]);
 				}
+				copyrightText.push('修改: czyjian <czyjian@gmail.com>');
 				copyrightElement.textContent = copyrightText.join(' | ');
 				copyrightElement.style.display = '';
 			} else if (copyrightElement) {
@@ -397,10 +407,7 @@ return view.extend({
 			});
 
 			// Clear loading animation if present
-			var loadingDiv = infoContainer.querySelector('.spinning');
-			if (loadingDiv) {
-				infoContainer.removeChild(loadingDiv);
-			}
+			loadingElement.style.display = 'none';
 
 			// Remove obsolete tables from DOM and map
 			for (var existingClass in tables_map) {
@@ -462,6 +469,7 @@ return view.extend({
 			}
 		}).catch(function(e) {
 			console.error('Error fetching modem info:', e);
+			loadingElement.style.display = 'none';
 			dom.content(infoContainer, E('div', { 'class': 'alert-message warning' },
 				_('Error loading modem information: %s').format(e.message)));
 		});
@@ -513,11 +521,20 @@ return view.extend({
 		
 		// Create update time display
 		var updateTimeSection = E('fieldset', { 'class': 'cbi-section' });
+		var updateStatusRow = E('div', {
+			'style': 'display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;'
+		});
+		var loadingDiv = E('div', {
+			'class': 'spinning',
+			'style': 'display: none; padding: 5px;'
+		}, _('Loading modem information...'));
 		var updateTimeDiv = E('div', { 
-			'style': 'text-align: right; padding: 5px; color: #888;',
+			'style': 'text-align: right; padding: 5px; color: #888; margin-left: auto;',
 			'id': 'update_time_display'
 		}, _('Last update') + ': -');
-		updateTimeSection.appendChild(updateTimeDiv);
+		updateStatusRow.appendChild(loadingDiv);
+		updateStatusRow.appendChild(updateTimeDiv);
+		updateTimeSection.appendChild(updateStatusRow);
 		container.appendChild(updateTimeSection);
 		
 		// Create info container
@@ -541,7 +558,7 @@ return view.extend({
 				tables_map = {};
 			}
 			
-			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv);
+			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv);
 		};
 		
 		// Selector change handler
@@ -555,7 +572,7 @@ return view.extend({
 		// Start polling (every 10 seconds)
 		poll.add(function() {
 			var selectedModem = select.value;
-			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv);
+			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv);
 		}, 10);
 		
 		return container;

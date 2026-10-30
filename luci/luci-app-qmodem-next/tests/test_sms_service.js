@@ -5,6 +5,9 @@ const fs = require('fs');
 const path = require('path');
 
 const L = { Class: { extend: function(service) { return service; } } };
+function load(name, names = [], values = []) { return new Function('L', ...names, fs.readFileSync(path.join(__dirname, '../htdocs/luci-static/resources/qmodem/' + name + '.js'), 'utf8'))(L, ...values); }
+const phone = load('phone', ['phoneLib', 'phoneMcc'], [load('phone-lib'), load('phone-mcc')]);
+const qmodem = { getSimInfo: () => Promise.resolve({}), getModemSections: () => Promise.resolve([]), formatModemName: name => name };
 const smsNumber = new Function('L', fs.readFileSync(path.join(__dirname,
 	'../htdocs/luci-static/resources/qmodem/sms-number.js'), 'utf8'))(L);
 
@@ -25,7 +28,7 @@ function createService(listResults, syncResult) {
 		}
 	};
 	const L = { Class: { extend: function(service) { return service; } } };
-	const service = new Function('rpc', 'L', 'smsNumber', '_', source)(rpc, L, smsNumber, function(value) { return value; });
+	const service = new Function('rpc', 'L', 'smsNumber', 'qmodem', 'phone', '_', source)(rpc, L, smsNumber, qmodem, phone, function(value) { return value; });
 	return { service: service, listCalls: function() { return listCalls; } };
 }
 

@@ -29,7 +29,7 @@ define Package/$(PKG_NAME)
 		+coreutils +coreutils-stat +xxd \
 		+PACKAGE_qmodem_INCLUDE_SEAL:qmodem-seal \
 		+usbutils \
-		+PACKAGE_qmodem_INCLUDE_rdisc6:rdisc6 \
+		+PACKAGE_qmodem_INCLUDE_ndisc6:rdisc6 \
 		+PACKAGE_qmodem_INCLUDE_ndisc6:ndisc6 \
 		+PACKAGE_qmodem_INCLUDE_generic-qmi-wwan:kmod-usb-net-qmi-wwan \
 		+PACKAGE_qmodem_INCLUDE_vendor-qmi-wwan:kmod-qmi_wwan_q \
@@ -61,19 +61,14 @@ define Package/$(PKG_NAME)/config
 		  Build and install qmodem-seal. When omitted, qmodem_collect
 		  falls back to an explicitly marked unencrypted archive.
 
-	choice
-		prompt "IPv6 Neighbor Discovery Selection"
-		default PACKAGE_qmodem_INCLUDE_ndisc6
-
-		config PACKAGE_qmodem_INCLUDE_ndisc6
-			bool "Include ndisc6 for IPv6 Neighbor Discovery"
-
-		config PACKAGE_qmodem_INCLUDE_rdisc6
-			bool "Include rdisc6 for IPv6 Router Discovery"
-
-		config PACKAGE_qmodem_INCLUDE_no_ndisc_rdisc6
-			bool "Do not include any IPv6 Neighbor/Router Discovery tool"
-	endchoice
+	config PACKAGE_qmodem_INCLUDE_ndisc6
+		bool "Include rdisc6/ndisc6 to keep the IPv6 default route alive"
+		default y
+		help
+		  The dial monitor sends Router Solicitations (rdisc6) so the
+		  modem re-advertises the IPv6 default route before its RA router
+		  lifetime runs out. Without them, the DHCPv6 interface is
+		  restarted shortly before the route expires instead.
 
 	choice
 		prompt "Qualcomm QMI WWAN Driver Selection"

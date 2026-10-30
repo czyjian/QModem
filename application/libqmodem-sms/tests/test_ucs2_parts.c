@@ -1,3 +1,6 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +38,7 @@ int main(void)
                                   SMS_MAX_PARTS, 42);
     assert(parts == 1);
     assert(pdus[0][1] == 0x11);
+    assert(pdus[0][4] == 0x81);
     assert(lengths[0] > 10);
     parts = pdu_encode_ucs2_parts("18675170156", long_text, pdus, lengths,
                                   SMS_MAX_PARTS, 42);
@@ -44,6 +48,17 @@ int main(void)
     assert(memmem(pdus[1], lengths[1], "\x05\x00\x03\x2a\x02\x02", 6));
     assert(pdu_encode_ucs2_parts("10086", "\xc0\xaf", pdus, lengths,
                                  SMS_MAX_PARTS, 1) < 0);
+    assert(pdu_encode_ucs2_parts("+8617607123407", "test", pdus, lengths,
+                                      SMS_MAX_PARTS, 1) == 1);
+    assert(pdus[0][3] == 13 && pdus[0][4] == 0x91);
+    assert(memcmp(pdus[0] + 5, "\x68\x71\x06\x17\x32\x04\xf7", 7) == 0);
+    assert(pdu_encode_ucs2_parts("10659200", long_text, pdus, lengths,
+                                      SMS_MAX_PARTS, 1) == 2);
+    assert(pdus[0][3] == 8 && pdus[0][4] == 0x81 && pdus[1][4] == 0x81);
+    assert(pdu_encode_ucs2_parts("++8617607123407", "test", pdus, lengths,
+                                      SMS_MAX_PARTS, 1) < 0);
+    assert(pdu_encode_ucs2_parts("123456789012345678901", "test", pdus, lengths,
+                                      SMS_MAX_PARTS, 1) < 0);
     test_udl_flag_is_not_udhi();
     puts("PASS UCS-2 single, multipart, and invalid UTF-8 encoding");
     return 0;

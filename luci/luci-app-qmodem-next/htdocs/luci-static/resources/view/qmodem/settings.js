@@ -89,7 +89,8 @@ return view.extend({
 	render: function(data) {
 		var m, s, o;
 
-		m = new form.Map('qmodem', _('QModem Settings'));
+		m = new form.Map('qmodem', _('QModem Settings'),
+			_('Configure modem detection and scanning, the modem device list and slot defaults.'));
 
 		// ===========================================
 		// Modem Probe Settings
@@ -247,7 +248,7 @@ return view.extend({
 		s.sortable = true;
 		s.modaltitle = L.bind(function(section_id) {
 			var name = uci.get('qmodem', section_id, 'name');
-			return _('Modem Device') + ': ' + (name || section_id);
+			return _('Modem Device') + ': ' + (name ? name.toUpperCase() : section_id);
 		}, this);
 
 		// Use available devices from RPC call
@@ -433,6 +434,8 @@ return view.extend({
 	s.modaltitle = L.bind(function(section_id) {
 		var slotId = uci.get('qmodem', section_id, 'slot');
 		var alias = uci.get('qmodem', section_id, 'alias');
+		if (alias === '-')
+			alias = '';
 		return _('Modem Slot') + ': ' + (alias || slotId || section_id);
 	}, this);
 

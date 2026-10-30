@@ -2679,3 +2679,156 @@ msgstr "加载国家码失败"
 
 msgid "Failed to save country calling code"
 msgstr "保存国家码失败"
+
+# Source: view/qmodem/debug.js
+msgid "Select a quick command"
+msgstr "选择快速命令"
+
+# Source: view/qmodem/network_config.js
+msgid "Device State"
+msgstr "设备状态"
+
+# Source: view/qmodem/network_config.js
+msgid "Disabled"
+msgstr "已禁用"
+
+# Source: view/qmodem/network_config.js
+msgid "Ethernet"
+msgstr "以太网"
+
+# Source: view/qmodem/network_config.js
+msgid "Bridge Port"
+msgstr "桥接端口"
+
+# Source: view/qmodem/network_config.js
+msgid "Device-level bridge port for passthrough. If set, it overrides the slot default bridge port."
+msgstr "直通模式使用的设备级桥接端口。设置后将覆盖插槽的默认桥接端口。"
+
+# Source: view/qmodem/settings.js
+msgid "Scan Log Level"
+msgstr "扫描日志级别"
+
+# Source: view/qmodem/settings.js
+msgid "Notice"
+msgstr "通知"
+
+# Source: view/qmodem/settings.js
+msgid "Scan Workers"
+msgstr "扫描线程数"
+
+# Source: view/qmodem/settings.js
+msgid "AT Probe Workers"
+msgstr "AT 探测线程数"
+
+# Source: view/qmodem/settings.js
+msgid "Fast AT Timeout"
+msgstr "快速 AT 超时"
+
+# Source: view/qmodem/settings.js
+msgid "Model AT Timeout"
+msgstr "型号识别 AT 超时"
+
+# Source: view/qmodem/settings.js
+msgid "Hotplug Add Delay"
+msgstr "热插拔添加延迟"
+
+# Source: view/qmodem/settings.js
+msgid "Add Retry Delay"
+msgstr "添加重试间隔"
+
+# Source: view/qmodem/settings.js
+msgid "Add Retry Max"
+msgstr "添加最大重试次数"
+
+# Source: view/qmodem/settings.js
+msgid "Default bridge port for passthrough. Device-level bridge_port overrides this slot default."
+msgstr "直通模式使用的默认桥接端口。设备级的 bridge_port 会覆盖此插槽默认值。"
+
+# Source: view/qmodem/sim_switch.js
+msgid "Slot %s"
+msgstr "插槽 %s"
+
+# Source: view/qmodem/sms.js
+msgid "SMS Mode"
+msgstr "短信模式"
+
+# Source: view/qmodem/sms.js
+msgid "Direct modem access"
+msgstr "直接访问模组"
+
+# Source: view/qmodem/sms.js
+msgid "Database with polling"
+msgstr "数据库（轮询）"
+
+# Source: view/qmodem/sms.js
+msgid "Database with URC"
+msgstr "数据库（URC 上报）"
+
+# Source: view/qmodem/sms_sim.js
+msgid "Sender"
+msgstr "发件人"
+
+# Source: view/qmodem/sms_sim.js
+msgid "Content"
+msgstr "内容"
+
+# Source: view/qmodem/sms_sim.js
+msgid "Actions"
+msgstr "操作"
+
+# Source: view/qmodem/sms_sim.js
+msgid "No messages to delete"
+msgstr "没有可删除的短信"
+
+# Source: view/qmodem/config_advanced.js
+msgid "Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more."
+msgstr "按调制解调器设置拨号模式、SIM卡切换、网络优先级、IMEI、锁定频段等。"
+
+# Source: view/qmodem/debug.js
+msgid "Send AT commands to the modem and view the responses."
+msgstr "向调制解调器发送 AT 命令并查看响应。"
+
+# Source: view/qmodem/network_config.js
+msgid "Manage the QModem network service and the dial settings of each modem."
+msgstr "管理 QModem 网络服务及各调制解调器的拨号设置。"
+
+# Source: view/qmodem/settings.js
+msgid "Configure modem detection and scanning, the modem device list and slot defaults."
+msgstr "配置调制解调器的探测与扫描、设备列表及插槽默认值。"
+
+msgid "Automatic (SIM home country)"
+msgstr "自动（SIM 卡归属地）"
+
+msgid "Default country for SMS numbers"
+msgstr "短信号码默认国家/地区"
+
+msgid "Used for local phone numbers. For other countries, enter +country code."
+msgstr "用于识别不带国家码的本地号码。发送至其他国家时，请输入 +国家码。"
+
+msgid "Cannot determine the destination country. Select a default country or enter a valid number with +country code."
+msgstr "无法确定收件号码的国家/地区。请选择默认国家/地区，或输入带 +国家码的有效号码。"
+
+msgid "IPv6 source routing"
+msgstr "IPv6 源路由"
+
+msgid "Automatically handle multiple uplink interfaces using source-based policy routing."
+msgstr "使用基于源地址的策略路由自动处理多个上行链路接口。"
+
+msgid "Reported by modem"
+msgstr "模组上报"
+
+msgid "Estimated from ARFCN; confirm before locking"
+msgstr "按 ARFCN 推算，锁定前需确认"
+
+msgid "Valid PCI and ARFCN are required to copy cell parameters"
+msgstr "PCI 和 ARFCN 无效，无法复制小区参数"
+
+msgid "PCI and ARFCN copied. The modem did not report a band; confirm and enter it before locking."
+msgstr "已复制 PCI 和 ARFCN。模组未上报频段，请确认并填写后再锁定。"
+
+
+msgid "Automatically identify country from SIM"
+msgstr "自动识别 SIM 归属国家"
+
+msgid "Automatic identification uses the selected default country or SIM. Enter a country code to override it, or disable automatic identification to send as entered. The preview shows the actual destination."
+msgstr "自动识别使用默认国家或 SIM 归属国家。填写国家码可覆盖自动识别，关闭自动识别则按原号码发送。预览显示实际收件地址。"
