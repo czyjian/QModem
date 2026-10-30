@@ -65,6 +65,7 @@ jobs:
           application/qmodem/tests/test_sms_transport_modes.sh
           node luci/luci-app-qmodem-next/tests/test_sms_service.js
           node luci/luci-app-qmodem-next/tests/test_neighbor_cell.js
+          node luci/luci-app-qmodem-next/tests/test_form_sections.js
           sh application/qmodem/tests/test_fibocom_neighbor_identity.sh
           make -C application/libqmodem-sms/tests CFLAGS='-O2 -Wall -Wextra -Werror -std=gnu11 -D_GNU_SOURCE'
           application/qmodem/tests/test_fixture_collection_bytes.sh

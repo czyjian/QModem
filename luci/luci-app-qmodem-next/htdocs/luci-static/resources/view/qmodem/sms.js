@@ -270,15 +270,6 @@ return qmodem.withSmsTabs(view.extend({
 	storageSection.appendChild(storageTable);
 	container.appendChild(storageSection);
 	
-		// Title
-		var title = E('h2', { 'name': 'content' }, _('SMS Messages'));
-		container.appendChild(title);
-
-		// Description
-		var desc = E('div', { 'class': 'cbi-map-descr' }, 
-			_('View and manage SMS messages. Messages are grouped by sender/recipient.'));
-		container.appendChild(desc);
-
 		// Main content area
 		var contentArea = E('div', { 'id': 'sms-list-content' });
 		container.appendChild(contentArea);
@@ -433,7 +424,6 @@ return qmodem.withSmsTabs(view.extend({
 				_('No messages found')));
 		} else {
 			// Create conversations list
-			var listDiv = E('div', { 'class': 'cbi-section' });
 			var listFieldset = E('fieldset', { 'class': 'cbi-section' });
 			var listLegend = E('legend', {}, _('Conversations'));
 		
@@ -495,8 +485,7 @@ return qmodem.withSmsTabs(view.extend({
 
 		table.appendChild(tbody);
 		listFieldset.appendChild(table);
-		listDiv.appendChild(listFieldset);
-		conversationsDiv.appendChild(listDiv);
+		conversationsDiv.appendChild(listFieldset);
 		}
 
 		// Add action buttons - always show these regardless of whether there are conversations

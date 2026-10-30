@@ -24,10 +24,6 @@ return view.extend({
 		}
 
 		var container = E('div', { 'class': 'cbi-map' });
-		var title = E('h2', { 'class': 'cbi-map-caption' }, _('AT Debug'));
-		container.appendChild(title);
-		container.appendChild(E('div', { 'class': 'cbi-map-descr' },
-			_('Send AT commands to the modem and view the responses.')));
 
 		// Create modem selector section (similar to overview)
 		var selectorSection = E('fieldset', { 'class': 'cbi-section' });

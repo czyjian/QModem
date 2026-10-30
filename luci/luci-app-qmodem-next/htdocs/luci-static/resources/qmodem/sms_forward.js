@@ -1,6 +1,7 @@
 'use strict';
 'require baseclass';
 'require form';
+'require qmodem.form-sections as sectionForm';
 'require uci';
 'require ui';
 'require qmodem.qmodem as qmodem';
@@ -20,7 +21,7 @@ return baseclass.extend({
 		m = new form.Map('sms_forwarder');
 
 		// Global settings
-		s = m.section(form.NamedSection, 'sms_forward', 'sms_forward', _('Global Settings'));
+		s = m.section(sectionForm.NamedSection, 'sms_forward', 'sms_forward', _('Global Settings'));
 
 		o = s.option(form.Flag, 'enable', _('Enable SMS Forwarder'));
 		o.default = '0';
@@ -34,7 +35,7 @@ return baseclass.extend({
 		o.default = 'info';
 
 		// Forward instances
-		s = m.section(form.GridSection, 'sms_forward_instance', _('Forward Instances'),
+		s = m.section(sectionForm.GridSection, 'sms_forward_instance', _('Forward Instances'),
 			_('Configure SMS forwarding instances for different modems and services'));
 
 		s.addremove = true;

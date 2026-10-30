@@ -1,6 +1,7 @@
 'use strict';
 'require view';
 'require form';
+'require qmodem.form-sections as sectionForm';
 'require uci';
 'require rpc';
 'require ui';
@@ -56,11 +57,10 @@ return view.extend({
 	render: function() {
 		var m, s, o;
 
-		m = new form.Map('qmodem', _('NetworkConfiguration'),
-			_('Manage the QModem network service and the dial settings of each modem.'));
+		m = new form.Map('qmodem');
 
 		// Global Dial Configuration
-		s = m.section(form.NamedSection, 'main', 'main', _('Global Configuration'));
+		s = m.section(sectionForm.NamedSection, 'main', 'main', _('Global Configuration'));
 
 		o = s.option(form.Flag, 'enable_dial', _('Enable Dial (Global)'));
 		o.default = '1';
@@ -205,7 +205,7 @@ return view.extend({
 		}, this);
 
 	// Dial Configuration Section (Per-Modem)
-	s = m.section(form.GridSection, 'modem-device', _('Dial Configuration'));
+	s = m.section(sectionForm.GridSection, 'modem-device', _('Dial Configuration'));
 	s.anonymous = false;
 	s.addremove = false;
 	s.modaltitle = L.bind(function(section_id) {

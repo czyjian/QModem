@@ -55,7 +55,7 @@ LuciTable.prototype = {
 	initTable: function() {
 		this.fieldset = E('fieldset', { 'class': 'cbi-section collapsible draggable', 'draggable': 'true' });
 		//this.legend = E('legend', {});
-		this.title_span = E('h2', { 'class': 'panel-title' });
+		this.title_span = E('legend', { 'class': 'panel-title' });
 		var table = E('table', { 'class': 'table' });
 		this.tbody = E('tbody', { 'style': 'width: 100%' });
 		
@@ -285,7 +285,7 @@ return view.extend({
 		};
 		
 		if (legend) legend.addEventListener('click', toggleCollapse);
-		if (title) title.addEventListener('click', toggleCollapse);
+		if (title && title !== legend) title.addEventListener('click', toggleCollapse);
 		
 		// Drag and drop handlers
 		fieldset.addEventListener('dragstart', function(e) {

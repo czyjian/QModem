@@ -25,13 +25,9 @@ return view.extend({
 		}
 
 		var container = E('div', { 'class': 'cbi-map' });
-		var title = E('h2', { 'class': 'cbi-map-caption' }, _('Advanced Modem Config'));
-		container.appendChild(title);
-		container.appendChild(E('div', { 'class': 'cbi-map-descr' },
-			_('Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more.')));
 
 		// Create modem selector section
-		var selectorSection = E('fieldset', { 'class': 'cbi-section' });
+		var selectorSection = E('fieldset', {'class': 'cbi-section' });
 		var selectorTable = E('table', { 'class': 'table' });
 		var selectorBody = E('tbody', {});
 		var selectorRow = E('tr', { 'class': 'tr' });
@@ -214,7 +210,7 @@ return view.extend({
 
 	createDialModeTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		var legend = E('legend', {}, _('Dial Mode Configuration'));
 		container.appendChild(legend);
 
@@ -355,7 +351,7 @@ return view.extend({
 
 	createRatPreferTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		var legend = E('legend', {}, _('Network Preference Configuration'));
 		container.appendChild(legend);
 
@@ -494,7 +490,7 @@ return view.extend({
 
 	createImeiTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		var legend = E('legend', {}, _('IMEI Configuration'));
 		container.appendChild(legend);
 
@@ -647,7 +643,7 @@ return view.extend({
 
 	createNeighborCellTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		var legend = E('legend', {}, _('Neighbor Cell / Lock Cell'));
 		container.appendChild(legend);
 
@@ -658,11 +654,11 @@ return view.extend({
 		// Create three sections: Neighbor Cell List, Lock Cell Status, Lock Cell Settings
 		
 		// 1. Neighbor Cell List Section
-		var neighborSection = E('div', { 
+		var neighborSection = E('fieldset', {
 			'class': 'cbi-section',
 			'style': 'margin-bottom: 20px;'
 		});
-		var neighborHeader = E('h3', { 'style': 'margin: 10px 0;' }, _('Neighbor Cell List'));
+		var neighborHeader = E('legend', {}, _('Neighbor Cell List'));
 		neighborSection.appendChild(neighborHeader);
 		
 		var scanButton = E('button', {
@@ -688,11 +684,11 @@ return view.extend({
 		container.appendChild(neighborSection);
 
 		// 2. Lock Cell Status Section
-		var statusSection = E('div', { 
+		var statusSection = E('fieldset', {
 			'class': 'cbi-section',
 			'style': 'margin-bottom: 20px;'
 		});
-		var statusHeader = E('h3', { 'style': 'margin: 10px 0;' }, _('Lock Cell Status'));
+		var statusHeader = E('legend', {}, _('Lock Cell Status'));
 		statusSection.appendChild(statusHeader);
 		
 		var statusContent = E('div', { 
@@ -704,8 +700,8 @@ return view.extend({
 		container.appendChild(statusSection);
 
 		// 3. Lock Cell Settings Section
-		var settingsSection = E('div', { 'class': 'cbi-section' });
-		var settingsHeader = E('h3', { 'style': 'margin: 10px 0;' }, _('Lock Cell Settings'));
+		var settingsSection = E('fieldset', {'class': 'cbi-section' });
+		var settingsHeader = E('legend', {}, _('Lock Cell Settings'));
 		settingsSection.appendChild(settingsHeader);
 
 		var settingsDesc = E('div', { 
@@ -952,8 +948,8 @@ return view.extend({
 
 			// Display LTE Cells
 			if (lteCells.length > 0) {
-				var lteSection = E('div', { 'class': 'cbi-section' });
-				var lteHeader = E('h4', { 'style': 'margin: 10px 0 5px 0;' }, _('LTE Cells'));
+				var lteSection = E('fieldset', {'class': 'cbi-section' });
+				var lteHeader = E('legend', {}, _('LTE Cells'));
 				lteSection.appendChild(lteHeader);
 				
 				var lteTable = E('table', { 'class': 'table cbi-section-table' });
@@ -977,8 +973,8 @@ return view.extend({
 
 			// Display NR Cells
 			if (nrCells.length > 0) {
-				var nrSection = E('div', { 'class': 'cbi-section', 'style': 'margin-top: 15px;' });
-				var nrHeader = E('h4', { 'style': 'margin: 10px 0 5px 0;' }, _('NR (5G) Cells'));
+				var nrSection = E('fieldset', {'class': 'cbi-section', 'style': 'margin-top: 15px;' });
+				var nrHeader = E('legend', {}, _('NR (5G) Cells'));
 				nrSection.appendChild(nrHeader);
 				
 				var nrTable = E('table', { 'class': 'table cbi-section-table' });
@@ -1136,7 +1132,7 @@ return view.extend({
 
 	createLockBandTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		var legend = E('legend', {}, _('Lock Band Configuration'));
 		container.appendChild(legend);
 
@@ -1232,14 +1228,12 @@ return view.extend({
 				};
 
 				// Create section for this band class
-				var bandSection = E('div', { 
+				var bandSection = E('fieldset', {
 					'class': 'cbi-section',
 					'style': 'margin-bottom: 20px;'
 				});
 
-				var bandHeader = E('h3', { 
-					'style': 'margin: 10px 0;'
-				}, bandClass);
+				var bandHeader = E('legend', {}, bandClass);
 				bandSection.appendChild(bandHeader);
 
 				// Current locked bands display
@@ -1418,7 +1412,7 @@ return view.extend({
 
 	createRebootModemTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		var legend = E('legend', {}, _('Reboot Modem'));
 		container.appendChild(legend);
 
@@ -1565,13 +1559,13 @@ return view.extend({
 
 	createSimSwitchTab: function(modem) {
 		var self = this;
-		var container = E('fieldset', { 'class': 'cbi-section' });
+		var container = E('fieldset', {'class': 'cbi-section' });
 		container.appendChild(E('legend', {}, _('SIM Switch')));
 		container.appendChild(E('div', { 'class': 'cbi-section-descr' },
 			_('Switch between SIM card slots. Note: Some modems may require a reboot after switching SIM slots.')));
 
 		// Status section - shows support and current slot
-		var statusSection = E('div', { 'class': 'cbi-value' });
+		var statusSection = E('fieldset', {'class': 'cbi-value' });
 		statusSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('SIM Switch Status')));
 		var statusField = E('div', { 'class': 'cbi-value-field' });
 		statusField.appendChild(E('div', { 'class': 'spinning' }, _('Loading...')));

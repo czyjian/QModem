@@ -57,15 +57,6 @@ return baseclass.extend({
 		selectorSection.appendChild(selectorTable);
 		container.appendChild(selectorSection);
 
-		// Title
-		var title = E('h2', { 'name': 'content' }, _('SIM Card SMS Management'));
-		container.appendChild(title);
-
-		// Description
-		var desc = E('div', { 'class': 'cbi-map-descr' }, 
-			_('View and delete SMS messages stored on SIM card. These are raw messages before being processed into conversations.'));
-		container.appendChild(desc);
-
 		// Main content area
 		var contentArea = E('div', { 'id': 'sms-sim-content' });
 		container.appendChild(contentArea);
@@ -145,7 +136,6 @@ return baseclass.extend({
 				_('No messages found on SIM card')));
 		} else {
 			// Create messages list
-			var listDiv = E('div', { 'class': 'cbi-section' });
 			var listFieldset = E('fieldset', { 'class': 'cbi-section' });
 			var listLegend = E('legend', {}, _('SMS Messages on SIM Card'));
 		
@@ -207,12 +197,10 @@ return baseclass.extend({
 
 			table.appendChild(tbody);
 			listFieldset.appendChild(table);
-			listDiv.appendChild(listFieldset);
-			messagesDiv.appendChild(listDiv);
+			messagesDiv.appendChild(listFieldset);
 		}
 
 		// Add summary info
-		var summaryDiv = E('div', { 'class': 'cbi-section' });
 		var summaryFieldset = E('fieldset', { 'class': 'cbi-section' });
 		summaryFieldset.appendChild(E('legend', {}, _('Summary')));
 		
@@ -226,8 +214,7 @@ return baseclass.extend({
 		
 		summaryTable.appendChild(summaryBody);
 		summaryFieldset.appendChild(summaryTable);
-		summaryDiv.appendChild(summaryFieldset);
-		messagesDiv.appendChild(summaryDiv);
+		messagesDiv.appendChild(summaryFieldset);
 
 		// Add action buttons
 		var buttonDiv = E('div', { 'class': 'cbi-page-actions' });

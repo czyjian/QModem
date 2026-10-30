@@ -2541,7 +2541,7 @@ msgstr "查看和删除存储在SIM卡上的短信。这些是处理成会话之
 
 # Source: view/qmodem/sms_sim.js
 msgid "SMS Messages on SIM Card"
-msgstr "SIM卡上的短信"
+msgstr "SIM卡短信"
 
 # Source: view/qmodem/sms_sim.js
 msgid "Index"

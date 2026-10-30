@@ -1,6 +1,7 @@
 'use strict';
 'require view';
 'require form';
+'require qmodem.form-sections as sectionForm';
 'require uci';
 'require rpc';
 'require ui';
@@ -89,13 +90,12 @@ return view.extend({
 	render: function(data) {
 		var m, s, o;
 
-		m = new form.Map('qmodem', _('QModem Settings'),
-			_('Configure modem detection and scanning, the modem device list and slot defaults.'));
+		m = new form.Map('qmodem');
 
 		// ===========================================
 		// Modem Probe Settings
 		// ===========================================
-		s = m.section(form.NamedSection, 'main', 'main', _('Modem Probe Settings'));
+		s = m.section(sectionForm.NamedSection, 'main', 'main', _('Modem Probe Settings'));
 
 		o = s.option(form.Flag, 'at_tool', _('Alternative AT Tools'));
 		o.description = _('If enabled, using alternative AT Tools');
@@ -243,7 +243,7 @@ return view.extend({
 
 
 		// Modem Configuration (Device Settings Only)
-		s = m.section(form.GridSection, 'modem-device', _('Modem Devices'));
+		s = m.section(sectionForm.GridSection, 'modem-device', _('Modem Devices'));
 		s.anonymous = true;
 		s.sortable = true;
 		s.modaltitle = L.bind(function(section_id) {
@@ -426,7 +426,7 @@ return view.extend({
 	// ===========================================
 	// Modem Slot Configuration
 	// ===========================================
-	s = m.section(form.GridSection, 'modem-slot', _('Modem Slot Configuration'));
+	s = m.section(sectionForm.GridSection, 'modem-slot', _('Modem Slot Configuration'));
 	s.description = _('Configure physical slots for modem installation');
 	s.anonymous = false;
 	s.addremove = true;
