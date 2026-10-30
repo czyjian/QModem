@@ -3647,3 +3647,18 @@ msgstr ""
 
 msgid "About number recognition"
 msgstr ""
+
+msgid "%s characters · %s SMS"
+msgstr ""
+
+msgid "Maximum 16 SMS parts exceeded"
+msgstr ""
+
+msgid "Unicode SMS: 70 units for one message, 67 per part for multipart messages. Some emoji use two units."
+msgstr ""
+
+msgid "Mobile Network"
+msgstr ""
+
+msgid "Modem Management"
+msgstr ""

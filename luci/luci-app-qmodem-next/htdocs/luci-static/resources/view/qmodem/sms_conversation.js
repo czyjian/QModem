@@ -4,6 +4,7 @@
 'require ui';
 'require dom';
 'require qmodem.sms as smsService';
+'require qmodem.sms-counter as smsCounter';
 'require qmodem.sms-address as smsAddress';
 
 // Load CSS
@@ -259,7 +260,7 @@ return view.extend({
 			'id': 'sms-encoding',
 			'class': 'cbi-input-select'
 		}, [
-			E('option', { 'value': '7bit' }, _('7-bit (ASCII)')),
+
 			E('option', { 'value': '16bit', 'selected': 'selected' }, _('16-bit (Unicode)'))
 		]);
 		encodingField.appendChild(encodingSelect);
@@ -272,34 +273,15 @@ return view.extend({
 			'class': 'cbi-value',
 			'style': 'font-size: 12px; color: #666;'
 		});
-		var counter = E('span', { 'id': 'sms-char-counter' }, '0/160');
+		var counter = E('span', { 'id': 'sms-char-counter' }, '');
 		counterDiv.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Length')));
 		counterDiv.appendChild(E('div', { 'class': 'cbi-value-field' }, counter));
 		fieldset.appendChild(counterDiv);
 
-		// Update character counter
-		textarea.addEventListener('input', function() {
-			var text = textarea.value;
-			var encoding = encodingSelect.value;
-			var maxLength = encoding === '7bit' ? 160 : 70;
-			var parts = Math.ceil(text.length / maxLength);
-			
-			if (parts > 1) {
-				maxLength = encoding === '7bit' ? 153 : 66;
-				parts = Math.ceil(text.length / maxLength);
-			}
-			
-			counter.textContent = text.length + ' / ' + maxLength + 
-			                      (parts > 1 ? ' (' + parts + ' parts)' : '');
-			
-			if (text.length > maxLength * 5) {
-				counter.style.color = 'red';
-			} else if (parts > 1) {
-				counter.style.color = 'orange';
-			} else {
-				counter.style.color = '#666';
-			}
-		});
+		var updateCounter = function() { smsCounter.update(counter, textarea.value); };
+		textarea.addEventListener('input', updateCounter);
+		encodingSelect.addEventListener('change', updateCounter);
+		updateCounter();
 
 		// Buttons
 		var buttonsDiv = E('div', { 'class': 'cbi-page-actions' });

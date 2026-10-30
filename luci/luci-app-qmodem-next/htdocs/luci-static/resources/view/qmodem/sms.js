@@ -4,6 +4,7 @@
 'require ui';
 'require dom';
 'require qmodem.sms as smsService';
+'require qmodem.sms-counter as smsCounter';
 'require qmodem.sms-address as smsAddress';
 'require qmodem.qmodem as qmodem';
 
@@ -559,7 +560,7 @@ return qmodem.withSmsTabs(view.extend({
 						'id': 'new-conversation-encoding',
 						'class': 'cbi-input-select'
 					}, [
-						E('option', { 'value': '7bit' }, _('7-bit (ASCII)')),
+
 						E('option', { 'value': '16bit', 'selected': 'selected' }, _('16-bit (Unicode)'))
 					])
 				])
@@ -570,7 +571,7 @@ return qmodem.withSmsTabs(view.extend({
 			}, [
 				E('label', { 'class': 'cbi-value-title' }, _('Length')),
 				E('div', { 'class': 'cbi-value-field' }, [
-					E('span', { 'id': 'new-conversation-counter' }, '0/160')
+					E('span', { 'id': 'new-conversation-counter' }, '')
 				])
 			])
 		]);
@@ -647,31 +648,11 @@ return qmodem.withSmsTabs(view.extend({
 		var encodingSelect = document.getElementById('new-conversation-encoding');
 		var counter = document.getElementById('new-conversation-counter');
 
-		var updateCounter = function() {
-			var text = textarea.value;
-			var encoding = encodingSelect.value;
-			var maxLength = encoding === '7bit' ? 160 : 70;
-			var parts = Math.ceil(text.length / maxLength);
-			
-			if (parts > 1) {
-				maxLength = encoding === '7bit' ? 153 : 66;
-				parts = Math.ceil(text.length / maxLength);
-			}
-			
-			counter.textContent = text.length + ' / ' + maxLength + 
-			                      (parts > 1 ? ' (' + parts + ' parts)' : '');
-			
-			if (text.length > maxLength * 5) {
-				counter.style.color = 'red';
-			} else if (parts > 1) {
-				counter.style.color = 'orange';
-			} else {
-				counter.style.color = '#666';
-			}
-		};
+		var updateCounter = function() { smsCounter.update(counter, textarea.value); };
 
 	textarea.addEventListener('input', updateCounter);
 	encodingSelect.addEventListener('change', updateCounter);
+	updateCounter();
 },
 
 loadBackendConfig: function(configSection, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox, smsCountrySelect) {

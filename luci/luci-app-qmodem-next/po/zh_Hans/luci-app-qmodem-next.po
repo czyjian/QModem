@@ -454,7 +454,7 @@ msgstr "每芯片能量与噪声比"
 
 # Source: view/qmodem/config_advanced.js:534
 msgid "Enter exactly 15 digits"
-msgstr "请输入恰好15位数字"
+msgstr "IMEI 应为 15 位数字"
 
 # Source: view/qmodem/sms.js:427
 msgid "Enter phone number"
@@ -718,11 +718,11 @@ msgstr "IMEI配置"
 
 # Source: view/qmodem/config_advanced.js:554
 msgid "IMEI must be exactly 15 digits"
-msgstr "IMEI必须为恰好15位数字"
+msgstr "IMEI 应为 15 位数字"
 
 # Source: view/qmodem/config_advanced.js:559
 msgid "IMEI must contain only numbers"
-msgstr "IMEI只能包含数字"
+msgstr "IMEI 仅支持数字"
 
 # Source: view/qmodem/config_advanced.js:573
 msgid "IMEI set successfully. Please reboot the modem for changes to take effect."
@@ -1662,7 +1662,7 @@ msgstr "查看和管理短信。消息按发件人/收件人分组。"
 
 # Source: view/qmodem/config_advanced.js:486
 msgid "View and modify the modem IMEI number. IMEI must be 15 digits. Changes require modem reboot to take effect."
-msgstr "查看和修改调制解调器IMEI。IMEI必须为15位数字。更改需重启调制解调器生效。"
+msgstr "配置调制解调器 IMEI，格式为 15 位数字。修改后需重启调制解调器生效。"
 
 # Source: vendor/fibocom.sh:372, vendor/foxconn.sh:463, vendor/meig.sh:187, vendor/quectel.sh:313, vendor/sierra.sh:333, vendor/simcom.sh:203, vendor/telit.sh:131
 msgid "Voltage"
@@ -2838,3 +2838,18 @@ msgstr "与 %s 的会话"
 
 msgid "About number recognition"
 msgstr "号码识别说明"
+
+msgid "%s characters · %s SMS"
+msgstr "%s 个字符 · 分 %s 条短信发送"
+
+msgid "Maximum 16 SMS parts exceeded"
+msgstr "超过最多 16 条的分段上限"
+
+msgid "Unicode SMS: 70 units for one message, 67 per part for multipart messages. Some emoji use two units."
+msgstr "Unicode 短信单条可容纳 70 个编码位置，长短信每条 67 个。部分表情占两个位置。"
+
+msgid "Mobile Network"
+msgstr "移动网络"
+
+msgid "Modem Management"
+msgstr "模组管理"

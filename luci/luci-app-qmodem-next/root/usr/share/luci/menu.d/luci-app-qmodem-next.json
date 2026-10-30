@@ -1,6 +1,6 @@
 {
 	"admin/modem": {
-		"title": "Modem",
+		"title": "Mobile Network",
 		"order": 25,
 		"action": {
 			"type": "firstchild"
@@ -10,7 +10,7 @@
 		}
 	},
 	"admin/modem/qmodem": {
-		"title": "QModem",
+		"title": "Modem Management",
 		"order": 10,
 		"action": {
 			"type": "view",
