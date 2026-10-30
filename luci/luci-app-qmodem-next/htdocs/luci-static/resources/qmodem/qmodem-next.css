@@ -41,6 +41,23 @@
 }
 
 /* Lock Band Styles */
+.qmodem-dial-mode-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 5px 0;
+}
+
+.qmodem-dial-mode-option input[type="radio"] {
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.qmodem-dial-mode-option label {
+	margin: 0;
+	line-height: inherit;
+}
+
 .band-container {
 	display: flex;
 	align-items: center;

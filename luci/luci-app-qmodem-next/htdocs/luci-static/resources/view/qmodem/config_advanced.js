@@ -323,9 +323,9 @@ return view.extend({
 				return;
 			}
 
-			var radioContainer = E('div', { 'class': 'cbi-value-field' });
+			var radioContainer = E('div', { 'class': 'qmodem-dial-mode-options' });
 			availableModes.forEach(function(mode) {
-				var radioWrapper = E('div', { 'style': 'margin: 5px 0; display: flex;' });
+				var radioWrapper = E('div', { 'class': 'qmodem-dial-mode-option' });
 				var radio = E('input', {
 					'type': 'radio',
 					'name': 'mode_' + modem.id,
@@ -334,8 +334,7 @@ return view.extend({
 					'checked': mode === currentMode ? 'checked' : null
 				});
 				var label = E('label', {
-					'for': 'mode_' + modem.id + '_' + mode,
-					'style': 'margin-left: 5px;'
+					'for': 'mode_' + modem.id + '_' + mode
 				}, mode.toUpperCase());
 				
 				radioWrapper.appendChild(radio);
