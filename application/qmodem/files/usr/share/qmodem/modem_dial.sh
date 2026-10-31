@@ -12,6 +12,7 @@ log_file="${MODEM_RUNDIR}/${modem_config}_dir/dial_log"
 debug_subject="modem_dial"
 source "${SCRIPT_DIR}/generic.sh"
 source "${SCRIPT_DIR}/cmds/modem_dial.sh"
+[ ! -r "$SCRIPT_DIR/rm500u_ipv6.sh" ] || . "$SCRIPT_DIR/rm500u_ipv6.sh"
 touch $log_file
 
 exec_pre_dial()
@@ -854,12 +855,33 @@ set_if()
             env6="1"
             ;;
     esac
+    if [ "$protov6" = dhcpv6 ] && [ "$bridge_enabled" != 1 ] && [ "$extend_prefix" = 1 ] &&
+       [ -x "${QMODEM_RM500U_PROTO:-/lib/netifd/proto/qmodem_rm500u6.sh}" ] &&
+       command -v rm500u_matches >/dev/null 2>&1 && rm500u_matches "$modem_config"; then
+        protov6=qmodem_rm500u6
+    fi
     if [ "$bridge_enabled" = "1" ]; then
         env4="1"
         env6="0"
     fi
     interface=$(uci -q get network.$interface_name)
     interfacev6=$(uci -q get network.$interface6_name)
+    if [ "$extend_prefix" != 1 ] && command -v rm500u_matches >/dev/null 2>&1 &&
+       rm500u_matches "$modem_config" && uci -q get network.$interface6_name.extendprefix >/dev/null; then
+        uci -q delete network.$interface6_name.extendprefix
+        network_reload_flag=1
+    fi
+    if [ "$env6" = 1 ] && [ -n "$interfacev6" ]; then
+        local old_protov6=$(uci -q get network.$interface6_name.proto)
+        case "$old_protov6:$protov6" in
+            qmodem_rm500u6:*|*:qmodem_rm500u6)
+                if [ "$old_protov6" != "$protov6" ]; then
+                    uci set network.$interface6_name.proto="$protov6"
+                    network_reload_flag=1
+                fi
+                ;;
+        esac
+    fi
     if [ -n "$interface" ] && [ "$(uci -q get network.$interface_name.proto)" != "$proto" ]; then
         uci set network.$interface_name.proto="$proto"
         network_reload_flag=1

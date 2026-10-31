@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'application/qmodem/**'
+      - 'application/qmodem_rm500u_ndppd/**'
       - 'application/libqmodem-sms/**'
       - 'application/qmodem_smsd/**'
       - 'luci/luci-app-qmodem-next/**'
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths:
       - 'application/qmodem/**'
+      - 'application/qmodem_rm500u_ndppd/**'
       - 'application/libqmodem-sms/**'
       - 'application/qmodem_smsd/**'
       - 'luci/luci-app-qmodem-next/**'
@@ -40,10 +42,17 @@ jobs:
                -type f -name '*.sh' -exec sh -n {} +
           sh -n application/qmodem/files/usr/share/qmodem/generic.sh
           sh -n application/qmodem/files/usr/share/qmodem/modem_util.sh
+          sh -n application/qmodem/files/usr/share/qmodem/rm500u_ipv6.sh
+          sh -n application/qmodem/files/usr/share/qmodem/rm500u_ipv6_watch.sh
+          sh -n application/qmodem/files/usr/share/qmodem/rm500u_dhcpv6.script
+          sh -n application/qmodem/files/lib/netifd/proto/qmodem_rm500u6.sh
           sh -n application/qmodem/files/usr/sbin/qmodem_collect
           sh -n application/qmodem/tests/test_core_cmds.sh
           sh -n application/qmodem/tests/test_dial_apn_log.sh
           sh -n application/qmodem/tests/test_dial_ipv6_log.sh
+          sh -n application/qmodem/tests/test_network_service.sh
+          sh -n application/qmodem/tests/test_rm500u_ipv6.sh
+          sh -n application/qmodem/tests/test_rm500u_ipv6_watch.sh
           bash -n application/qmodem/tests/test_ipv6_sourcefilter.sh
           sh -n application/qmodem/tests/test_sms_forwarder_conflicts.sh
           sh -n application/qmodem/tests/test_sms_transport_modes.sh
@@ -60,12 +69,16 @@ jobs:
           application/qmodem/tests/test_core_cmds.sh
           sh application/qmodem/tests/test_dial_apn_log.sh
           sh application/qmodem/tests/test_dial_ipv6_log.sh
+          sh application/qmodem/tests/test_network_service.sh
+          sh application/qmodem/tests/test_rm500u_ipv6.sh
+          sh application/qmodem/tests/test_rm500u_ipv6_watch.sh
           bash application/qmodem/tests/test_ipv6_sourcefilter.sh
           application/qmodem/tests/test_sms_forwarder_conflicts.sh
           application/qmodem/tests/test_sms_transport_modes.sh
           node luci/luci-app-qmodem-next/tests/test_sms_service.js
           node luci/luci-app-qmodem-next/tests/test_neighbor_cell.js
           node luci/luci-app-qmodem-next/tests/test_form_sections.js
+          node luci/luci-app-qmodem-next/tests/test_rm500u_protocol.js
           sh application/qmodem/tests/test_fibocom_neighbor_identity.sh
           make -C application/libqmodem-sms/tests CFLAGS='-O2 -Wall -Wextra -Werror -std=gnu11 -D_GNU_SOURCE'
           application/qmodem/tests/test_fixture_collection_bytes.sh

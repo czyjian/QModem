@@ -8,7 +8,7 @@ include ../../version.mk
 
 LUCI_TITLE:=LuCI Modern UI for QModem
 LUCI_DESCRIPTION:=LuCI modern (JavaScript) interface for QModem.
-LUCI_DEPENDS:=+qmodem +qmodem-smsd +sms-forwarder-next +luci-base
+LUCI_DEPENDS:=+qmodem +qmodem-smsd +sms-forwarder-next +luci-base +luci-proto-ipv6
 LUCI_PKGARCH:=all
 LUCI_MAINTAINER:=Tom <fjrcn@outlook.com>
 

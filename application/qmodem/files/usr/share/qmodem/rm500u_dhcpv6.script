@@ -1,0 +1,14 @@
+#!/bin/sh
+# Used only by qmodem_rm500u6. All other interfaces retain the stock callback.
+SCRIPT_DIR="${QMODEM_HOME:-/usr/share/qmodem}"
+. "$SCRIPT_DIR/rm500u_ipv6.sh"
+cfg=""
+case "${INTERFACE:-}" in
+    ''|*[!A-Za-z0-9_]*) ;;
+    *) cfg=$(uci -q get "network.$INTERFACE.modem_config");;
+esac
+if rm500u_matches "$cfg" && [ "$(uci -q get "qmodem.$cfg.extend_prefix")" = 1 ]; then
+    RA_ADDRESSES=$(printf '%s\n' "${RA_ADDRESSES:-}" | rm500u_normalize_ra)
+    export RA_ADDRESSES
+fi
+exec "${QMODEM_REAL_DHCPV6_SCRIPT:-/lib/netifd/dhcpv6.script}" "$@"

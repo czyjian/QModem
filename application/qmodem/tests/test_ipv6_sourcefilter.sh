@@ -17,6 +17,7 @@ uci() {
     case "$operation" in
         get) [ ! -f "$fixture/$1" ] || cat "$fixture/$1" ;;
         set) printf '%s' "${1#*=}" > "$fixture/${1%%=*}" ;;
+        del|delete) rm -f "$fixture/$1" ;;
         commit) printf '%s\n' "$1" >> "$fixture/commits" ;;
         *) echo "unexpected UCI operation: $operation" >&2; return 1 ;;
     esac
@@ -77,3 +78,31 @@ set_if
 [ "$(uci get network.modem0v6.proto)" = dhcpv6 ]
 
 echo 'PASS: IPv6 source routing default, toggle, new/existing interface and idempotence'
+
+# A dedicated protocol is selected only for RM500U-CN, then removed on a swap.
+. "$package_dir/files/usr/share/qmodem/rm500u_ipv6.sh"
+QMODEM_RM500U_PROTO="$fixture/rm500u-proto"
+printf '#!/bin/sh\n' > "$QMODEM_RM500U_PROTO"
+chmod +x "$QMODEM_RM500U_PROTO"
+manufacturer=quectel platform=unisoc extend_prefix=1
+uci set qmodem.modem0.name=rm500u-cn
+uci set qmodem.modem0.manufacturer=quectel
+uci set qmodem.modem0.platform=unisoc
+set_if
+[ "$(uci get network.modem0v6.proto)" = qmodem_rm500u6 ]
+extend_prefix=0
+set_if
+[ "$(uci get network.modem0v6.proto)" = dhcpv6 ]
+[ ! -e "$fixture/network.modem0v6.extendprefix" ]
+extend_prefix=1
+set_if
+[ "$(uci get network.modem0v6.proto)" = qmodem_rm500u6 ]
+manufacturer=fibocom platform=mediatek
+uci set qmodem.modem0.name=rw350r-gl
+uci set qmodem.modem0.manufacturer=fibocom
+uci set qmodem.modem0.platform=mediatek
+set_if
+[ "$(uci get network.modem0v6.proto)" = dhcpv6 ]
+[ "$(uci get network.modem0.proto)" = static ]
+[ "$(uci get network.modem0v6.sourcefilter)" = 0 ]
+echo 'PASS: RM500U private protocol and RW350R native protocol restoration'
