@@ -53,6 +53,7 @@ jobs:
           sh -n application/qmodem/tests/test_network_service.sh
           sh -n application/qmodem/tests/test_rm500u_ipv6.sh
           sh -n application/qmodem/tests/test_rm500u_ipv6_watch.sh
+          sh -n application/qmodem/tests/test_quectel_scs.sh
           bash -n application/qmodem/tests/test_ipv6_sourcefilter.sh
           sh -n application/qmodem/tests/test_sms_forwarder_conflicts.sh
           sh -n application/qmodem/tests/test_sms_transport_modes.sh
@@ -72,6 +73,7 @@ jobs:
           sh application/qmodem/tests/test_network_service.sh
           sh application/qmodem/tests/test_rm500u_ipv6.sh
           sh application/qmodem/tests/test_rm500u_ipv6_watch.sh
+          sh application/qmodem/tests/test_quectel_scs.sh
           bash application/qmodem/tests/test_ipv6_sourcefilter.sh
           application/qmodem/tests/test_sms_forwarder_conflicts.sh
           application/qmodem/tests/test_sms_transport_modes.sh

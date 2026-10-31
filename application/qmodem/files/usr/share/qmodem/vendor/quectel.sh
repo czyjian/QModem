@@ -1483,6 +1483,42 @@ get_scs()
     echo "$scs"
 }
 
+quectel_scs_target()
+{
+    [ "${platform:-}" = unisoc ] || return 1
+    case "${config_section:-}" in ''|*[!A-Za-z0-9_]*) return 1;; esac
+    [ "$(uci -q get "qmodem.$config_section.name")" = rm500u-cn ]
+}
+
+# Only RM500U-CN uses the corrected layout; preserve other models' conversion.
+quectel_serving_scs()
+{
+    local field
+    if ! quectel_scs_target; then
+        local legacy=$(echo "$1" | awk -F',' '{print $16}')
+        [ "$2" != NR5G-NSA ] || legacy=$(echo "$legacy" | sed 's/\r//g')
+        get_scs "$legacy"
+        return
+    fi
+    case "$2" in
+        NR5G-SA) field=18;;
+        NR5G-NSA) field=12;;
+        *) return;;
+    esac
+    local value=$(printf '%s\n' "$1" | awk -F, -v field="$field" '{gsub(/[[:space:]"]/, "", $field); print $field; exit}')
+    case "$value" in 0|1|2|3|4) get_scs "$value";; esac
+}
+
+quectel_display_scs()
+{
+    [ -n "$1" ] || return
+    if quectel_scs_target; then
+        printf '%s kHz\n' "$1"
+    else
+        printf '%s\n' "$1"
+    fi
+}
+
 #获取物理信道
 # $1:物理信道数字
 get_phych()
@@ -1564,8 +1600,7 @@ cell_info()
         endc_nr_band=$(get_band "NR" $endc_nr_band_num)
         nr_dl_bandwidth_num=$(echo "$nr5g_nsa" | awk -F',' '{print $10}')
         endc_nr_dl_bandwidth=$(get_bandwidth "NR" $nr_dl_bandwidth_num)
-        scs_num=$(echo "$nr5g_nsa" | awk -F',' '{print $16}' | sed 's/\r//g')
-        endc_nr_scs=$(get_scs $scs_num)
+        endc_nr_scs=$(quectel_serving_scs "$nr5g_nsa" NR5G-NSA)
     else
         #SA，LTE，WCDMA模式
         response=$(echo "$response" | grep "+QENG:")
@@ -1632,8 +1667,7 @@ EOF
                 nr_rsrp=$(echo "$response" | awk -F',' '{print $13}')
                 nr_rsrq=$(echo "$response" | awk -F',' '{print $14}')
                 nr_sinr=$(echo "$response" | awk -F',' '{print $15}')
-                nr_scs_num=$(echo "$response" | awk -F',' '{print $16}')
-                nr_scs=$(get_scs $nr_scs_num)
+                nr_scs=$(quectel_serving_scs "$response" NR5G-SA)
                 nr_srxlev=$(echo "$response" | awk -F',' '{print $17}' | sed 's/\r//g')
             ;;
             "LTE"|"CAT-M"|"CAT-NB")
@@ -1689,7 +1723,7 @@ EOF
         set_5g_cell_info "$nr_mcc" "$nr_mnc" "$nr_tac" "$nr_cell_id" "$nr_arfcn" \
             "$nr_physical_cell_id" "$nr_band" "$nr_ul_bandwidth" "$nr_dl_bandwidth" \
             "$nr_rsrp" "$nr_rsrq" "$nr_sinr" "" ""
-        add_plain_info_entry "SCS" "$nr_scs" "SCS"
+        add_plain_info_entry "SCS" "$(quectel_display_scs "$nr_scs")" "SCS"
         add_plain_info_entry "Srxlev" "$nr_srxlev" "Serving Cell Receive Level"
         # Add CA info if present
         if [ -n "$ca_scc_arfcn" ] || [ -n "$ca_scc_pci" ] || [ -n "$ca_scc_band_num" ]; then
@@ -1715,7 +1749,7 @@ EOF
         set_5g_cell_info "$endc_nr_mcc" "$endc_nr_mnc" "" "" "$endc_nr_arfcn" \
             "$endc_nr_physical_cell_id" "$endc_nr_band" "" "$endc_nr_dl_bandwidth" \
             "$endc_nr_rsrp" "$endc_nr_rsrq" "$endc_nr_sinr" "" ""
-        add_plain_info_entry "SCS" "$endc_nr_scs" "SCS"
+        add_plain_info_entry "SCS" "$(quectel_display_scs "$endc_nr_scs")" "SCS"
         ;;
     "LTE Mode")
         add_plain_info_entry "Duplex Mode" "$lte_duplex_mode" "Duplex Mode"
@@ -1776,7 +1810,7 @@ get_current_band()
             "$(echo "$nr5g_nsa" | awk -F',' '{print $4}')" \
             "" \
             "$(get_bandwidth "NR" "$(echo "$nr5g_nsa" | awk -F',' '{print $10}')")" \
-            "$(get_scs "$(echo "$nr5g_nsa" | awk -F',' '{print $16}' | sed 's/\r//g')")"
+            "$(quectel_serving_scs "$nr5g_nsa" NR5G-NSA)"
 
         json_close_array
     else
@@ -1813,7 +1847,7 @@ get_current_band()
                     "$(echo "$response" | awk -F',' '{print $8}')" \
                     "$(get_bandwidth "NR" "$(echo "$ca_response" | grep "+QCAINFO:" | grep "PCC" | awk -F',' '{print $3}' | head -n 1)")" \
                     "$(get_bandwidth "NR" "$(echo "$ca_response" | grep "+QCAINFO:" | grep "PCC" | awk -F',' '{print $3}' | head -n 1)")" \
-                    "$(get_scs "$(echo "$response" | awk -F',' '{print $16}')")"
+                    "$(quectel_serving_scs "$response" NR5G-SA)"
 
                 ca_scc_info=$(echo "$ca_response" | grep "+QCAINFO:" | grep "SCC")
                 while IFS= read -r scc_line; do
