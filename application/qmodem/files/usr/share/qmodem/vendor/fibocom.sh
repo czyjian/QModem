@@ -374,6 +374,15 @@ fibocom_gtact_lock_params()
 {
     local network_prefer_num bands_str
 
+    if fibocom_gtact_requires_rat_fields; then
+        # Removing the last band disables this RAT; never expand it to all bands.
+        bands_str=$(fibocom_normalize_band_list "$umts_bands,$lte_bands,$nr_bands")
+        [ -n "$bands_str" ] || return 1
+        network_prefer_num=$(fibocom_gtact_network_prefer_from_bands)
+        fibocom_gtact_params "$network_prefer_num" "$bands_str"
+        return
+    fi
+
     if [ "$platform" = "mediatek" ] && { [ "$band_class" = "LTE" ] || [ "$band_class" = "NR" ]; }; then
         umts_bands=""
         [ -n "$lte_bands" ] || lte_bands="$ALL_LTE_CODES"
@@ -1195,7 +1204,10 @@ set_lockband_nr()
             ;;
     esac
 
-    gtact_params=$(fibocom_gtact_lock_params)
+    if ! gtact_params=$(fibocom_gtact_lock_params); then
+        res="ERROR: At least one band must remain enabled"
+        return
+    fi
 
     res=$(cmd_gtact_set "$at_port" "$gtact_params")
     set_lockband_command="AT+GTACT=$gtact_params"

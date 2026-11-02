@@ -1351,6 +1351,9 @@ return view.extend({
 						applyBtn.textContent = _('Applying...');
 
 						qmodem.setLockBand(modem.id, params).then(function(result) {
+							var status = result && result.result && result.result.set_lockband;
+							if (typeof status === 'string' && /(^|[\r\n])\s*(?:ERROR\b|\+(?:CME|CMS) ERROR\b)/.test(status))
+								throw new Error(_('Failed to apply lock band configuration'));
 							if (result) {
 								ui.addNotification(null, E('p', _('Lock band configuration applied for %s').format(bandClass)), 'success');
 								// Refresh the display

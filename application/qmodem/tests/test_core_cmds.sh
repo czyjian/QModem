@@ -125,6 +125,24 @@ nr_bands=5041,5078
 GTACT_PARAM2=6
 GTACT_PARAM3=6
 [ "$(fibocom_gtact_params 14 "$nr_bands")" = '14,6,6,5041,5078' ]
+band_class=NR
+nr_bands=5001,5041,5078
+[ "$(fibocom_gtact_lock_params)" = '14,6,6,5001,5041,5078' ]
+lte_bands=101,103
+[ "$(fibocom_gtact_lock_params)" = '17,6,6,101,103,5001,5041,5078' ]
+nr_bands=
+[ "$(fibocom_gtact_lock_params)" = '2,6,6,101,103' ]
+lte_bands=
+nr_bands=5041,5078
+band_class=LTE
+[ "$(fibocom_gtact_lock_params)" = '14,6,6,5041,5078' ]
+nr_bands=
+if fibocom_gtact_lock_params; then
+    echo 'FAIL: empty selection must not enable all RATs' >&2
+    exit 1
+fi
+lte_bands=
+nr_bands=5041,5078
 QMODEM_TESTCASE_MODEL=fm350-gl
 [ "$(fibocom_gtact_params 14 "$nr_bands")" = '14,,,5041,5078' ]
 platform=qualcomm
