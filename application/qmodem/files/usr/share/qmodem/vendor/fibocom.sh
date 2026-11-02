@@ -354,11 +354,20 @@ fibocom_gtact_params()
 
     if [ -z "$bands_str" ]; then
         echo "${network_prefer_num}"
-    elif [ "$rat_count" -gt 1 ]; then
+    elif [ "$rat_count" -gt 1 ] || fibocom_gtact_requires_rat_fields; then
         echo "${network_prefer_num},${GTACT_PARAM2:-6},${GTACT_PARAM3:-3},$bands_str"
     else
         echo "${network_prefer_num},,,$bands_str"
     fi
+}
+
+# RW350R-GL rejects empty preference fields even when selecting a single RAT.
+fibocom_gtact_requires_rat_fields()
+{
+    [ "$platform" = mediatek ] || return 1
+    local model="${QMODEM_TESTCASE_MODEL:-}"
+    [ -n "$model" ] || model=$(uci -q get "qmodem.${config_section}.name" 2>/dev/null)
+    [ "$model" = rw350r-gl ]
 }
 
 fibocom_gtact_lock_params()

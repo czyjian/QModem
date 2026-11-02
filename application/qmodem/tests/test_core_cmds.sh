@@ -63,6 +63,7 @@ cmd_gtcurcar_query() { :; }
 [ "$(fibocom_get_carrier)" = 'garbled' ]
 
 eval "$(get_function fibocom_gtact_params "$FIBOCOM_FILE")"
+eval "$(get_function fibocom_gtact_requires_rat_fields "$FIBOCOM_FILE")"
 eval "$(get_function fibocom_uses_empty_gtact_fields "$FIBOCOM_FILE")"
 eval "$(get_function fibocom_normalize_band_list "$FIBOCOM_FILE")"
 eval "$(get_function fibocom_gtact_network_prefer_from_bands "$FIBOCOM_FILE")"
@@ -116,4 +117,17 @@ scs=
 lockcell_all
 [ "$res" = '/dev/ttyUSB7|1,0,0,2452,221' ]
 
+platform=mediatek
+QMODEM_TESTCASE_MODEL=rw350r-gl
+umts_bands=
+lte_bands=
+nr_bands=5041,5078
+GTACT_PARAM2=6
+GTACT_PARAM3=6
+[ "$(fibocom_gtact_params 14 "$nr_bands")" = '14,6,6,5041,5078' ]
+QMODEM_TESTCASE_MODEL=fm350-gl
+[ "$(fibocom_gtact_params 14 "$nr_bands")" = '14,,,5041,5078' ]
+platform=qualcomm
+QMODEM_TESTCASE_MODEL=fm160-cn
+[ "$(fibocom_gtact_params 14 "$nr_bands")" = '14,,,5041,5078' ]
 echo 'core cmds tests passed'
