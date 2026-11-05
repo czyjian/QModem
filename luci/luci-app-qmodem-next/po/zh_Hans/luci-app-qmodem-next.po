@@ -2982,3 +2982,8 @@ msgstr "使用说明"
 
 msgid "Plugin Settings"
 msgstr "插件设置"
+msgid "Boot Scan Delay"
+msgstr "开机扫描延迟"
+
+msgid "Delay automatic USB and PCIe scans after the scanner is ready, in seconds."
+msgstr "扫描器就绪后延迟执行 USB 和 PCIe 自动扫描，单位为秒。"

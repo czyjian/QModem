@@ -403,6 +403,8 @@ return view.extend({
 				submitButton.textContent = _('Applying...');
 
 				qmodem.setNetworkPrefer(modem.id, selectedNetworks).then(function(result) {
+					if (result && result.result && result.result.success === false)
+						throw new Error(result.result.status || _('Failed to set network preference'));
 					var status = result && result.result && result.result.status;
 					if (typeof status === 'string' && /(^|[\r\n])\s*(?:ERROR|\+(?:CME|CMS) ERROR\b[^\r\n]*)\s*(?:[\r\n]|$)/.test(status))
 						throw new Error(_('Failed to set network preference'));
