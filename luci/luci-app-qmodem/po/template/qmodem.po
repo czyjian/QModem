@@ -610,13 +610,13 @@ msgid "Alias"
 msgstr "别名"
 
 msgid "Alias for the modem, used for identification."
-msgstr "调制解调器的别名，用于标识。"
+msgstr "模组的别名，用于标识。"
 
 msgid "Enter alias name"
 msgstr "输入别名"
 
 msgid "Modem Model"
-msgstr "调制解调器型号"
+msgstr "模组型号"
 
 msgid "PDP Context Index"
 msgstr "PDP上下文序号"
@@ -668,7 +668,7 @@ msgid "AT Port"
 msgstr "AT端口"
 
 msgid "AT command port for modem communication."
-msgstr "用于调制解调器通信的AT命令端口。"
+msgstr "用于模组通信的AT命令端口。"
 
 msgid "Supported Modes"
 msgstr "支持的模式"
@@ -791,7 +791,7 @@ msgid "Lock Band"
 msgstr "锁频段"
 
 msgid "Reboot Modem"
-msgstr "重启调制解调器"
+msgstr "重启模组"
 
 msgid "AT Debug"
 msgstr "AT调试"

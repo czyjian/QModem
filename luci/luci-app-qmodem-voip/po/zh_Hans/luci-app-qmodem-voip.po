@@ -189,7 +189,7 @@ msgstr "条件允许时将自动请求权限。"
 #: qmodem-voip/surface.js:204
 msgid ""
 "Place and receive one modem call. Unsupported hardware remains disabled."
-msgstr "发起或接听一路调制解调器通话。不支持的硬件保持禁用。"
+msgstr "发起或接听一路模组通话。不支持的硬件保持禁用。"
 
 #: view/qmodem-voip/call.js:386
 msgid "RM520N-GL passed the safety probe."
@@ -306,7 +306,7 @@ msgstr "服务状态"
 
 #: view/qmodem-voip/call.js:59
 msgid "Starts modem voice preparation and browser media support."
-msgstr "启动调制解调器语音准备和浏览器媒体支持。"
+msgstr "启动模组语音准备和浏览器媒体支持。"
 
 #: qmodem-voip/reducer.js:180
 msgid "State recovery is in progress. Refreshing the call snapshot."
@@ -338,11 +338,11 @@ msgstr "目标包含不支持的字符。"
 
 #: qmodem-voip/reducer.js:144
 msgid "The modem call command failed."
-msgstr "调制解调器通话命令失败。"
+msgstr "模组通话命令失败。"
 
 #: qmodem-voip/reducer.js:147
 msgid "The modem could not restore its baseline state."
-msgstr "调制解调器无法恢复基线状态。"
+msgstr "模组无法恢复基线状态。"
 
 #: qmodem-voip/reducer.js:153
 msgid "The operation failed."
@@ -387,7 +387,7 @@ msgstr "硬件不支持：通话控制不可用。"
 
 #: qmodem-voip/surface.js:121
 msgid "Use digits and the modem-supported call control characters."
-msgstr "请输入数字和调制解调器支持的通话控制字符。"
+msgstr "请输入数字和模组支持的通话控制字符。"
 
 #: view/qmodem-voip/call.js:389
 msgid "Use the UCI switch below, then Save & Apply."
@@ -403,13 +403,13 @@ msgstr "等待中"
 
 #: view/qmodem-voip/call.js:386
 msgid "Waiting for modem discovery and the read-only safety probe."
-msgstr "正在等待调制解调器发现和只读安全探测。"
+msgstr "正在等待模组发现和只读安全探测。"
 
 #: qmodem-voip/reducer.js:176
 msgid ""
 "Waiting for modem discovery. Call controls will become available when the "
 "modem is ready."
-msgstr "正在等待调制解调器发现。调制解调器就绪后可使用通话控制。"
+msgstr "正在等待模组发现。模组就绪后可使用通话控制。"
 
 #: view/qmodem-voip/call.js:397
 msgid "Withheld number"
@@ -480,7 +480,7 @@ msgstr "时间"
 #~ msgstr "DTMF 控制保留给后续媒体协议。"
 
 #~ msgid "Destination accepted by the modem."
-#~ msgstr "调制解调器已接受目标。"
+#~ msgstr "模组已接受目标。"
 
 #~ msgid "Enabled"
 #~ msgstr "已启用"
@@ -499,4 +499,4 @@ msgstr "时间"
 
 #~ msgid ""
 #~ "Unsupported hardware fails closed. This page controls one modem call."
-#~ msgstr "不支持的硬件将安全关闭。本页面仅控制一个调制解调器通话。"
+#~ msgstr "不支持的硬件将安全关闭。本页面仅控制一个模组通话。"

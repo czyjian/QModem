@@ -104,7 +104,7 @@ msgstr "应用中..."
 
 # Source: view/qmodem/config_advanced.js:564
 msgid "Are you sure you want to change the IMEI to %s? This requires modem reboot."
-msgstr "确定要将IMEI更改为%s吗？这需要重启调制解调器。"
+msgstr "确定要将IMEI更改为%s吗？这需要重启模组。"
 
 # Source: view/qmodem/network_config.js:553
 msgid "Are you sure you want to clear the dial log?"
@@ -112,11 +112,11 @@ msgstr "确定要清除拨号日志吗？"
 
 # Source: view/qmodem/config_advanced.js:1424
 msgid "Are you sure you want to perform a hard reboot? This will power cycle the modem and may cause a longer disconnection."
-msgstr "确定要执行硬重启吗？这将断电重启调制解调器，可能导致更长的断连时间。"
+msgstr "确定要执行硬重启吗？这将断电重启模组，可能导致更长的断连时间。"
 
 # Source: view/qmodem/config_advanced.js:1387
 msgid "Are you sure you want to perform a soft reboot? The modem will restart and may lose connection temporarily."
-msgstr "确定要执行软重启吗？调制解调器将重启，可能暂时断开连接。"
+msgstr "确定要执行软重启吗？模组将重启，可能暂时断开连接。"
 
 # Source: view/qmodem/settings.js:224
 msgid "Associated USB"
@@ -240,15 +240,15 @@ msgstr "配置小区锁定参数。可手动输入值，或从扫描的小区使
 
 # Source: view/qmodem/config_advanced.js:347
 msgid "Configure network preference (5G/4G/3G priority). Changes may require modem restart."
-msgstr "配置网络优先级（5G/4G/3G）。更改可能需要重启调制解调器。"
+msgstr "配置网络优先级（5G/4G/3G）。更改可能需要重启模组。"
 
 # Source: view/qmodem/settings.js:190
 msgid "Configure physical slots for modem installation"
-msgstr "配置调制解调器安装的物理插槽"
+msgstr "配置模组安装的物理插槽"
 
 # Source: view/qmodem/config_advanced.js:205
 msgid "Configure the modem dial mode (QMI/MBIM/ECM/NCM, etc.). Changes require modem reboot to take effect."
-msgstr "配置调制解调器拨号模式（QMI/MBIM/ECM/NCM等）。更改需重启调制解调器生效。"
+msgstr "配置模组拨号模式（QMI/MBIM/ECM/NCM等）。更改需重启模组生效。"
 
 # Source: view/qmodem/debug.js:102
 msgid "Configured Ports"
@@ -376,7 +376,7 @@ msgstr "拨号命令发送成功"
 
 # Source: view/qmodem/network_config.js:167
 msgid "Dial disabled for this modem"
-msgstr "此调制解调器已禁用拨号"
+msgstr "此模组已禁用拨号"
 
 # Source: view/qmodem/network_config.js:88
 msgid "Disable"
@@ -506,7 +506,7 @@ msgstr "加载模式失败：%s"
 
 # Source: view/qmodem/overview.js:314
 msgid "Error loading modem information: %s"
-msgstr "加载调制解调器信息失败：%s"
+msgstr "加载模组信息失败：%s"
 
 # Source: view/qmodem/config_advanced.js:475
 msgid "Error loading network preference: %s"
@@ -646,11 +646,11 @@ msgstr "设置网络优先级失败"
 
 # Source: view/qmodem/network_config.js:63
 msgid "Failed to start QModem Network: "
-msgstr "启动QModem网络失败："
+msgstr "启动移动网络失败："
 
 # Source: view/qmodem/network_config.js:84
 msgid "Failed to stop QModem Network: "
-msgstr "停止QModem网络失败："
+msgstr "停止移动网络失败："
 
 # Source: view/qmodem/settings.js:221
 msgid "For 5G modules using the Ethernet PHY connection, please specify the network interface name (e.g., eth0, eth1)"
@@ -710,7 +710,7 @@ msgstr "硬重启"
 
 # Source: view/qmodem/config_advanced.js:1433
 msgid "Hard reboot initiated successfully. The modem is restarting..."
-msgstr "硬重启已启动。调制解调器正在重启..."
+msgstr "硬重启已启动。模组正在重启..."
 
 # Source: view/qmodem/config_advanced.js:482
 msgid "IMEI Configuration"
@@ -726,7 +726,7 @@ msgstr "IMEI 仅支持数字"
 
 # Source: view/qmodem/config_advanced.js:573
 msgid "IMEI set successfully. Please reboot the modem for changes to take effect."
-msgstr "IMEI设置成功。请重启调制解调器使更改生效。"
+msgstr "IMEI设置成功。请重启模组使更改生效。"
 
 # Source: view/qmodem/network_config.js:180
 # Source: view/qmodem/network_config.js:339
@@ -745,7 +745,7 @@ msgstr "IPv6"
 
 # Source: view/qmodem/settings.js:58
 msgid "If enabled, the modem auto scan will be blocked."
-msgstr "启用后，将阻止调制解调器自动扫描。"
+msgstr "启用后，将阻止模组自动扫描。"
 
 # Source: view/qmodem/settings.js:48
 msgid "If enabled, using alternative AT Tools"
@@ -841,7 +841,7 @@ msgstr "正在加载消息..."
 
 # Source: view/qmodem/overview.js:241
 msgid "Loading modem information..."
-msgstr "正在加载调制解调器信息..."
+msgstr "正在加载模组信息..."
 
 # Source: view/qmodem/config_advanced.js:1350
 msgid "Loading reboot capabilities..."
@@ -881,7 +881,7 @@ msgstr "锁定小区配置已成功应用"
 
 # Source: view/qmodem/config_advanced.js:1058
 msgid "Lock modem to specific frequency bands. Select bands for each network type (UMTS/LTE/NR)."
-msgstr "将调制解调器锁定至特定频段。为每种网络类型（UMTS/LTE/NR）选择频段。"
+msgstr "将模组锁定至特定频段。为每种网络类型（UMTS/LTE/NR）选择频段。"
 
 # Source: view/qmodem/config_advanced.js:1164
 msgid "Locked Bands"
@@ -921,7 +921,7 @@ msgstr "移动网络码"
 
 # Source: view/qmodem/config_advanced.js:256
 msgid "Mode set successfully. Please reboot the modem."
-msgstr "模式设置成功。请重启调制解调器。"
+msgstr "模式设置成功。请重启模组。"
 
 # Source: vendor/gosuncn.sh:133
 msgid "Model"
@@ -933,35 +933,35 @@ msgstr "型号名称"
 
 # Source: view/qmodem/network_config.js:129
 msgid "Modem Alias"
-msgstr "调制解调器别名"
+msgstr "模组别名"
 
 # Source: view/qmodem/settings.js:156
 msgid "Modem Device"
-msgstr "调制解调器设备"
+msgstr "模组设备"
 
 # Source: view/qmodem/settings.js:150
 msgid "Modem Devices"
-msgstr "调制解调器设备"
+msgstr "模组设备"
 
 # Source: view/qmodem/network_config.js:123
 msgid "Modem Model"
-msgstr "调制解调器型号"
+msgstr "模组型号"
 
 # Source: view/qmodem/config_advanced.js:27, view/qmodem/debug.js:27, view/qmodem/overview.js:334, view/qmodem/sms.js:65, view/qmodem/sms_conversation.js:83
 msgid "Modem Name"
-msgstr "调制解调器名称"
+msgstr "模组名称"
 
 # Source: generic.sh:385
 msgid "Modem Offline"
-msgstr "调制解调器离线"
+msgstr "模组离线"
 
 # Source: view/qmodem/settings.js:45
 msgid "Modem Probe Settings"
-msgstr "调制解调器探测设置"
+msgstr "模组探测设置"
 
 # Source: view/qmodem/settings.js:189
 msgid "Modem Slot Configuration"
-msgstr "调制解调器插槽配置"
+msgstr "模组插槽配置"
 
 # Source: qmodem/sms.js:221
 msgid "Monday"
@@ -1033,11 +1033,11 @@ msgstr "否"
 
 # Source: view/qmodem/config_advanced.js:1103
 msgid "No bands available for this modem"
-msgstr "此调制解调器无可用频段"
+msgstr "此模组无可用频段"
 
 # Source: view/qmodem/config_advanced.js:128
 msgid "No features available for this modem."
-msgstr "此调制解调器无可用功能。"
+msgstr "此模组无可用功能。"
 
 # Source: view/qmodem/network_config.js:502
 msgid "No log available"
@@ -1057,11 +1057,11 @@ msgstr "此会话中无消息"
 
 # Source: view/qmodem/config_advanced.js:15, view/qmodem/debug.js:15
 msgid "No modem configured."
-msgstr "未配置调制解调器。"
+msgstr "未配置模组。"
 
 # Source: view/qmodem/overview.js:324, view/qmodem/sms.js:56, view/qmodem/sms_conversation.js:73
 msgid "No modems configured or all modems are disabled."
-msgstr "未配置调制解调器或所有调制解调器均已禁用。"
+msgstr "未配置模组或所有模组均已禁用。"
 
 # Source: view/qmodem/config_advanced.js:306
 msgid "No modes available"
@@ -1069,7 +1069,7 @@ msgstr "无可用模式"
 
 # Source: view/qmodem/config_advanced.js:874
 msgid "No neighbor cells found. Make sure the modem has network signal."
-msgstr "未找到邻区小区。请确保调制解调器有网络信号。"
+msgstr "未找到邻区小区。请确保模组有网络信号。"
 
 # Source: view/qmodem/config_advanced.js:445
 msgid "No network types available"
@@ -1077,7 +1077,7 @@ msgstr "无可用网络类型"
 
 # Source: view/qmodem/config_advanced.js:1374
 msgid "No reboot methods available for this modem"
-msgstr "此调制解调器无可用重启方法"
+msgstr "此模组无可用重启方法"
 
 # Source: view/qmodem/debug.js:202
 msgid "No response received"
@@ -1226,7 +1226,7 @@ msgstr "电源GPIO"
 
 # Source: view/qmodem/config_advanced.js:1467
 msgid "Power cycles the modem completely. Takes longer but ensures a full restart."
-msgstr "完全断电重启调制解调器。耗时较长，但确保完全重启。"
+msgstr "完全断电重启模组。耗时较长，但确保完全重启。"
 
 # Source: vendor/fibocom.sh:1514, vendor/huawei.sh:577, vendor/meig.sh:624, vendor/neoway.sh:754, vendor/quectel.sh:1741, vendor/simcom.sh:1003
 msgid "Primary Scrambling Code"
@@ -1238,15 +1238,15 @@ msgstr "QModem配置"
 
 # Source: view/qmodem/network_config.js:36
 msgid "QModem Network"
-msgstr "QModem网络"
+msgstr "移动网络"
 
 # Source: view/qmodem/network_config.js:59
 msgid "QModem Network started successfully"
-msgstr "QModem网络已成功启动"
+msgstr "移动网络已成功启动"
 
 # Source: view/qmodem/network_config.js:80
 msgid "QModem Network stopped successfully"
-msgstr "QModem网络已成功停止"
+msgstr "移动网络已成功停止"
 
 # Source: view/qmodem/settings.js:40
 # Source: view/qmodem/settings.js
@@ -1279,7 +1279,7 @@ msgstr "重拨"
 
 # Source: view/qmodem/config_advanced.js:112, view/qmodem/config_advanced.js:1336
 msgid "Reboot Modem"
-msgstr "重启调制解调器"
+msgstr "重启模组"
 
 # Source: view/qmodem/config_advanced.js:1345
 msgid "Reboot Options"
@@ -1287,7 +1287,7 @@ msgstr "重启选项"
 
 # Source: view/qmodem/config_advanced.js:1340
 msgid "Reboot the modem device. Soft reboot restarts the modem firmware, hard reboot power cycles the modem."
-msgstr "重启调制解调器设备。软重启重启固件，硬重启断电重启。"
+msgstr "重启模组设备。软重启重启固件，硬重启断电重启。"
 
 # Source: view/qmodem/config_advanced.js:1392, view/qmodem/config_advanced.js:1429
 msgid "Rebooting..."
@@ -1331,7 +1331,7 @@ msgstr "响应"
 
 # Source: view/qmodem/config_advanced.js:1460
 msgid "Restarts the modem firmware without power cycling. Faster but may not resolve all issues."
-msgstr "重启调制解调器固件而不断电。更快，但可能无法解决所有问题。"
+msgstr "重启模组固件而不断电。更快，但可能无法解决所有问题。"
 
 # Source: vendor/fibocom.sh:431, vendor/foxconn.sh:306, vendor/gosuncn.sh:134, vendor/huawei.sh:277, vendor/meig.sh:237, vendor/neoway.sh:160, vendor/quectel.sh:362, vendor/sierra.sh:214, vendor/simcom.sh:244, vendor/telit.sh:163
 msgid "Revision"
@@ -1417,7 +1417,7 @@ msgstr "手动扫描USB"
 
 # Source: view/qmodem/config_advanced.js:639
 msgid "Scan neighboring cell towers and lock modem to specific cell. You can scan for nearby cells and then lock to a specific cell by copying its parameters."
-msgstr "扫描邻区基站并将调制解调器锁定至特定小区。可扫描附近小区，然后通过复制其参数锁定至特定小区。"
+msgstr "扫描邻区基站并将模组锁定至特定小区。可扫描附近小区，然后通过复制其参数锁定至特定小区。"
 
 # Source: view/qmodem/settings.js:81, view/qmodem/settings.js:104, view/qmodem/settings.js:127
 msgid "Scanning"
@@ -1525,7 +1525,7 @@ msgstr "软重启"
 
 # Source: view/qmodem/config_advanced.js:1396
 msgid "Soft reboot initiated successfully. The modem is restarting..."
-msgstr "软重启已启动。调制解调器正在重启..."
+msgstr "软重启已启动。模组正在重启..."
 
 # Source: vendor/fibocom.sh:1523, vendor/huawei.sh:586, vendor/quectel.sh:1750
 msgid "Speech Code"
@@ -1662,7 +1662,7 @@ msgstr "查看和管理短信。消息按发件人/收件人分组。"
 
 # Source: view/qmodem/config_advanced.js:486
 msgid "View and modify the modem IMEI number. IMEI must be 15 digits. Changes require modem reboot to take effect."
-msgstr "配置调制解调器 IMEI，格式为 15 位数字。修改后需重启调制解调器生效。"
+msgstr "配置模组 IMEI，格式为 15 位数字。修改后需重启模组生效。"
 
 # Source: vendor/fibocom.sh:372, vendor/foxconn.sh:463, vendor/meig.sh:187, vendor/quectel.sh:313, vendor/sierra.sh:333, vendor/simcom.sh:203, vendor/telit.sh:131
 msgid "Voltage"
@@ -1690,7 +1690,7 @@ msgstr "昨天"
 
 # Source: view/qmodem
 msgid "Modem"
-msgstr "调制解调器"
+msgstr "模组"
 
 # Source: view/qmodem
 msgid "QModem"
@@ -1706,7 +1706,7 @@ msgstr "网络配置"
 
 # Source: view/qmodem/config_advanced.js
 msgid "Advanced Modem Config"
-msgstr "高级调制解调器配置"
+msgstr "高级模组配置"
 
 # Source: view/qmodem/network_config.js:364, view/qmodem/network_config.js:441
 msgid "A1 (AT)"
@@ -1734,7 +1734,7 @@ msgstr "注意：启用此选项将使其成为IPv6 RA主设备，且仅能配�
 
 # Source: view/qmodem/network_config.js:311
 msgid "Caution: Only avalible for quectel sdx 5G Modem."
-msgstr "注意：仅适用于高通SDX 5G调制解调器。"
+msgstr "注意：仅适用于高通SDX 5G模组。"
 
 # Source: view/qmodem/network_config.js:373, view/qmodem/network_config.js:450
 msgid "Celcom (MY)"
@@ -1782,11 +1782,11 @@ msgstr "E-Plus (DE)"
 
 # Source: view/qmodem/network_config.js:166, view/qmodem/network_config.js:769
 msgid "Failed to disable QModem Network: "
-msgstr "禁用QModem网络失败："
+msgstr "禁用移动网络失败："
 
 # Source: view/qmodem/network_config.js:147, view/qmodem/network_config.js:750
 msgid "Failed to enable QModem Network: "
-msgstr "启用QModem网络失败："
+msgstr "启用移动网络失败："
 
 # Source: view/qmodem/network_config.js:304
 msgid "Force Set APN"
@@ -1842,11 +1842,11 @@ msgstr "跃点数"
 
 # Source: view/status/include/11_modem.js:19
 msgid "Modem Info"
-msgstr "调制解调器信息"
+msgstr "模组信息"
 
 # Source: view/qmodem/settings.js:243
 msgid "Modem Slot"
-msgstr "调制解调器插槽"
+msgstr "模组插槽"
 
 # Source: view/qmodem/network_config.js:392
 msgid "MsChapV2"
@@ -1858,7 +1858,7 @@ msgstr "无"
 
 # Source: view/status/include/11_modem.js:51, view/status/include/11_modem.js:88, view/status/include/11_modem.js:120
 msgid "No modem information available"
-msgstr "无调制解调器信息"
+msgstr "无模组信息"
 
 # Source: view/qmodem/network_config.js:329
 msgid "Once checking, the prefix will be apply to lan zone"
@@ -1886,11 +1886,11 @@ msgstr "物理插槽标识符（例如：USB为1-1.4，PCIe为0000:01:00.0）"
 
 # Source: view/qmodem/network_config.js:162, view/qmodem/network_config.js:765
 msgid "QModem Network disabled successfully"
-msgstr "QModem网络已成功禁用"
+msgstr "移动网络已成功禁用"
 
 # Source: view/qmodem/network_config.js:143, view/qmodem/network_config.js:746
 msgid "QModem Network enabled successfully"
-msgstr "QModem网络已成功启用"
+msgstr "移动网络已成功启用"
 
 # Source: view/qmodem/network_config.js:322
 msgid "RA Master"
@@ -1970,7 +1970,7 @@ msgstr "例如"
 
 # Source: view/qmodem/settings.js:201
 msgid "enable modem soft reboot"
-msgstr "启用调制解调器软重启"
+msgstr "启用模组软重启"
 
 # Source: view/qmodem/network_config.js:317
 msgid "quectel-CM will append the DNS server to the resolv.conf file by default.if you do not want to modify the resolv.conf file, please check this option."
@@ -1982,11 +1982,11 @@ msgstr "短信转发配置"
 
 # Source: view/qmodem/settings.js:326
 msgid "GPIO Value(Modem Power Down)"
-msgstr "GPIO值（调制解调器断电）"
+msgstr "GPIO值（模组断电）"
 
 # Source: view/qmodem/settings.js:331
 msgid "GPIO Value(Modem Power Up)"
-msgstr "GPIO值（调制解调器通电）"
+msgstr "GPIO值（模组通电）"
 
 # Source: view/qmodem/sms_forward.js:66
 msgid "PushDeer"
@@ -2050,11 +2050,11 @@ msgstr "拨号前延迟"
 
 # Source: view/qmodem/network_config.js:141, view/qmodem/network_config.js:794
 msgid "Failed to restart QModem Network: "
-msgstr "重启QModem网络失败："
+msgstr "重启移动网络失败："
 
 # Source: view/qmodem/network_config.js:137, view/qmodem/network_config.js:790
 msgid "QModem Network restarted successfully"
-msgstr "QModem网络已成功重启"
+msgstr "移动网络已成功重启"
 
 # Source: view/qmodem/network_config.js:145, view/qmodem/network_config.js:798
 msgid "Restart"
@@ -2102,7 +2102,7 @@ msgstr "配置 API 设置"
 
 # Source: view/qmodem/sms_forward.js:39
 msgid "Configure SMS forwarding instances for different modems and services"
-msgstr "为不同调制解调器和服务配置短信转发实例"
+msgstr "为不同模组和服务配置短信转发实例"
 
 # Source: view/qmodem/sms_forward.js:21
 msgid "Configure SMS forwarding to various notification services"
@@ -2182,7 +2182,7 @@ msgstr "消息通道，使用 | 分隔多个通道"
 
 # Source: view/qmodem/sms_forward.js:49
 msgid "Modem Config"
-msgstr "调制解调器配置"
+msgstr "模组配置"
 
 # Source: vendor/fibocom.sh:566, vendor/foxconn.sh:314, vendor/meig.sh:380, vendor/neoway.sh:287, vendor/quectel.sh:504, vendor/sierra.sh:222, vendor/simcom.sh:340, vendor/telit.sh:258
 msgid "Network Information"
@@ -2378,7 +2378,7 @@ msgstr "SIM卡切换"
 
 # Source: view/qmodem/sim_switch.js
 msgid "Switch between SIM card slots. Note: Some modems may require a reboot after switching SIM slots."
-msgstr "在SIM卡槽之间切换。注意：某些调制解调器在切换SIM卡槽后可能需要重启。"
+msgstr "在SIM卡槽之间切换。注意：某些模组在切换SIM卡槽后可能需要重启。"
 
 # Source: view/qmodem/sim_switch.js
 msgid "SIM Switch Status"
@@ -2422,7 +2422,7 @@ msgstr "SIM卡槽2"
 
 # Source: view/qmodem/sim_switch.js
 msgid "This modem does not support SIM switching."
-msgstr "此调制解调器不支持SIM卡切换。"
+msgstr "此模组不支持SIM卡切换。"
 
 # Source: view/qmodem/sim_switch.js
 msgid "Note"
@@ -2430,7 +2430,7 @@ msgstr "注意"
 
 # Source: vendor/huawei.sh
 msgid "Huawei Modem does not support querying SIM slot capabilities via AT commands.Slot display may be incorrect."
-msgstr "华为调制解调器不支持通过AT命令查询SIM卡槽功能，卡槽显示可能不正确。"
+msgstr "华为模组不支持通过AT命令查询SIM卡槽功能，卡槽显示可能不正确。"
 
 # Source: view/qmodem/sim_switch.js
 msgid "Switching SIM slot..."
@@ -2442,11 +2442,11 @@ msgstr "SIM卡槽已成功切换到卡槽%s。"
 
 # Source: view/qmodem/sim_switch.js
 msgid "Note: Some modems may require a reboot for the change to take effect."
-msgstr "注意：某些调制解调器可能需要重启才能使更改生效。"
+msgstr "注意：某些模组可能需要重启才能使更改生效。"
 
 # Source: view/qmodem/sim_switch.js
 msgid "Failed to switch SIM slot. Please check modem status."
-msgstr "切换SIM卡槽失败。请检查调制解调器状态。"
+msgstr "切换SIM卡槽失败。请检查模组状态。"
 
 # Source: view/qmodem/sim_switch.js
 msgid "Error switching SIM slot: %s"
@@ -2782,19 +2782,19 @@ msgstr "没有可删除的短信"
 
 # Source: view/qmodem/config_advanced.js
 msgid "Per-modem settings: dial mode, SIM switch, network preference, IMEI, band locking and more."
-msgstr "按调制解调器设置拨号模式、SIM卡切换、网络优先级、IMEI、锁定频段等。"
+msgstr "按模组设置拨号模式、SIM卡切换、网络优先级、IMEI、锁定频段等。"
 
 # Source: view/qmodem/debug.js
 msgid "Send AT commands to the modem and view the responses."
-msgstr "向调制解调器发送 AT 命令并查看响应。"
+msgstr "向模组发送 AT 命令并查看响应。"
 
 # Source: view/qmodem/network_config.js
 msgid "Manage the QModem network service and the dial settings of each modem."
-msgstr "管理 QModem 网络服务及各调制解调器的拨号设置。"
+msgstr "管理 移动网络服务及各模组的拨号设置。"
 
 # Source: view/qmodem/settings.js
 msgid "Configure modem detection and scanning, the modem device list and slot defaults."
-msgstr "配置调制解调器的探测与扫描、设备列表及插槽默认值。"
+msgstr "配置模组的探测与扫描、设备列表及插槽默认值。"
 
 msgid "Automatic (SIM home country)"
 msgstr "自动（SIM 卡归属地）"

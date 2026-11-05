@@ -9,7 +9,7 @@
 
 document.head.appendChild(E('link', {
 	'rel':'stylesheet',
-	'href':L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v='+L.env.resource_version+'&' : '?') + 'layout=traffic-chart-3'
+	'href':L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v='+L.env.resource_version+'&' : '?') + 'layout=traffic-chart-4'
 }));
 
 return view.extend({

@@ -420,7 +420,7 @@
 }
 
 .qmodem-traffic-page,
-.qmodem-traffic-page :is(td, p, legend, input, select, button, .cbi-value-title, .cbi-value-field) {
+.qmodem-traffic-page :is(td, p, input, select, button, .cbi-value-title, .cbi-value-field) {
 	font-size: var(--text-sm, inherit);
 	line-height: var(--text-sm--line-height, normal);
 }

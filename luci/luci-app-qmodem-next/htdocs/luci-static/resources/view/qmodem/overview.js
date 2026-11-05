@@ -383,7 +383,10 @@ return view.extend({
 				for (var key in copyrightInfo) {
 					if (key === 'Maintainer')
 						continue;
-					copyrightText.push((key === 'Author' ? '原作者' : _(key)) + ': ' + copyrightInfo[key]);
+					var value = copyrightInfo[key];
+					if (key === 'Vendor' && typeof value === 'string')
+						value = value.charAt(0).toUpperCase() + value.slice(1);
+					copyrightText.push((key === 'Author' ? '原作者' : _(key)) + ': ' + value);
 				}
 				copyrightText.push('修改: czyjian <czyjian@gmail.com>');
 				copyrightElement.textContent = copyrightText.join(' | ');
@@ -524,7 +527,7 @@ return view.extend({
 			'style': 'display: none; padding: 5px;'
 		}, _('Loading modem information...'));
 		var updateTimeDiv = E('div', { 
-			'style': 'text-align: right; padding: 5px;',
+			'style': 'text-align: right; padding: 5px; color: var(--muted-foreground, #888);',
 			'id': 'update_time_display'
 		}, _('Last update') + ': -');
 		var trafficInline = E('div', { 'class': 'qmodem-overview-traffic' });

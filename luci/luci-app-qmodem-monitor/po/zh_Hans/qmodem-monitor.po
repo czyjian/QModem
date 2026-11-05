@@ -10,7 +10,7 @@ msgstr "QModem 监控配置"
 
 #: view/qmodem/monitor.js
 msgid "Configure monitoring methods and actions for modem connectivity."
-msgstr "配置调制解调器连接的监控方式和动作。"
+msgstr "配置模组连接的监控方式和动作。"
 
 #: view/qmodem/monitor.js
 msgid "Global Monitor Settings"
@@ -78,7 +78,7 @@ msgstr "重启监控失败："
 
 #: view/qmodem/monitor.js
 msgid "Modem Monitor Configuration"
-msgstr "调制解调器监控配置"
+msgstr "模组监控配置"
 
 #: view/qmodem/monitor.js
 msgid "Monitor Configuration"
@@ -86,7 +86,7 @@ msgstr "监控配置"
 
 #: view/qmodem/monitor.js
 msgid "Modem"
-msgstr "调制解调器"
+msgstr "模组"
 
 #: view/qmodem/monitor.js
 msgid "Enable"
@@ -182,7 +182,7 @@ msgstr "发送AT命令"
 
 #: view/qmodem/monitor.js
 msgid "Send AT commands to modem"
-msgstr "向调制解调器发送AT命令"
+msgstr "向模组发送AT命令"
 
 #: view/qmodem/monitor.js
 msgid "Run Scripts"

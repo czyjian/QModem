@@ -55,7 +55,7 @@ msgid "Uplinks"
 msgstr "上行链路"
 
 msgid "Cellular"
-msgstr "蜂窝网络"
+msgstr "移动网络"
 
 msgid "Interface or modem instance"
 msgstr "网络接口或模组实例"

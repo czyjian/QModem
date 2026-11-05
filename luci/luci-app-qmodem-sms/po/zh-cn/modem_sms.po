@@ -123,10 +123,10 @@ msgid "Delete After Forward"
 msgstr "转发后删除"
 
 msgid "Delete SMS messages from modem after successful forwarding"
-msgstr "转发成功后从调制解调器中删除短信"
+msgstr "转发成功后从模组中删除短信"
 
 msgid "Delete SMS messages from modem after successful forwarding. This helps keep the modem's SMS storage clean but messages will be permanently removed."
-msgstr "转发成功后从调制解调器中删除短信。这有助于保持调制解调器的短信存储空间整洁，但短信将被永久删除。"
+msgstr "转发成功后从模组中删除短信。这有助于保持模组的短信存储空间整洁，但短信将被永久删除。"
 
 msgid "PushDeer Push Key from http://pushdeer.com"
 msgstr "从 http://pushdeer.com 获取的推送密钥"
@@ -174,13 +174,13 @@ msgid "Set the logging verbosity level for the SMS daemon."
 msgstr "设置短信守护进程的日志详细级别。"
 
 msgid "Configure multiple SMS forward instances. Each instance can monitor a different modem port and forward to different APIs."
-msgstr "配置多个短信转发实例。每个实例可以监控不同的调制解调器端口并转发到不同的API。"
+msgstr "配置多个短信转发实例。每个实例可以监控不同的模组端口并转发到不同的API。"
 
 msgid "Enable"
 msgstr "启用"
 
 msgid "Modem Port"
-msgstr "调制解调器端口"
+msgstr "模组端口"
 
 msgid "Poll Interval"
 msgstr "轮询间隔"
