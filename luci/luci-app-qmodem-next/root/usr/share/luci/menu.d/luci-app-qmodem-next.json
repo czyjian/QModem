@@ -6,7 +6,9 @@
 			"type": "firstchild"
 		},
 		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
+			"acl": [
+				"luci-app-qmodem-next"
+			]
 		}
 	},
 	"admin/modem/qmodem": {
@@ -17,7 +19,9 @@
 			"path": "qmodem/overview"
 		},
 		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
+			"acl": [
+				"luci-app-qmodem-next"
+			]
 		}
 	},
 	"admin/modem/qmodem/overview": {
@@ -38,15 +42,15 @@
 	},
 	"admin/modem/qmodem/debug": {
 		"title": "AT Debug",
-		"order": 3,
+		"order": 5,
 		"action": {
 			"type": "view",
 			"path": "qmodem/debug"
 		}
 	},
 	"admin/modem/qmodem/config_advanced": {
-		"title": "Advanced Modem Config",
-		"order": 4,
+		"title": "Advanced Configuration",
+		"order": 6,
 		"action": {
 			"type": "view",
 			"path": "qmodem/config_advanced"
@@ -54,13 +58,15 @@
 	},
 	"admin/modem/qmodem/sms": {
 		"title": "SMS Messages",
-		"order": 5,
+		"order": 3,
 		"action": {
 			"type": "view",
 			"path": "qmodem/sms"
 		},
 		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
+			"acl": [
+				"luci-app-qmodem-next"
+			]
 		}
 	},
 	"admin/modem/qmodem/sms/conversation/*": {
@@ -69,12 +75,22 @@
 			"path": "qmodem/sms_conversation"
 		},
 		"depends": {
-			"acl": [ "luci-app-qmodem-next" ]
+			"acl": [
+				"luci-app-qmodem-next"
+			]
+		}
+	},
+	"admin/modem/qmodem/traffic": {
+		"title": "Traffic Monitor",
+		"order": 4,
+		"action": {
+			"type": "view",
+			"path": "qmodem/traffic"
 		}
 	},
 	"admin/modem/qmodem/settings": {
-		"title": "QModem Settings",
-		"order": 9,
+		"title": "Plugin Settings",
+		"order": 7,
 		"action": {
 			"type": "view",
 			"path": "qmodem/settings"

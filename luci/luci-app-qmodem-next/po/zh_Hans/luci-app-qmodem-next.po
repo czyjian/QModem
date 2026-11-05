@@ -2853,3 +2853,132 @@ msgstr "移动网络"
 
 msgid "Modem Management"
 msgstr "模组管理"
+
+msgid "Traffic Monitor"
+msgstr "流量监控"
+
+msgid "Recording since"
+msgstr "统计起始时间"
+
+msgid "Download and upload trends"
+msgstr "上传与下载趋势"
+
+msgid "Solid line: download · Dashed line: upload"
+msgstr "实线：下载 · 虚线：上传"
+
+msgid "Traffic monitoring is disabled."
+msgstr "流量监控已关闭。"
+
+msgid "Waiting for the first traffic sample..."
+msgstr "正在等待首次流量采样…"
+
+msgid "Current download / upload"
+msgstr "当前下载／上传速度"
+
+msgid "Current billing cycle"
+msgstr "本周期流量"
+
+msgid "Total recorded traffic"
+msgstr "累计流量"
+
+msgid "Billing cycle starts"
+msgstr "本周期起始时间"
+
+msgid "Traffic threshold"
+msgstr "流量阈值"
+
+msgid "Not set"
+msgstr "未设置"
+
+msgid "Traffic usage has reached the configured threshold."
+msgstr "本周期流量已达到设定阈值。"
+
+msgid "Traffic samples are stale. Check the monitoring service."
+msgstr "流量采样未更新，请检查监控服务。"
+
+msgid "No modems configured."
+msgstr "尚未配置模组。"
+
+msgid "Enter valid traffic settings."
+msgstr "请输入有效的流量设置。"
+
+msgid "Failed to save traffic settings."
+msgstr "流量设置保存失败。"
+
+msgid "Real-time speed"
+msgstr "实时网速"
+
+msgid "Daily traffic"
+msgstr "每日流量"
+
+msgid "Monthly traffic"
+msgstr "每月流量"
+
+msgid "Month"
+msgstr "月份"
+
+msgid "Traffic settings"
+msgstr "流量设置"
+
+msgid "Enable traffic monitoring"
+msgstr "启用流量监控"
+
+msgid "Monthly reset day"
+msgstr "每月重置日期"
+
+msgid "Reset time"
+msgstr "重置时间"
+
+msgid "Cycle threshold (GB)"
+msgstr "周期流量阈值（GB）"
+
+msgid "Upload and download are combined. 1 GB = 1,000,000,000 bytes; 0 disables the threshold. Reset dates beyond the end of a month use its last day."
+msgstr "按上传与下载合计统计。1 GB = 1,000,000,000 字节；阈值为 0 时不提醒。重置日期超出当月天数时，采用当月最后一天。"
+
+msgid "IPv4 and IPv6 devices are counted together without counting a shared device twice. History survives billing resets. Router counters may differ from carrier billing."
+msgstr "合计统计 IPv4 和 IPv6 网卡，共用网卡仅计一次。周期重置不删除历史记录，统计结果可能与运营商账单存在差异。"
+
+msgid "Samples are collected every 10 seconds and saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes. Daily history: 400 days; monthly history: 24 months."
+msgstr "每 10 秒采样，每 15 分钟及正常关机时保存。突然断电可能丢失最近 15 分钟的数据。每日记录保留 400 天，每月记录保留 24 个月。"
+
+msgid "View traffic trends and settings"
+msgstr "查看流量趋势与设置"
+
+msgid "Traffic monitoring service is unavailable."
+msgstr "流量监控服务不可用。"
+
+msgid "Speed refreshes every second; charts update every 10 seconds. Records are saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes. Daily history: 400 days; monthly history: 24 months."
+msgstr "网速每秒刷新，趋势图每 10 秒更新。每 15 分钟及正常关机时保存记录，突然断电可能丢失最近 15 分钟的数据。每日记录保留 400 天，每月记录保留 24 个月。"
+
+msgid "Adjustment"
+msgstr "修正"
+
+msgid "Current usage reported by your carrier"
+msgstr "运营商显示的当前已用流量"
+
+msgid "Enter valid current-cycle usage."
+msgstr "请输入有效的本周期已用流量。"
+
+msgid "Failed to correct cycle usage."
+msgstr "本周期流量修正失败。"
+
+msgid "Cycle usage updated."
+msgstr "本周期流量已更新。"
+
+msgid "Correct cycle usage"
+msgstr "修正本周期流量"
+
+msgid "Restore measured usage"
+msgstr "恢复实测流量"
+
+msgid "Current-cycle usage (GB)"
+msgstr "本周期已用流量（GB）"
+
+msgid "Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved."
+msgstr "填写运营商显示的当前已用总流量，后续新增流量将在此基础上继续累计。修正仅在本周期内生效，并纳入阈值提醒；实测上传、下载及历史趋势保持不变。"
+
+msgid "Usage notes"
+msgstr "使用说明"
+
+msgid "Plugin Settings"
+msgstr "插件设置"

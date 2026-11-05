@@ -66,6 +66,8 @@ jobs:
           bash -n application/qmodem/tests/test_vendor_fixtures.sh
       - name: Enforce command boundary
         run: |
+          sh application/qmodem/tests/test_traffic.sh
+          node luci/luci-app-qmodem-next/tests/test_traffic.js
           application/qmodem/tests/test_vendor_cmds_boundary.sh
           application/qmodem/tests/test_core_cmds.sh
           sh application/qmodem/tests/test_dial_apn_log.sh

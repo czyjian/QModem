@@ -3662,3 +3662,6 @@ msgstr ""
 
 msgid "Modem Management"
 msgstr ""
+
+msgid "Plugin Settings"
+msgstr ""

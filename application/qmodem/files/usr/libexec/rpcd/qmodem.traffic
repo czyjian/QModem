@@ -1,0 +1,91 @@
+#!/bin/sh
+TRAFFIC_RAM=${QMODEM_TRAFFIC_RAM:-/var/run/qmodem/traffic}
+TRAFFIC_STORE=${QMODEM_TRAFFIC_STORE:-/etc/qmodem/traffic}
+case "$1" in
+list)
+    echo '{"get":{"config_section":"string"},"current":{"config_section":"string"},"correct":{"config_section":"string","target_gb":"string","cycle":"string"},"clear_correction":{"config_section":"string"},"configure":{"config_section":"string","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"string"}}'
+    ;;
+call)
+    read -r input
+    section=$(printf '%s' "$input" | jq -r '.config_section // empty')
+    . "${QMODEM_HOME:-/usr/share/qmodem}/instance.sh"
+    qmodem_valid_instance "$section" || { echo '{"error":"Invalid modem instance"}'; exit 2; }
+    case "$2" in
+    correct|clear_correction)
+        method=$2
+        if [ "$method" = correct ]; then
+            printf '%s' "$input" | jq -e '
+              (.target_gb | type == "string") and
+              (.target_gb | split(".") | length <= 2 and all(length > 0 and (explode | all(. >= 48 and . <= 57)))) and
+              (.target_gb | split(".") | (.[1] // "" | length) <= 3) and
+              (.target_gb | tonumber >= 0 and tonumber <= 1000000)' >/dev/null || {
+                echo '{"error":"Invalid cycle usage"}'; exit 2;
+            }
+        fi
+        qmodem_config_lock
+        mkdir -p "$TRAFFIC_STORE"
+        snapshot=$(mktemp "$TRAFFIC_STORE/.correction-state.XXXXXX") || exit 1
+        adjustment=$(mktemp "$TRAFFIC_STORE/.correction.XXXXXX") || { rm -f "$snapshot"; exit 1; }
+        trap 'rm -f "$snapshot" "$adjustment"' EXIT
+        if ! cp "$TRAFFIC_RAM/$section.json" "$snapshot" || ! jq -e --argjson now "$(date +%s)" '(.cycle | type == "string") and $now-.now <= 30' "$snapshot" >/dev/null; then
+            echo '{"error":"Wait for a fresh traffic sample"}'; exit 2;
+        fi
+        if ! jq --argjson input "$input" --arg method "$method" --argjson now "$(date +%s)" '
+          if $method == "correct" and .cycle != $input.cycle then error("Billing cycle changed; refresh the page") else
+          {cycle:.cycle,updated_at:$now,bytes:(if $method == "clear_correction" then 0 else (($input.target_gb|tonumber)*1000000000|round)-(.cycle_rx // 0)-(.cycle_tx // 0) end)} end' "$snapshot" > "$adjustment"; then
+            echo '{"error":"Billing cycle changed; refresh the page"}'; exit 2;
+        fi
+        # Persist the matching counter baseline before publishing the correction.
+        mv "$snapshot" "$TRAFFIC_STORE/$section.json" && mv "$adjustment" "$TRAFFIC_STORE/$section.adjustment.json" || exit 1
+        qmodem_config_unlock
+        echo '{"success":true}'
+        ;;
+    configure)
+        printf '%s' "$input" | jq -e '
+          (.enabled | type == "boolean") and
+          ([.reset_day,.reset_hour,.reset_minute] | all(type == "number" and floor == .)) and
+          (.reset_day >= 1 and .reset_day <= 31) and
+          (.reset_hour >= 0 and .reset_hour <= 23) and
+          (.reset_minute >= 0 and .reset_minute <= 59) and
+          (.threshold_gb | type == "string") and
+          (.threshold_gb | split(".") | length <= 2 and all(length > 0 and (explode | all(. >= 48 and . <= 57)))) and
+          (.threshold_gb | split(".") | (.[1] // "" | length) <= 3) and
+          (.threshold_gb | tonumber >= 0 and tonumber <= 1000000)' >/dev/null || {
+            echo '{"error":"Invalid traffic settings"}'; exit 2;
+        }
+        qmodem_config_lock
+        for pair in 'enabled traffic_enabled' 'reset_day traffic_reset_day' 'reset_hour traffic_reset_hour' 'reset_minute traffic_reset_minute' 'threshold_gb traffic_threshold_gb'; do
+            set -- $pair
+            value=$(printf '%s' "$input" | jq -r --arg key "$1" '.[$key] | if type == "boolean" then (if . then "1" else "0" end) else tostring end')
+            uci set "qmodem.$section.$2=$value" || { qmodem_config_unlock; exit 1; }
+        done
+        uci commit qmodem
+        qmodem_config_unlock
+        echo '{"success":true}'
+        ;;
+    get|current)
+        enabled=$(uci -q get "qmodem.$section.traffic_enabled")
+        rd=$(uci -q get "qmodem.$section.traffic_reset_day")
+        rh=$(uci -q get "qmodem.$section.traffic_reset_hour")
+        rm=$(uci -q get "qmodem.$section.traffic_reset_minute")
+        threshold=$(uci -q get "qmodem.$section.traffic_threshold_gb")
+        file="$TRAFFIC_RAM/$section.json"
+        [ -f "$file" ] || file="$TRAFFIC_STORE/$section.json"
+        [ -f "$file" ] || file=/dev/null
+        adjustment="$TRAFFIC_STORE/$section.adjustment.json"
+        [ -f "$adjustment" ] || adjustment=/dev/null
+        jq -s --slurpfile adjustment "$adjustment" --arg method "$2" --arg enabled "${enabled:-1}" --arg rd "${rd:-1}" --arg rh "${rh:-0}" --arg rm "${rm:-0}" --arg threshold "${threshold:-0}" --argjson now "$(date +%s)" '
+          (.[0] // {}) as $s |
+          ($adjustment[0] // {}) as $a |
+          (if $a.cycle != null and $a.cycle == $s.cycle then $a.bytes else 0 end) as $offset |
+          ([0, (($s.cycle_rx // 0)+($s.cycle_tx // 0)+$offset)] | max) as $total |
+          {enabled:($enabled == "1"), reset_day:($rd|tonumber? // 1),reset_hour:($rh|tonumber? // 0),reset_minute:($rm|tonumber? // 0),threshold_gb:($threshold|tonumber? // 0)} as $cfg |
+          $s + {config:$cfg, cycle_total:$total, cycle_adjustment:$offset, stale:($now - ($s.now // 0) > 30),
+          exceeded:($cfg.enabled and $cfg.threshold_gb > 0 and $total >= $cfg.threshold_gb * 1000000000)} |
+          (if .stale or ($cfg.enabled|not) then .rx_rate=0 | .tx_rate=0 else . end) |
+          if $method == "current" then del(.daily,.monthly,.live,.devices,.boot,.uptime) else . end' "$file"
+        ;;
+    *) exit 2;;
+    esac
+    ;;
+esac

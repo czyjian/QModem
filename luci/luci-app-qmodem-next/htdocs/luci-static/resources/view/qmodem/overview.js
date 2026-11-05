@@ -5,13 +5,14 @@
 'require dom';
 'require uci';
 'require qmodem.qmodem as qmodem';
+'require qmodem.traffic as traffic';
 
 // Load CSS
 document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
 	// versioned like the view scripts, so a package upgrade never serves stale CSS
-	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '')
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=traffic-inline-2'
 }));
 
 // Check if cbi-progressbar class exists
@@ -458,13 +459,7 @@ return view.extend({
 			
 			// Update refresh time
 			if (updateTimeElement) {
-				var now = new Date();
-				var timeStr = now.getFullYear() + '-' + 
-					String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-					String(now.getDate()).padStart(2, '0') + ' ' + 
-					String(now.getHours()).padStart(2, '0') + ':' + 
-					String(now.getMinutes()).padStart(2, '0') + ':' + 
-					String(now.getSeconds()).padStart(2, '0');
+				var timeStr = traffic.formatDate(Date.now()/1000);
 				updateTimeElement.textContent = _('Last update') + ': ' + timeStr;
 			}
 		}).catch(function(e) {
@@ -522,20 +517,46 @@ return view.extend({
 		// Create update time display
 		var updateTimeSection = E('fieldset', { 'class': 'cbi-section' });
 		var updateStatusRow = E('div', {
-			'style': 'display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;'
+			'class': 'qmodem-overview-status'
 		});
 		var loadingDiv = E('div', {
 			'class': 'spinning',
 			'style': 'display: none; padding: 5px;'
 		}, _('Loading modem information...'));
 		var updateTimeDiv = E('div', { 
-			'style': 'text-align: right; padding: 5px; color: #888; margin-left: auto;',
+			'style': 'text-align: right; padding: 5px;',
 			'id': 'update_time_display'
 		}, _('Last update') + ': -');
-		updateStatusRow.appendChild(loadingDiv);
+		var trafficInline = E('div', { 'class': 'qmodem-overview-traffic' });
+		var trafficWarning = E('div');
+		updateStatusRow.appendChild(E('div', {}, loadingDiv));
+		updateStatusRow.appendChild(trafficInline);
 		updateStatusRow.appendChild(updateTimeDiv);
 		updateTimeSection.appendChild(updateStatusRow);
+		updateTimeSection.appendChild(trafficWarning);
 		container.appendChild(updateTimeSection);
+		function updateTraffic() {
+			var id = select.value;
+			return traffic.current(id).then(function(data) {
+				if (select.value !== id) return;
+				dom.content(trafficWarning, []);
+				if (!data.config || !data.config.enabled) { dom.content(trafficInline, []); return; }
+				if (!data.now || data.stale) {
+					dom.content(trafficInline, data.stale ? _('Traffic samples are stale. Check the monitoring service.') : _('Waiting for the first traffic sample...'));
+					return;
+				}
+				dom.content(trafficInline, [
+					E('span', {}, _('Current download / upload') + ': ' + (data.rx_rate * 8 / 1000000).toFixed(2) + ' / ' + (data.tx_rate * 8 / 1000000).toFixed(2) + ' Mbps'),
+					E('span', {}, _('Current billing cycle') + ': ' + traffic.bytes(traffic.cycleTotal(data)) + ' (' + traffic.cycleBreakdown(data) + ')')
+				]);
+				if (data.exceeded) dom.content(trafficWarning, E('div', { 'class': 'alert-message warning' }, _('Traffic usage has reached the configured threshold.') + ' ' + traffic.bytes(traffic.cycleTotal(data)) + ' / ' + data.config.threshold_gb + ' GB'));
+			}).catch(function() {
+				if (select.value === id) dom.content(trafficInline, _('Traffic monitoring service is unavailable.'));
+			});
+		}
+		select.addEventListener('change', updateTraffic);
+		updateTraffic();
+		poll.add(updateTraffic, 1);
 		
 		// Create info container
 		var infoContainer = E('div', { 'id': 'modem_info_container' });

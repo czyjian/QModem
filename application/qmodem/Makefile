@@ -146,6 +146,9 @@ endef
 define Package/$(PKG_NAME)/install
 		$(CP) ./files/* $(1)/
 		$(INSTALL_BIN) ./files/lib/netifd/proto/qmodem_rm500u6.sh $(1)/lib/netifd/proto/
+		$(INSTALL_BIN) ./files/usr/libexec/rpcd/qmodem.traffic $(1)/usr/libexec/rpcd/
+		$(INSTALL_BIN) ./files/etc/init.d/qmodem_traffic $(1)/etc/init.d/
+		$(INSTALL_BIN) ./files/etc/uci-defaults/92-qmodem-traffic $(1)/etc/uci-defaults/
 		$(INSTALL_BIN) ./files/usr/share/qmodem/rm500u*.sh $(1)/usr/share/qmodem/
 		$(INSTALL_BIN) ./files/usr/share/qmodem/rm500u_dhcpv6.script $(1)/usr/share/qmodem/
 endef

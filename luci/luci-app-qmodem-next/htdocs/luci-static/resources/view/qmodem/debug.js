@@ -82,15 +82,16 @@ return view.extend({
 
 	createAtInterface: function(modem) {
 		var self = this;
-		var container = E('div', { 'class': 'cbi-section-node' });
+		var tableBody = E('tbody', {});
+		var container = E('table', { 'class': 'table' }, tableBody);
 
 		// AT Port Configuration
-		var portSection = E('div', { 'class': 'cbi-value' });
-		portSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Available AT Ports')));
-		var portInfo = E('div', { 'class': 'cbi-value-field' });
+		var portSection = E('tr', { 'class': 'tr' });
+		portSection.appendChild(E('td', { 'class': 'td left', 'width': '33%' }, _('Available AT Ports')));
+		var portInfo = E('td', { 'class': 'td' });
 		portInfo.appendChild(E('div', { 'class': 'spinning' }, _('Loading...')));
 		portSection.appendChild(portInfo);
-		container.appendChild(portSection);
+		tableBody.appendChild(portSection);
 
 		// Load AT configuration
 		qmodem.getAtCfg(modem.id).then(function(cfg) {
@@ -126,9 +127,9 @@ return view.extend({
 			if (cfg.at_cfg.ports) ports = ports.concat(cfg.at_cfg.ports);
 			if (cfg.at_cfg.other_ttys) ports = ports.concat(cfg.at_cfg.other_ttys);
 
-			var portSelectSection = E('div', { 'class': 'cbi-value' });
-			portSelectSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Select AT Port')));
-			var portSelectField = E('div', { 'class': 'cbi-value-field' });
+			var portSelectSection = E('tr', { 'class': 'tr' });
+			portSelectSection.appendChild(E('td', { 'class': 'td left', 'width': '33%' }, _('Select AT Port')));
+			var portSelectField = E('td', { 'class': 'td' });
 			
 			var select = new ui.Dropdown(cfg.at_cfg.using_port || (ports.length > 0 ? ports[0] : ''),
 				ports.reduce(function(obj, port) {
@@ -141,12 +142,12 @@ return view.extend({
 			
 			portSelectField.appendChild(select.render());
 			portSelectSection.appendChild(portSelectField);
-			container.appendChild(portSelectSection);
+			tableBody.appendChild(portSelectSection);
 
 			// Use Ubus flag option
-			var ubusSection = E('div', { 'class': 'cbi-value' });
-			ubusSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Use Ubus AT Daemon')));
-			var ubusField = E('div', { 'class': 'cbi-value-field' });
+			var ubusSection = E('tr', { 'class': 'tr' });
+			ubusSection.appendChild(E('td', { 'class': 'td left', 'width': '33%' }, _('Use Ubus AT Daemon')));
+			var ubusField = E('td', { 'class': 'td' });
 			
 			var ubusCheckbox = E('input', {
 				'type': 'checkbox',
@@ -158,12 +159,12 @@ return view.extend({
 			ubusField.appendChild(document.createTextNode(' '));
 			ubusField.appendChild(E('span', {}, _('Enable to use Ubus AT daemon instead of direct serial port access')));
 			ubusSection.appendChild(ubusField);
-			container.appendChild(ubusSection);
+			tableBody.appendChild(ubusSection);
 
 			// AT Command input
-			var cmdSection = E('div', { 'class': 'cbi-value' });
-			cmdSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('AT Command')));
-			var cmdField = E('div', { 'class': 'cbi-value-field' });
+			var cmdSection = E('tr', { 'class': 'tr' });
+			cmdSection.appendChild(E('td', { 'class': 'td left', 'width': '33%' }, _('AT Command')));
+			var cmdField = E('td', { 'class': 'td' });
 			var cmdInput = E('input', {
 				'type': 'text',
 				'class': 'cbi-input-text',
@@ -181,9 +182,9 @@ return view.extend({
 			var quickSelect = null;
 
 			if (quickCmds.length > 0) {
-				var quickSection = E('div', { 'class': 'cbi-value' });
-				quickSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Quick Commands')));
-				var quickField = E('div', { 'class': 'cbi-value-field' });
+				var quickSection = E('tr', { 'class': 'tr' });
+				quickSection.appendChild(E('td', { 'class': 'td left', 'width': '33%' }, _('Quick Commands')));
+				var quickField = E('td', { 'class': 'td' });
 
 				quickSelect = E('select', {
 					'class': 'cbi-input-select',
@@ -202,7 +203,7 @@ return view.extend({
 
 				quickField.appendChild(quickSelect);
 				quickSection.appendChild(quickField);
-				container.appendChild(quickSection);
+				tableBody.appendChild(quickSection);
 			}
 
 			// Typing by hand detaches the input from the picked quick command
@@ -212,12 +213,12 @@ return view.extend({
 					quickSelect.value = '';
 			});
 
-			container.appendChild(cmdSection);
+			tableBody.appendChild(cmdSection);
 
 			// Response area
-			var responseSection = E('div', { 'class': 'cbi-value' });
-			responseSection.appendChild(E('label', { 'class': 'cbi-value-title' }, _('Response')));
-			var responseField = E('div', { 'class': 'cbi-value-field' });
+			var responseSection = E('tr', { 'class': 'tr' });
+			responseSection.appendChild(E('td', { 'class': 'td left', 'width': '33%' }, _('Response')));
+			var responseField = E('td', { 'class': 'td' });
 			
 			var responseDiv = E('textarea', {
 				'id': 'at_response_' + modem.id,
@@ -269,7 +270,7 @@ return view.extend({
 			responseField.appendChild(E('br'));
 			responseField.appendChild(responseDiv);
 			responseSection.appendChild(responseField);
-			container.appendChild(responseSection);
+			tableBody.appendChild(responseSection);
 
 		}).catch(function(e) {
 			dom.content(portInfo, _('Error loading AT configuration: %s').format(e.message));
