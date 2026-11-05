@@ -2987,3 +2987,30 @@ msgstr "开机扫描延迟"
 
 msgid "Delay automatic USB and PCIe scans after the scanner is ready, in seconds."
 msgstr "扫描器就绪后延迟执行 USB 和 PCIe 自动扫描，单位为秒。"
+
+msgid "Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing."
+msgstr "统计 IPv4 和 IPv6 网卡的上传与下载，共用网卡仅计一次。统计结果可能与运营商账单存在差异。"
+
+msgid "Speed refreshes every second; charts update every 10 seconds."
+msgstr "网速每秒刷新，趋势图每 10 秒更新。"
+
+msgid "Daily history is retained for 400 days and is not deleted at billing resets."
+msgstr "每日记录保留 400 天，周期重置不删除历史记录。"
+
+msgid "Monthly history is retained for 24 months and is not deleted at billing resets."
+msgstr "每月记录保留 24 个月，周期重置不删除历史记录。"
+
+msgid "Records are saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes."
+msgstr "每 15 分钟及正常关机时保存记录，突然断电可能丢失最近 15 分钟的数据。"
+
+msgid "Resets this billing cycle each month at the selected date and time. Dates beyond the end of a month use its last day. History is preserved."
+msgstr "每月按设定的日期和时间重置本周期流量。日期超出当月天数时，采用当月最后一天；历史记录保留。"
+
+msgid "The threshold uses this cycle's combined upload and download, including manual adjustments. 1 GB = 1,000,000,000 bytes; 0 disables alerts."
+msgstr "阈值按本周期上传与下载合计计算，包含手动修正。1 GB = 1,000,000,000 字节；设为 0 时不提醒。"
+
+msgid "If the selected reset day does not exist in a month, the last day of that month is used."
+msgstr "设定日期超出当月天数时，采用当月最后一天。"
+
+msgid "The billing cycle resets at this local time on the monthly reset day. Historical records are preserved."
+msgstr "按本地时区，在每月重置日的此时刻开始新周期，历史记录保留。"

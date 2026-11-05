@@ -3674,3 +3674,30 @@ msgstr ""
 
 msgid "Plugin Settings"
 msgstr ""
+
+msgid "Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing."
+msgstr ""
+
+msgid "Speed refreshes every second; charts update every 10 seconds."
+msgstr ""
+
+msgid "Daily history is retained for 400 days and is not deleted at billing resets."
+msgstr ""
+
+msgid "Monthly history is retained for 24 months and is not deleted at billing resets."
+msgstr ""
+
+msgid "Records are saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes."
+msgstr ""
+
+msgid "Resets this billing cycle each month at the selected date and time. Dates beyond the end of a month use its last day. History is preserved."
+msgstr ""
+
+msgid "The threshold uses this cycle's combined upload and download, including manual adjustments. 1 GB = 1,000,000,000 bytes; 0 disables alerts."
+msgstr ""
+
+msgid "If the selected reset day does not exist in a month, the last day of that month is used."
+msgstr ""
+
+msgid "The billing cycle resets at this local time on the monthly reset day. Historical records are preserved."
+msgstr ""

@@ -40,9 +40,22 @@ return view.extend({
 		var enabled=E('input',{type:'checkbox'}), day=E('input',{type:'number',min:1,max:31,'class':'cbi-input-text'}), time=E('input',{type:'time','class':'cbi-input-text'}), threshold=E('input',{type:'number',min:0,max:1000000,step:0.001,'class':'cbi-input-text'});
 		var correction=E('input',{type:'number',min:0,max:1000000,step:0.001,'class':'cbi-input-text',placeholder:_('Current usage reported by your carrier')});
 		var fieldId=0;
-		function row(label,control,table) {
+		function description(text) { return E('div',{'class':'cbi-value-description',style:'margin-top:0;flex:1 1 260px;'},text); }
+		function nativeField(children,inline) {
+			return E('div',{'class':'cbi-value',style:'display:block;margin:0;padding:0;'},[
+				E('div',{'class':'cbi-value-field',style:'margin:0;width:100%;'+(inline?'display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;':'')},children)
+			]);
+		}
+		function note(text) { return E('div',{style:'margin-top:6px;'},nativeField(description(text),false)); }
+		function row(label,control,table,help) {
 			var id='traffic-field-'+(++fieldId); control.id=id;
-			if(table) return E('tr',{'class':'tr'},[E('td',{'class':'td left',width:'33%'},E('label',{'for':label ? id : null},label)),E('td',{'class':'td'},control)]);
+			if(table) {
+				if(help) control.style.flexShrink='0';
+				return E('tr',{'class':'tr'},[
+					E('td',{'class':'td left',width:'33%'},E('label',{'for':label ? id : null},label)),
+					E('td',{'class':'td'},help ? nativeField([control,description(help)],true) : control)
+				]);
+			}
 			return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title','for':label ? id : null},label),E('div',{'class':'cbi-value-field'},control)]);
 		}
 		function section(label,children) { return E('fieldset',{'class':'cbi-section'},[E('legend',{},label)].concat(children)); }
@@ -95,25 +108,19 @@ return view.extend({
 					E('td',{'class':'td'},selector)
 				])])])
 			]),
-			section(_('Traffic Monitor'),[summary]),
-			section(_('Real-time speed'),[live]),
-			section(_('Daily traffic'),[row(_('Month'),month),daily]),
-			section(_('Monthly traffic'),[monthly]),
+			section(_('Traffic Monitor'),[summary,note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]),
+			section(_('Real-time speed'),[live,note(_('Speed refreshes every second; charts update every 10 seconds.'))]),
+			section(_('Daily traffic'),[row(_('Month'),month),daily,note(_('Daily history is retained for 400 days and is not deleted at billing resets.'))]),
+			section(_('Monthly traffic'),[monthly,note(_('Monthly history is retained for 24 months and is not deleted at billing resets.'))]),
 			section(_('Traffic settings'),[
 				E('table',{'class':'table'},[E('tbody',{},[
-					row(_('Enable traffic monitoring'),enabled,true),
-					row(_('Monthly reset day'),day,true),
-					row(_('Reset time'),time,true),
-					row(_('Cycle threshold (GB)'),threshold,true),
-					row(_('Current-cycle usage (GB)'),correction,true),
+					row(_('Enable traffic monitoring'),enabled,true,_('Records are saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes.')),
+					row(_('Monthly reset day'),day,true,_('If the selected reset day does not exist in a month, the last day of that month is used.')),
+					row(_('Reset time'),time,true,_('The billing cycle resets at this local time on the monthly reset day. Historical records are preserved.')),
+					row(_('Cycle threshold (GB)'),threshold,true,_("The threshold uses this cycle's combined upload and download, including manual adjustments. 1 GB = 1,000,000,000 bytes; 0 disables alerts.")),
+					row(_('Current-cycle usage (GB)'),correction,true,_('Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved.')),
 					row('',E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;'},[correctButton,clearButton]),true)
 				])]),
-				E('details',{},[E('summary',{},_('Usage notes')),
-					E('p',{'class':'cbi-section-descr'},_('Upload and download are combined. 1 GB = 1,000,000,000 bytes; 0 disables the threshold. Reset dates beyond the end of a month use its last day.')),
-					E('p',{'class':'cbi-section-descr'},_('IPv4 and IPv6 devices are counted together without counting a shared device twice. History survives billing resets. Router counters may differ from carrier billing.')),
-					E('p',{'class':'cbi-section-descr'},_('Speed refreshes every second; charts update every 10 seconds. Records are saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes. Daily history: 400 days; monthly history: 24 months.')),
-					E('p',{'class':'cbi-section-descr'},_('Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved.'))
-				]),
 				E('div',{style:'display:flex;justify-content:flex-end;'},save)
 			])
 		]);
