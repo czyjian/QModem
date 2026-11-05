@@ -76,78 +76,14 @@ return view.extend({
 
 		var container = E('div', { 'class': 'cbi-map' });
 
-		// Modem selector
-		var selectorSection = E('fieldset', { 'class': 'cbi-section' });
-		var selectorTable = E('table', { 'class': 'table' });
-		var selectorBody = E('tbody', {});
-		var selectorRow = E('tr', { 'class': 'tr' });
-		var labelCell = E('td', { 'class': 'td', 'width': '33%' }, _('Modem Name'));
-		var selectCell = E('td', { 'class': 'td' });
-		
+		// Keep one selector shared by conversation loading and the reply form.
 		var select = E('select', {
 			'class': 'cbi-input-select',
 			'id': 'sms_modem_selector'
 		});
-		
 		modems.forEach(function(modem) {
 			select.appendChild(E('option', { 'value': modem.id }, modem.name));
 		});
-		
-		selectCell.appendChild(select);
-		selectorRow.appendChild(labelCell);
-		selectorRow.appendChild(selectCell);
-		selectorBody.appendChild(selectorRow);
-
-		// Timezone offset setting for received messages
-		var timezoneReceivedRow = E('tr', { 'class': 'tr' });
-		var timezoneReceivedLabel = E('td', { 'class': 'td', 'width': '33%' }, 
-			_('Parse received SMS time as UTC+0'));
-		var timezoneReceivedCell = E('td', { 'class': 'td' });
-		
-		var timezoneReceivedCheckbox = E('input', {
-			'type': 'checkbox',
-			'id': 'sms_utc_offset_received_checkbox'
-		});
-		if (self.getUtcOffsetSetting('received')) {
-			timezoneReceivedCheckbox.checked = true;
-		}
-		
-		timezoneReceivedCell.appendChild(timezoneReceivedCheckbox);
-		timezoneReceivedCell.appendChild(E('span', { 'style': 'margin-left: 5px;' }, 
-			_('Adjust received messages for local timezone (UTC+8)')));
-		timezoneReceivedRow.appendChild(timezoneReceivedLabel);
-		timezoneReceivedRow.appendChild(timezoneReceivedCell);
-		selectorBody.appendChild(timezoneReceivedRow);
-
-		// Timezone offset setting for sent messages
-		var timezoneSentRow = E('tr', { 'class': 'tr' });
-		var timezoneSentLabel = E('td', { 'class': 'td', 'width': '33%' }, 
-			_('Parse sent SMS time as UTC+0'));
-		var timezoneSentCell = E('td', { 'class': 'td' });
-		
-		var timezoneSentCheckbox = E('input', {
-			'type': 'checkbox',
-			'id': 'sms_utc_offset_sent_checkbox'
-		});
-		if (self.getUtcOffsetSetting('sent')) {
-			timezoneSentCheckbox.checked = true;
-		}
-		
-		var timezoneHelpText = E('div', {
-			'style': 'font-size: 12px; color: #666; margin-top: 5px;'
-		}, _('Enable if SMS timestamps appear 8 hours ahead (e.g., UTC+8 local time parsed as UTC+0)'));
-		
-		timezoneSentCell.appendChild(timezoneSentCheckbox);
-		timezoneSentCell.appendChild(E('span', { 'style': 'margin-left: 5px;' }, 
-			_('Adjust sent messages for local timezone (UTC+8)')));
-		timezoneSentCell.appendChild(timezoneHelpText);
-		timezoneSentRow.appendChild(timezoneSentLabel);
-		timezoneSentRow.appendChild(timezoneSentCell);
-		selectorBody.appendChild(timezoneSentRow);
-
-		selectorTable.appendChild(selectorBody);
-		selectorSection.appendChild(selectorTable);
-		container.appendChild(selectorSection);
 
 		// Header with back button
 		var headerDiv = E('div', { 'class': 'sms-conversation-header' }, [
@@ -198,22 +134,6 @@ return view.extend({
 			self.loadConversation(messagesArea, loading, select.value, contact);
 		});
 
-		// Timezone checkbox change handler for received messages
-		timezoneReceivedCheckbox.addEventListener('change', function() {
-			self.setUtcOffsetSetting('received', timezoneReceivedCheckbox.checked);
-			var loading = E('div', { 'class': 'spinning' }, _('Loading...'));
-			dom.content(messagesArea, loading);
-			self.loadConversation(messagesArea, loading, select.value, contact);
-		});
-
-		// Timezone checkbox change handler for sent messages
-		timezoneSentCheckbox.addEventListener('change', function() {
-			self.setUtcOffsetSetting('sent', timezoneSentCheckbox.checked);
-			var loading = E('div', { 'class': 'spinning' }, _('Loading...'));
-			dom.content(messagesArea, loading);
-			self.loadConversation(messagesArea, loading, select.value, contact);
-		});
-
 		// Start polling for new messages
 		poll.add(function() {
 			self.pollConversation(messagesArea, select.value, contact);
@@ -233,6 +153,12 @@ return view.extend({
 		var fieldset = E('fieldset', { 'class': 'cbi-section' });
 		var legend = E('legend', {}, _('Send Message'));
 		fieldset.appendChild(legend);
+		if (select) {
+			fieldset.appendChild(E('div', { 'class': 'cbi-value' }, [
+				E('label', { 'class': 'cbi-value-title', 'for': 'sms_modem_selector' }, _('Modem Name')),
+				E('div', { 'class': 'cbi-value-field' }, select)
+			]));
+		}
 		this.replyAddress = smsAddress.create(function() { return self.replyRecipient || contact; },
 			function() { return select ? select.value : configSection; });
 		fieldset.appendChild(this.replyAddress.node);
