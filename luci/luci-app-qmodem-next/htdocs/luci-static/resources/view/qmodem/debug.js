@@ -174,7 +174,9 @@ return view.extend({
 				'id': 'at_command_' + modem.id,
 				'placeholder': 'AT+CIMI'
 			});
-			cmdField.appendChild(cmdInput);
+			cmdInput.style.width = '100%';
+			var cmdControls = E('div', { style: 'display:flex;flex-direction:column;align-items:flex-start;gap:8px;' }, cmdInput);
+			cmdField.appendChild(cmdControls);
 			cmdSection.appendChild(cmdField);
 
 			// Quick commands: per-modem list from the backend, picked from a
@@ -268,9 +270,8 @@ return view.extend({
 				}
 			});
 
-			responseField.appendChild(sendBtn);
-			responseField.appendChild(E('br'));
-			responseField.appendChild(E('br'));
+			sendBtn.style.flexShrink = '0';
+			cmdControls.appendChild(sendBtn);
 			responseField.appendChild(responseDiv);
 			responseSection.appendChild(responseField);
 			tableBody.appendChild(responseSection);
