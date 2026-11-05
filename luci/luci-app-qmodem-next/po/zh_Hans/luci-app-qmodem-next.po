@@ -434,7 +434,7 @@ msgstr "启用USB扫描"
 
 # Source: view/qmodem/sms.js:119, view/qmodem/sms_conversation.js:137
 msgid "Enable if SMS timestamps appear 8 hours ahead (e.g., UTC+8 local time parsed as UTC+0)"
-msgstr "若短信时间戳显示提前8小时（例如UTC+8本地时间被解析为UTC+0），请启用"
+msgstr "若短信时间戳显示提前8小时（例如UTC+8本地时间被解析为UTC+0），请启用。"
 
 # Source: view/qmodem/debug.js:151
 msgid "Enable to use Ubus AT daemon instead of direct serial port access"

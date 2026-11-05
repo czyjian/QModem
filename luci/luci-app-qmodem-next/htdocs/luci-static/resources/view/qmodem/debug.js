@@ -155,9 +155,12 @@ return view.extend({
 				'checked': modem.use_ubus !== '0'
 			});
 			
-			ubusField.appendChild(ubusCheckbox);
-			ubusField.appendChild(document.createTextNode(' '));
-			ubusField.appendChild(E('span', {}, _('Enable to use Ubus AT daemon instead of direct serial port access')));
+			ubusCheckbox.style.margin = '0';
+			ubusCheckbox.style.flexShrink = '0';
+			ubusField.appendChild(E('label', {
+				'for': ubusCheckbox.id,
+				style: 'display:inline-flex;align-items:center;gap:8px;margin:0;padding:0;'
+			}, [ubusCheckbox, E('span', {}, _('Enable to use Ubus AT daemon instead of direct serial port access'))]));
 			ubusSection.appendChild(ubusField);
 			tableBody.appendChild(ubusSection);
 

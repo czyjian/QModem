@@ -49,6 +49,21 @@ return qmodem.withSmsTabs(view.extend({
 	render: function(modems) {
 		var self = this;
 		var container = E('div', { 'class': 'cbi-map' });
+		function checkboxLine(checkbox, text) {
+			checkbox.style.margin = '0';
+			checkbox.style.flexShrink = '0';
+			return E('label', { 'for': checkbox.id, style: 'display:inline-flex;align-items:center;gap:8px;margin:0;padding:0;' }, [checkbox, E('span', {}, text)]);
+		}
+		function helpField(control, text) {
+			control.style.flexShrink = '0';
+			return E('div', { 'class': 'cbi-value', style: 'display:block;margin:0;padding:0;' }, [
+				E('div', { 'class': 'cbi-value-field', style: 'margin:0;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;' }, [
+					control,
+					E('div', { 'class': 'cbi-value-description', style: 'margin-top:0;flex:1 1 260px;' }, text)
+				])
+			]);
+		}
+
 
 		// Filter enabled modems
 		modems = modems.filter(function(m) { return m.enabled; });
@@ -95,9 +110,7 @@ return qmodem.withSmsTabs(view.extend({
 			timezoneReceivedCheckbox.checked = true;
 		}
 		
-		timezoneReceivedCell.appendChild(timezoneReceivedCheckbox);
-		timezoneReceivedCell.appendChild(E('span', { 'style': 'margin-left: 5px;' }, 
-			_('Adjust received messages for local timezone (UTC+8)')));
+		timezoneReceivedCell.appendChild(checkboxLine(timezoneReceivedCheckbox, _('Adjust received messages for local timezone (UTC+8)')));
 		timezoneReceivedRow.appendChild(timezoneReceivedLabel);
 		timezoneReceivedRow.appendChild(timezoneReceivedCell);
 		selectorBody.appendChild(timezoneReceivedRow);
@@ -116,17 +129,13 @@ return qmodem.withSmsTabs(view.extend({
 			timezoneSentCheckbox.checked = true;
 		}
 		
-		var timezoneHelpText = E('div', {
-			'style': 'font-size: 12px; color: #666; margin-top: 5px;'
-		}, _('Enable if SMS timestamps appear 8 hours ahead (e.g., UTC+8 local time parsed as UTC+0)'));
-		
-		timezoneSentCell.appendChild(timezoneSentCheckbox);
-		timezoneSentCell.appendChild(E('span', { 'style': 'margin-left: 5px;' }, 
-			_('Adjust sent messages for local timezone (UTC+8)')));
-	timezoneSentCell.appendChild(timezoneHelpText);
-	timezoneSentRow.appendChild(timezoneSentLabel);
-	timezoneSentRow.appendChild(timezoneSentCell);
-	selectorBody.appendChild(timezoneSentRow);
+		timezoneSentCell.appendChild(helpField(
+			checkboxLine(timezoneSentCheckbox, _('Adjust sent messages for local timezone (UTC+8)')),
+			_('Enable if SMS timestamps appear 8 hours ahead (e.g., UTC+8 local time parsed as UTC+0)')
+		));
+		timezoneSentRow.appendChild(timezoneSentLabel);
+		timezoneSentRow.appendChild(timezoneSentCell);
+		selectorBody.appendChild(timezoneSentRow);
 
 	var smsCountrySelect = E('select', { 'class': 'cbi-input-select', 'id': 'sms_default_country' }, [
 		E('option', { 'value': '' }, _('Automatic (SIM home country)'))
@@ -139,8 +148,7 @@ return qmodem.withSmsTabs(view.extend({
 	});
 	selectorBody.appendChild(E('tr', { 'class': 'tr' }, [
 		E('td', { 'class': 'td', 'width': '33%' }, _('Default country for SMS numbers')),
-		E('td', { 'class': 'td' }, [smsCountrySelect,
-			E('div', { 'class': 'cbi-value-description' }, _('Used for local phone numbers. For other countries, enter +country code.'))])
+		E('td', { 'class': 'td' }, helpField(smsCountrySelect, _('Used for local phone numbers. For other countries, enter +country code.')))
 	]));
 
 	var smsModeRow = E('tr', { 'class': 'tr' });
@@ -179,9 +187,7 @@ return qmodem.withSmsTabs(view.extend({
 		'id': 'sms_auto_delete_checkbox'
 	});
 	
-	smsAutoDeleteCell.appendChild(smsAutoDeleteCheckbox);
-	smsAutoDeleteCell.appendChild(E('span', { 'style': 'margin-left: 5px;' }, 
-		_('Automatically delete SMS from SIM card after reading')));
+	smsAutoDeleteCell.appendChild(checkboxLine(smsAutoDeleteCheckbox, _('Automatically delete SMS from SIM card after reading')));
 	smsAutoDeleteRow.appendChild(smsAutoDeleteLabel);
 	smsAutoDeleteRow.appendChild(smsAutoDeleteCell);
 	selectorBody.appendChild(smsAutoDeleteRow);
