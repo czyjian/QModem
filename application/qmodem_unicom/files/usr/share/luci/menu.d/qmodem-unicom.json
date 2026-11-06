@@ -1,0 +1,15 @@
+{
+  "admin/modem/unicom_api/*": {
+    "action": {
+      "type": "function",
+      "module": "luci.controller.admin.qmodem_unicom",
+      "function": "action_query"
+    },
+    "auth": {
+      "methods": ["cookie:sysauth_https", "cookie:sysauth_http"],
+      "login": false
+    },
+    "depends": { "acl": ["luci-app-qmodem-next"] },
+    "firstchild_ineligible": true
+  }
+}

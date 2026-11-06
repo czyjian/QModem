@@ -3014,3 +3014,42 @@ msgstr "设定日期超出当月天数时，采用当月最后一天。"
 
 msgid "The billing cycle resets at this local time on the monthly reset day. Historical records are preserved."
 msgstr "按本地时区，在每月重置日的此时刻开始新周期，历史记录保留。"
+
+msgid "Traffic Query"
+msgstr "流量查询"
+
+msgid "Unable to identify the SIM carrier."
+msgstr "无法识别 SIM 卡运营商。"
+
+msgid "The SIM card is not ready. Insert or unlock the SIM card first."
+msgstr "SIM 卡尚未就绪，请先插入或解锁 SIM 卡。"
+
+msgid "China Mobile usage queries are not supported yet."
+msgstr "当前 SIM 卡为中国移动，暂未接入流量查询。"
+
+msgid "China Telecom usage queries are not supported yet."
+msgstr "当前 SIM 卡为中国电信，暂未接入流量查询。"
+
+msgid "Unable to identify a supported SIM carrier. Only China Unicom is supported for now."
+msgstr "未识别到支持的 SIM 卡运营商，目前仅支持中国联通。"
+
+msgid "The carrier query page address is invalid."
+msgstr "运营商查询页面地址无效。"
+
+msgid "China Unicom usage query"
+msgstr "中国联通流量查询"
+
+msgid "Current SIM carrier: China Unicom. Sign in with the number of the selected SIM card."
+msgstr "当前 SIM 卡运营商：中国联通。请使用所选 SIM 卡的号码登录查询。"
+
+msgid "Complete any verification requested by China Unicom manually. If the embedded page or verification does not work, open it in a new window."
+msgstr "登录时如遇联通安全验证，请手动完成。内嵌页面或验证无法正常显示时，可在新窗口打开。"
+
+msgid "Open query page in new window"
+msgstr "在新窗口打开查询页面"
+
+msgid "Identifying the SIM carrier..."
+msgstr "正在识别 SIM 卡运营商…"
+
+msgid "Unable to refresh SIM information. The query page has been kept open; try again later."
+msgstr "SIM 卡信息刷新失败，已保留查询页面，请稍后重试。"

@@ -381,6 +381,10 @@
 }
 
 /* Theme text size and label alignment */
+.cbi-map .cbi-section > .table:last-child {
+	margin-bottom: 0;
+}
+
 /* Themes such as shadcn give form text a smaller size than the page body and
    pad the field title so it lines up with an input box. Fields that only hold
    plain text get the same size and padding so they line up with the title;
@@ -404,7 +408,7 @@
 
 .qmodem-overview-status {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 12px;
 	font-size: var(--text-sm, inherit);
@@ -417,6 +421,10 @@
 	flex-wrap: wrap;
 	gap: 6px 20px;
 	text-align: center;
+}
+
+.qmodem-overview-status #update_time_display {
+	white-space: nowrap;
 }
 
 .qmodem-traffic-page,

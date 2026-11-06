@@ -532,7 +532,7 @@ return view.extend({
 		}, _('Last update') + ': -');
 		var trafficInline = E('div', { 'class': 'qmodem-overview-traffic' });
 		var trafficWarning = E('div');
-		updateStatusRow.appendChild(E('div', {}, loadingDiv));
+		updateTimeSection.appendChild(loadingDiv);
 		updateStatusRow.appendChild(trafficInline);
 		updateStatusRow.appendChild(updateTimeDiv);
 		updateTimeSection.appendChild(updateStatusRow);

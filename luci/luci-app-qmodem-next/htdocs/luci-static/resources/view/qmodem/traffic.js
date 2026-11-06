@@ -6,6 +6,7 @@
 'require dom';
 'require qmodem.traffic as traffic';
 'require qmodem.qmodem as qmodem';
+'require qmodem.traffic-query as trafficQuery';
 
 document.head.appendChild(E('link', {
 	'rel':'stylesheet',
@@ -20,6 +21,7 @@ return view.extend({
 		var modems = uci.sections('qmodem', 'modem-device');
 		if (!modems.length) return E('p', {}, _('No modems configured.'));
 		var selector = E('select', {'class':'cbi-input-select',id:'modem_selector'}, modems.map(function(m) { return E('option', {value:m['.name']},qmodem.formatModemName(m.name,m.alias,m['.name'])); }));
+		var query = trafficQuery.create(selector);
 		var summary = E('div'), live = E('div'), daily = E('div'), monthly = E('div'), state = {}, selected = '', pending = false, chartUpdated = 0;
 		var month = E('select', {'class':'cbi-input-select'});
 		for (var i=0; i<14; i++) {
@@ -99,15 +101,10 @@ return view.extend({
 		}
 		var correctButton=E('button',{'class':'cbi-button cbi-button-apply',click:function(){correctUsage(false);}},_('Correct cycle usage'));
 		var clearButton=E('button',{'class':'cbi-button',click:function(){correctUsage(true);}},_('Restore measured usage'));
-		selector.addEventListener('change',function(){ selected=''; update(); }); month.addEventListener('change',histories);
+		selector.addEventListener('change',function(){ selected=''; update(); query.change(); }); month.addEventListener('change',histories);
 		update(); poll.add(update,1);
-		return E('div',{'class':'cbi-map qmodem-traffic-page'},[
-			E('fieldset',{'class':'cbi-section'},[
-				E('table',{'class':'table'},[E('tbody',{},[E('tr',{'class':'tr'},[
-					E('td',{'class':'td left',width:'33%'},E('label',{'for':'modem_selector'},_('Modem Name'))),
-					E('td',{'class':'td'},selector)
-				])])])
-			]),
+		poll.add(query.update, 15);
+		var monitorPanel = E('div', {}, [
 			section(_('Traffic Monitor'),[summary,note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]),
 			section(_('Real-time speed'),[live,note(_('Speed refreshes every second; charts update every 10 seconds.'))]),
 			section(_('Daily traffic'),[row(_('Month'),month),daily,note(_('Daily history is retained for 400 days and is not deleted at billing resets.'))]),
@@ -123,6 +120,38 @@ return view.extend({
 				])]),
 				E('div',{style:'display:flex;justify-content:flex-end;'},save)
 			])
+		]);
+		var tabs = E('ul', { 'class': 'cbi-tabmenu', style: 'margin-bottom:1em;' });
+		var queryPanel = E('div', {}, [query.node]);
+		function show(name) {
+			name = name === 'query' ? 'query' : 'monitor';
+			monitorPanel.style.display = name === 'monitor' ? '' : 'none';
+			queryPanel.style.display = name === 'query' ? '' : 'none';
+			tabs.querySelectorAll('li').forEach(function(li) {
+				var selected = li.getAttribute('data-tab') === name;
+				li.className = selected ? 'cbi-tab' : 'cbi-tab-disabled';
+				li.querySelector('a').setAttribute('aria-current', selected ? 'page' : 'false');
+			});
+			history.replaceState(null, '', location.pathname + location.search + (name === 'query' ? '#query' : ''));
+			query.activate(name === 'query');
+		}
+		[{name:'monitor',title:_('Traffic Monitor')},{name:'query',title:_('Traffic Query')}].forEach(function(tab) {
+			tabs.appendChild(E('li', { 'data-tab': tab.name }, E('a', {
+				href: '#' + tab.name,
+				click: function(ev) { ev.preventDefault(); show(tab.name); }
+			}, tab.title)));
+		});
+		window.addEventListener('hashchange', function() { show(location.hash.slice(1)); });
+		show(location.hash.slice(1));
+		return E('div', {'class':'cbi-map qmodem-traffic-page'}, [
+			tabs,
+			E('fieldset', {'class':'cbi-section'}, [
+				E('table', {'class':'table', style:'margin-bottom:0;'}, [E('tbody', {}, [E('tr', {'class':'tr'}, [
+					E('td', {'class':'td left', width:'33%'}, E('label', {'for':'modem_selector'}, _('Modem Name'))),
+					E('td', {'class':'td'}, selector)
+				])])])
+			]),
+			monitorPanel, queryPanel
 		]);
 	},
 	handleSaveApply:null, handleSave:null, handleReset:null
