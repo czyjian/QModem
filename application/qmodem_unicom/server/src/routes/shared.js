@@ -1,5 +1,6 @@
 import { parseCookieHeader } from '../upstream/cookies.js';
 import { contextKey, ROUTER_TOKEN } from '../sessions.js';
+import { networkSummary } from '../network-summary.js';
 
 export function flowSummary(data) {
   const details = [], seen = new Set();
@@ -10,15 +11,16 @@ export function flowSummary(data) {
       const key = JSON.stringify([item.feePolicyId, name, item.total, item.endDate, item.flowType, item.addupItemCode]);
       if (seen.has(key)) continue;
       seen.add(key);
-      const number = value => value !== '' && value != null && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+      const number = value => ['string','number'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
       const total = number(item.total), used = number(item.use), remaining = number(item.remain);
       const unlimited = String(item.limited) === '1';
-      details.push({ name, total_mb: unlimited ? null : total, remaining_mb: unlimited ? null : remaining ?? (total != null && used != null ? Math.max(0,total-used) : null), unlimited });
+      details.push({ name, used_mb: used ?? (!unlimited && total!=null && remaining!=null ? Math.max(0,total-remaining) : null), total_mb: unlimited ? null : total, remaining_mb: unlimited ? null : remaining ?? (total != null && used != null ? Math.max(0,total-used) : null), unlimited });
     }
   }
   const metered = details.filter(item => !item.unlimited);
   return {
     package_name: String(data?.packageName || '').slice(0,120),
+    used_mb: details.length && details.every(item=>item.used_mb!=null) ? details.reduce((sum,item)=>sum+item.used_mb,0) : null,
     total_mb: metered.length && metered.every(item=>item.total_mb != null) ? metered.reduce((sum,item)=>sum+item.total_mb,0) : null,
     remaining_mb: metered.length && metered.every(item=>item.remaining_mb != null) ? metered.reduce((sum,item)=>sum+item.remaining_mb,0) : null,
     details,
@@ -35,11 +37,15 @@ export function registerShared(app, { upstream, store }) {
     const previous = cache.get(key);
     if (!refresh && previous?.session === session && Date.now()-previous.time < 30000) return previous.result;
     if (pending.has(key)) return pending.get(key);
-    const task = upstream.queryOcs(session.ecsToken, logger, parseCookieHeader(session.cookie)).then(data => {
+    const query=method=>Promise.resolve().then(()=>upstream[method]?.(session.ecsToken,logger,parseCookieHeader(session.cookie)));
+    const task = Promise.allSettled([query('queryOcs'),query('queryBasicData'),query('queryQci')]).then(results => {
+      if(results[0].status==='rejected') throw results[0].reason;
+      const data=results[0].value;
+      const success=result=>result.status==='fulfilled' && result.value?.ok!==false && String(result.value?.code)==='0000' ? result.value : null;
       if (store.get(context) !== session) return {ok:false,code:'SESSION_CHANGED',msg:'登录状态已更新，请刷新'};
       if (data?.code === 'TOKEN_EXPIRED' || data?.code === 'BLACKLIST') { store.remove(context); cache.delete(key); return data; }
       if (data?.ok === false || String(data?.code) !== '0000') return {ok:false,code:'UPSTREAM_ERROR',msg:'联通余量查询失败'};
-      const result = {ok:true,logged_in:true,mobile:session.mobile,updated_at:Math.floor(Date.now()/1000),...flowSummary(data)};
+      const result = {ok:true,logged_in:true,mobile:session.mobile,updated_at:Math.floor(Date.now()/1000),...flowSummary(data),...networkSummary(success(results[1]),success(results[2]))};
       cache.set(key, {time:Date.now(),session,result});
       return result;
     }).finally(()=>pending.delete(key));

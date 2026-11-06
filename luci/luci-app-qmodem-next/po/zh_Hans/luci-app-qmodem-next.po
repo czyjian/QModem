@@ -2951,7 +2951,7 @@ msgid "Speed refreshes every second; charts update every 10 seconds. Records are
 msgstr "网速每秒刷新，趋势图每 10 秒更新。每 15 分钟及正常关机时保存记录，突然断电可能丢失最近 15 分钟的数据。每日记录保留 400 天，每月记录保留 24 个月。"
 
 msgid "Adjustment"
-msgstr "修正"
+msgstr "校准"
 
 msgid "Current usage reported by your carrier"
 msgstr "运营商显示的当前已用流量"
@@ -2960,13 +2960,13 @@ msgid "Enter valid current-cycle usage."
 msgstr "请输入有效的本周期已用流量。"
 
 msgid "Failed to correct cycle usage."
-msgstr "本周期流量修正失败。"
+msgstr "本周期流量校准失败。"
 
 msgid "Cycle usage updated."
 msgstr "本周期流量已更新。"
 
 msgid "Correct cycle usage"
-msgstr "修正本周期流量"
+msgstr "校准本周期流量"
 
 msgid "Restore measured usage"
 msgstr "恢复实测流量"
@@ -2975,7 +2975,7 @@ msgid "Current-cycle usage (GB)"
 msgstr "本周期已用流量（GB）"
 
 msgid "Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved."
-msgstr "填写运营商显示的当前已用总流量，后续新增流量将在此基础上继续累计。修正仅在本周期内生效，并纳入阈值提醒；实测上传、下载及历史趋势保持不变。"
+msgstr "填写运营商显示的当前已用总流量，后续新增流量将在此基础上继续累计。校准仅在本周期内生效，并纳入阈值提醒；实测上传、下载及历史趋势保持不变。"
 
 msgid "Usage notes"
 msgstr "使用说明"
@@ -3007,7 +3007,7 @@ msgid "Resets this billing cycle each month at the selected date and time. Dates
 msgstr "每月按设定的日期和时间重置本周期流量。日期超出当月天数时，采用当月最后一天；历史记录保留。"
 
 msgid "The threshold uses this cycle's combined upload and download, including manual adjustments. 1 GB = 1,000,000,000 bytes; 0 disables alerts."
-msgstr "阈值按本周期上传与下载合计计算，包含手动修正。1 GB = 1,000,000,000 字节；设为 0 时不提醒。"
+msgstr "阈值按本周期上传与下载合计计算，包含手动校准。1 GB = 1,000,000,000 字节；设为 0 时不提醒。"
 
 msgid "If the selected reset day does not exist in a month, the last day of that month is used."
 msgstr "设定日期超出当月天数时，采用当月最后一天。"

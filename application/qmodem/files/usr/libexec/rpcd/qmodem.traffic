@@ -3,15 +3,17 @@ TRAFFIC_RAM=${QMODEM_TRAFFIC_RAM:-/var/run/qmodem/traffic}
 TRAFFIC_STORE=${QMODEM_TRAFFIC_STORE:-/etc/qmodem/traffic}
 case "$1" in
 list)
-    echo '{"get":{"config_section":"string"},"current":{"config_section":"string"},"correct":{"config_section":"string","target_gb":"string","cycle":"string"},"clear_correction":{"config_section":"string"},"configure":{"config_section":"string","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"string"}}'
+    echo '{"get":{"config_section":"string"},"current":{"config_section":"string"},"correct":{"config_section":"string","target_gb":"string","cycle":"string","unit_base":1000},"correct_bytes":{"config_section":"string","target_bytes":"string","threshold_bytes":"string","cycle":"string"},"clear_correction":{"config_section":"string"},"calibration_run":{"config_section":"string"},"calibration_status":{"config_section":"string"},"calibration_configure":{"config_section":"string","enabled":true,"hour":3,"minute":0},"configure":{"config_section":"string","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"string","unit_base":1000}}'
     ;;
 call)
     read -r input
+    unit_base=$(printf '%s' "$input" | jq -r '.unit_base // 1000')
+    case "$unit_base" in 1000|1024) ;; *) echo '{"error":"Invalid traffic unit base"}'; exit 2;; esac
     section=$(printf '%s' "$input" | jq -r '.config_section // empty')
     . "${QMODEM_HOME:-/usr/share/qmodem}/instance.sh"
     qmodem_valid_instance "$section" || { echo '{"error":"Invalid modem instance"}'; exit 2; }
     case "$2" in
-    correct|clear_correction)
+    correct|correct_bytes|clear_correction)
         method=$2
         if [ "$method" = correct ]; then
             printf '%s' "$input" | jq -e '
@@ -22,6 +24,9 @@ call)
                 echo '{"error":"Invalid cycle usage"}'; exit 2;
             }
         fi
+        if [ "$method" = correct_bytes ]; then
+            printf '%s' "$input" | jq -e '(.target_bytes|type=="string") and (.target_bytes|length>0 and length<=16 and (explode|all(.>=48 and .<=57))) and (.target_bytes|tonumber<=1000000000000000) and (if has("threshold_bytes") then (.threshold_bytes|type=="string") and (.threshold_bytes|length>0 and length<=16 and (explode|all(.>=48 and .<=57))) and (.threshold_bytes|tonumber|.>0 and .<=1000000000000000) else true end)' >/dev/null || { echo '{"error":"Invalid byte usage or threshold"}'; exit 2; }
+        fi
         qmodem_config_lock
         mkdir -p "$TRAFFIC_STORE"
         snapshot=$(mktemp "$TRAFFIC_STORE/.correction-state.XXXXXX") || exit 1
@@ -30,13 +35,51 @@ call)
         if ! cp "$TRAFFIC_RAM/$section.json" "$snapshot" || ! jq -e --argjson now "$(date +%s)" '(.cycle | type == "string") and $now-.now <= 30' "$snapshot" >/dev/null; then
             echo '{"error":"Wait for a fresh traffic sample"}'; exit 2;
         fi
-        if ! jq --argjson input "$input" --arg method "$method" --argjson now "$(date +%s)" '
-          if $method == "correct" and .cycle != $input.cycle then error("Billing cycle changed; refresh the page") else
-          {cycle:.cycle,updated_at:$now,bytes:(if $method == "clear_correction" then 0 else (($input.target_gb|tonumber)*1000000000|round)-(.cycle_rx // 0)-(.cycle_tx // 0) end)} end' "$snapshot" > "$adjustment"; then
+        if ! jq --argjson input "$input" --arg method "$method" --argjson base "$unit_base" --argjson now "$(date +%s)" '
+          if $method != "clear_correction" and .cycle != $input.cycle then error("Billing cycle changed; refresh the page") else
+          {cycle:.cycle,updated_at:$now,bytes:(if $method == "clear_correction" then 0 else (if $method=="correct_bytes" then ($input.target_bytes|tonumber) else (($input.target_gb|tonumber)*($base*$base*$base)|round) end)-(.cycle_rx // 0)-(.cycle_tx // 0) end)} end' "$snapshot" > "$adjustment"; then
             echo '{"error":"Billing cycle changed; refresh the page"}'; exit 2;
         fi
-        # Persist the matching counter baseline before publishing the correction.
-        mv "$snapshot" "$TRAFFIC_STORE/$section.json" && mv "$adjustment" "$TRAFFIC_STORE/$section.adjustment.json" || exit 1
+        threshold_bytes=''
+        [ "$method" != correct_bytes ] || threshold_bytes=$(printf '%s' "$input" | jq -r '.threshold_bytes // empty')
+        if [ -n "$threshold_bytes" ]; then
+            old_threshold=$(uci -q get "qmodem.$section.traffic_threshold_gb")
+            old_threshold_bytes=$(uci -q get "qmodem.$section.traffic_threshold_bytes")
+            threshold_gb=$(printf '%s' "$input" | jq -r '.threshold_bytes|tonumber|. / 1000000000|. * 1000|round|. / 1000|tostring')
+            if ! { uci set "qmodem.$section.traffic_threshold_gb=$threshold_gb" && uci set "qmodem.$section.traffic_threshold_bytes=$threshold_bytes" && uci commit qmodem; }; then
+                if [ -n "$old_threshold" ]; then uci set "qmodem.$section.traffic_threshold_gb=$old_threshold"; else uci -q delete "qmodem.$section.traffic_threshold_gb"; fi
+                if [ -n "$old_threshold_bytes" ]; then uci set "qmodem.$section.traffic_threshold_bytes=$old_threshold_bytes"; else uci -q delete "qmodem.$section.traffic_threshold_bytes"; fi
+                uci commit qmodem
+                echo '{"error":"Failed to save traffic threshold"}'; exit 1
+            fi
+        fi
+        # Persist the matching counter baseline before publishing the calibration.
+        if ! { mv "$snapshot" "$TRAFFIC_STORE/$section.json" && mv "$adjustment" "$TRAFFIC_STORE/$section.adjustment.json"; }; then
+            if [ -n "$threshold_bytes" ]; then
+                if [ -n "$old_threshold" ]; then uci set "qmodem.$section.traffic_threshold_gb=$old_threshold"; else uci -q delete "qmodem.$section.traffic_threshold_gb"; fi
+                if [ -n "$old_threshold_bytes" ]; then uci set "qmodem.$section.traffic_threshold_bytes=$old_threshold_bytes"; else uci -q delete "qmodem.$section.traffic_threshold_bytes"; fi
+                uci commit qmodem
+            fi
+            exit 1
+        fi
+        qmodem_config_unlock
+        echo '{"success":true}'
+        ;;
+    calibration_run)
+        /bin/sh "${QMODEM_HOME:-/usr/share/qmodem}/traffic_calibration.sh" run "$section"
+        ;;
+    calibration_status)
+        /bin/sh "${QMODEM_HOME:-/usr/share/qmodem}/traffic_calibration.sh" status "$section"
+        ;;
+    calibration_configure)
+        printf '%s' "$input" | jq -e '(.enabled|type=="boolean") and ([.hour,.minute]|all(type=="number" and floor==.)) and (.hour>=0 and .hour<=23) and (.minute>=0 and .minute<=59)' >/dev/null || { echo '{"error":"Invalid calibration settings"}'; exit 2; }
+        qmodem_config_lock
+        for pair in 'enabled traffic_calibration_enabled' 'hour traffic_calibration_hour' 'minute traffic_calibration_minute'; do
+            set -- $pair
+            value=$(printf '%s' "$input" | jq -r --arg key "$1" '.[$key] | if type=="boolean" then (if . then "1" else "0" end) else tostring end')
+            uci set "qmodem.$section.$2=$value" || { qmodem_config_unlock; exit 1; }
+        done
+        uci commit qmodem
         qmodem_config_unlock
         echo '{"success":true}'
         ;;
@@ -59,6 +102,14 @@ call)
             value=$(printf '%s' "$input" | jq -r --arg key "$1" '.[$key] | if type == "boolean" then (if . then "1" else "0" end) else tostring end')
             uci set "qmodem.$section.$2=$value" || { qmodem_config_unlock; exit 1; }
         done
+        if [ "$unit_base" = 1024 ]; then
+            exact=$(printf '%s' "$input" | jq -r '.threshold_gb|tonumber|. * 1073741824|round')
+            display=$(printf '%s' "$exact" | jq -r '. / 1000000000')
+            uci set "qmodem.$section.traffic_threshold_gb=$display"
+            uci set "qmodem.$section.traffic_threshold_bytes=$exact"
+        else
+            uci -q delete "qmodem.$section.traffic_threshold_bytes"
+        fi
         uci commit qmodem
         qmodem_config_unlock
         echo '{"success":true}'
@@ -69,19 +120,21 @@ call)
         rh=$(uci -q get "qmodem.$section.traffic_reset_hour")
         rm=$(uci -q get "qmodem.$section.traffic_reset_minute")
         threshold=$(uci -q get "qmodem.$section.traffic_threshold_gb")
+        threshold_bytes=$(uci -q get "qmodem.$section.traffic_threshold_bytes")
         file="$TRAFFIC_RAM/$section.json"
         [ -f "$file" ] || file="$TRAFFIC_STORE/$section.json"
         [ -f "$file" ] || file=/dev/null
         adjustment="$TRAFFIC_STORE/$section.adjustment.json"
         [ -f "$adjustment" ] || adjustment=/dev/null
-        jq -s --slurpfile adjustment "$adjustment" --arg method "$2" --arg enabled "${enabled:-1}" --arg rd "${rd:-1}" --arg rh "${rh:-0}" --arg rm "${rm:-0}" --arg threshold "${threshold:-0}" --argjson now "$(date +%s)" '
+        jq -s --slurpfile adjustment "$adjustment" --arg method "$2" --arg enabled "${enabled:-1}" --arg rd "${rd:-1}" --arg rh "${rh:-0}" --arg rm "${rm:-0}" --arg threshold "${threshold:-0}" --arg tb "$threshold_bytes" --argjson now "$(date +%s)" '
           (.[0] // {}) as $s |
           ($adjustment[0] // {}) as $a |
           (if $a.cycle != null and $a.cycle == $s.cycle then $a.bytes else 0 end) as $offset |
           ([0, (($s.cycle_rx // 0)+($s.cycle_tx // 0)+$offset)] | max) as $total |
-          {enabled:($enabled == "1"), reset_day:($rd|tonumber? // 1),reset_hour:($rh|tonumber? // 0),reset_minute:($rm|tonumber? // 0),threshold_gb:($threshold|tonumber? // 0)} as $cfg |
+          ($tb|tonumber? // -1) as $exact |
+          {enabled:($enabled == "1"), reset_day:($rd|tonumber? // 1),reset_hour:($rh|tonumber? // 0),reset_minute:($rm|tonumber? // 0),threshold_gb:($threshold|tonumber? // 0),threshold_bytes:(if $exact>=0 and $exact<=1000000000000000 then $exact else ($threshold|tonumber? // 0)*1000000000 end)} as $cfg |
           $s + {config:$cfg, cycle_total:$total, cycle_adjustment:$offset, stale:($now - ($s.now // 0) > 30),
-          exceeded:($cfg.enabled and $cfg.threshold_gb > 0 and $total >= $cfg.threshold_gb * 1000000000)} |
+          exceeded:($cfg.enabled and $cfg.threshold_bytes > 0 and $total >= $cfg.threshold_bytes)} |
           (if .stale or ($cfg.enabled|not) then .rx_rate=0 | .tx_rate=0 else . end) |
           if $method == "current" then del(.daily,.monthly,.live,.devices,.boot,.uptime) else . end' "$file"
         ;;

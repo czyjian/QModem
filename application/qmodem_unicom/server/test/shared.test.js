@@ -29,9 +29,12 @@ test('shared session is persistent, private and isolated by SIM identity',()=>{
 test('summary deduplicates exact resources, preserving blocks from the same policy',()=>{
   const summary=flowSummary(ocs);
   assert.equal(summary.total_mb,3072);assert.equal(summary.remaining_mb,1536);assert.equal(summary.details.length,2);
+  assert.equal(summary.used_mb,1536);
   const missing=flowSummary({resources:[{details:[{...pack,total:'',remain:''}]}]});
   assert.equal(missing.total_mb,null);assert.equal(missing.remaining_mb,null);
   assert.equal(flowSummary({resources:[{details:[{...pack,limited:'1'}]}]}).details[0].unlimited,true);
+  assert.equal(flowSummary({resources:[{details:[{...pack,limited:'1'}]}]}).used_mb,512);
+  assert.equal(flowSummary({resources:[{details:[{...pack,total:'',remain:'',use:false}]}]}).used_mb,null);
 });
 test('one browser logs in; another queries without carrier credentials',async()=>{
   const store=createSessionStore(), app=make(store);try {

@@ -3,20 +3,23 @@
 'require rpc';
 
 var get = rpc.declare({ object: 'qmodem.traffic', method: 'get', params: ['config_section'] });
-var configure = rpc.declare({ object: 'qmodem.traffic', method: 'configure', params: ['config_section', 'enabled', 'reset_day', 'reset_hour', 'reset_minute', 'threshold_gb'] });
+var configure = rpc.declare({ object: 'qmodem.traffic', method: 'configure', params: ['config_section', 'enabled', 'reset_day', 'reset_hour', 'reset_minute', 'threshold_gb','unit_base'] });
 
-function bytes(n) {
+function bytes(n, base) {
+	base = base === 1000 ? 1000 : 1024;
 	n = Number(n) || 0;
 	var units = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0;
-	while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
+	while (n >= base && i < units.length - 1) { n /= base; i++; }
 	return n.toFixed(i ? 2 : 0) + ' ' + units[i];
 }
 
 function cycleTotal(s) { return s.cycle_total != null ? s.cycle_total : (s.cycle_rx || 0)+(s.cycle_tx || 0); }
 function cycleBreakdown(s) {
+	var bytes = function(n){return formatBytes(n,s.unit_base);};
 	return _('Download')+': '+bytes(s.cycle_rx)+' / '+_('Upload')+': '+bytes(s.cycle_tx)+
 		(s.cycle_adjustment ? ' / '+_('Adjustment')+': '+(s.cycle_adjustment>0?'+':'−')+bytes(Math.abs(s.cycle_adjustment)) : '');
 }
+var formatBytes=bytes;
 function formatDate(value) {
 	if(typeof value==='string') return value.replace(/-/g,'/')+(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value)?':00':'');
 	if(!value) return '—';
@@ -46,7 +49,7 @@ function smoothPath(coords) {
 }
 
 var chartSequence=0, chartObserver=null, chartTargets=new Map();
-function chart(points, speed) {
+function chart(points, speed, base) {
 	var ns='http://www.w3.org/2000/svg', id='qmodem-area-'+(++chartSequence);
 	function node(tag,attrs,text) {
 		var el=document.createElementNS(ns,tag);
@@ -55,7 +58,7 @@ function chart(points, speed) {
 		return el;
 	}
 	points=points.map(function(p){return {label:p.label,rx:Math.max(0,Number(p.rx)||0),tx:Math.max(0,Number(p.tx)||0)};});
-	var format=speed ? function(n){return (n*8/1000000).toFixed(2)+' Mbps';} : bytes;
+	var format=speed ? function(n){return (n*8/1000000).toFixed(2)+' Mbps';} : function(n){return bytes(n,base);};
 	var svg=node('svg',{width:'100%',height:260,role:'img','aria-label':_('Download and upload trends')});
 	var tooltip=E('div',{'class':'qmodem-chart-tooltip',hidden:true});
 	var root=E('div',{'class':'qmodem-chart'},[
@@ -129,8 +132,11 @@ return baseclass.extend({
 	get: get,
 	current: rpc.declare({ object: 'qmodem.traffic', method: 'current', params: ['config_section'] }),
 	configure: configure,
-	correct: rpc.declare({object:'qmodem.traffic',method:'correct',params:['config_section','target_gb','cycle']}),
+	correct: rpc.declare({object:'qmodem.traffic',method:'correct',params:['config_section','target_gb','cycle','unit_base']}),
 	clearCorrection: rpc.declare({object:'qmodem.traffic',method:'clear_correction',params:['config_section']}),
+	calibrateNow: rpc.declare({object:'qmodem.traffic',method:'calibration_run',params:['config_section'],timeout:60000}),
+	calibrationStatus: rpc.declare({object:'qmodem.traffic',method:'calibration_status',params:['config_section']}),
+	configureCalibration: rpc.declare({object:'qmodem.traffic',method:'calibration_configure',params:['config_section','enabled','hour','minute']}),
 	bytes: bytes,
 	cycleTotal: cycleTotal,
 	cycleBreakdown: cycleBreakdown,
@@ -139,16 +145,17 @@ return baseclass.extend({
 	summary: function(s) {
 		if (!s.config || !s.config.enabled) return E('p', {}, _('Traffic monitoring is disabled.'));
 		if (!s.now) return E('p', {}, _('Waiting for the first traffic sample...'));
+		var bytes=function(n){return formatBytes(n,s.unit_base);}, quota=(s.config.threshold_bytes!=null?s.config.threshold_bytes:s.config.threshold_gb*1e9)/Math.pow(s.unit_base===1000?1000:1024,3), quotaText=Number(quota.toFixed(3))+' GB';
 		var rows = [
 			[_('Current download / upload'), (s.rx_rate * 8 / 1000000).toFixed(2) + ' / ' + (s.tx_rate * 8 / 1000000).toFixed(2) + ' Mbps'],
 			[_('Current billing cycle'), bytes(cycleTotal(s)) + ' (' + cycleBreakdown(s) + ')'],
 			[_('Total recorded traffic'), bytes((s.total_rx || 0)+(s.total_tx || 0))],
 			[_('Recording since'), formatDate(s.since)],
 			[_('Billing cycle starts'), s.cycle ? formatDate(s.cycle) : '—'],
-			[_('Traffic threshold'), s.config.threshold_gb > 0 ? s.config.threshold_gb + ' GB' : _('Not set')]
+			[_('Traffic threshold'), s.config.threshold_gb > 0 ? quotaText : _('Not set')]
 		];
 		var content = [];
-		if (s.exceeded) content.push(E('div', {'class':'alert-message warning'}, _('Traffic usage has reached the configured threshold.') + ' ' + bytes(cycleTotal(s)) + ' / ' + s.config.threshold_gb + ' GB'));
+		if (s.exceeded) content.push(E('div', {'class':'alert-message warning'}, _('Traffic usage has reached the configured threshold.') + ' ' + bytes(cycleTotal(s)) + ' / ' + quotaText));
 		if (s.stale) content.push(E('p', {'class':'alert-message warning'}, _('Traffic samples are stale. Check the monitoring service.')));
 		content.push(E('table', {'class':'table'}, rows.map(function(row) { return E('tr', {'class':'tr'}, [E('td', {'class':'td',width:'33%'},row[0]), E('td', {'class':'td'},row[1])]); })));
 		return E('div', {}, content);

@@ -3,7 +3,7 @@
 		"description": "Grant access to QModem Next application",
 		"read": {
 			"ubus": {
-				"qmodem.traffic": [ "get", "current" ],
+				"qmodem.traffic": [ "get", "current", "calibration_status" ],
 				"qmodem": [
 					"*"
 				],
@@ -17,7 +17,7 @@
 		},
 		"write": {
 			"ubus": {
-				"qmodem.traffic": [ "configure", "correct", "clear_correction" ],
+				"qmodem.traffic": [ "configure", "correct", "clear_correction", "calibration_configure", "calibration_run" ],
 				"qmodem": [
 					"delete_sms",
 					"do_reboot",

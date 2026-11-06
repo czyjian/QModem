@@ -2,6 +2,7 @@
 'require dom';
 'require uci';
 'require qmodem.qmodem as qmodem';
+'require qmodem.carrier-login as carrierLogin';
 
 // Prefer the SIM's home network over the registered network (roaming).
 function identify(data) {
@@ -42,19 +43,29 @@ return L.Class.extend({
 	queryUrl: queryUrl,
 	flow: flow,
 	create: function(selector) {
-		var node=E('div'), active=false, generation=0, pending=null, current='', rendered=false;
-		var loginTarget='', detailTarget='', carrierValue=E('td',{'class':'td'},_('正在识别…'));
+		var node=E('div'), active=false, generation=0, pending=null, current='', rendered=false, refreshQueued=false, loggingOut=false;
+		var loginDialog=null, detailTarget='', carrierValue=E('td',{'class':'td'},_('正在识别…'));
 		var carrierRow=E('fieldset',{'class':'cbi-section'},[
 			E('table',{'class':'table',style:'margin-bottom:0;'},[E('tbody',{},[E('tr',{'class':'tr'},[
 				E('td',{'class':'td left',width:'33%'},_('当前SIM卡运营商')),carrierValue
 			])])])
 		]);
-		var status=E('div',{'class':'cbi-value-description'}), summary=E('div'), login=E('button',{type:'button','class':'cbi-button',click:function(){window.open(loginTarget,'_blank','noopener,noreferrer');}},_('登录'));
+		var status=E('div',{'class':'cbi-value-description'}), summary=E('div'), login=E('button',{type:'button','class':'cbi-button',click:function(){
+			if(loginDialog)loginDialog.close();
+			loginDialog=carrierLogin.open(selector.value,function(){loginDialog=null;update(true);});
+		}},_('登录'));
 		var statusBox=E('div',{'class':'cbi-value',style:'display:block;margin:0 0 12px;padding:0;'},[
 			E('div',{'class':'cbi-value-field',style:'margin:0;width:100%;'},[status])
 		]);
 		var details=E('button',{type:'button','class':'cbi-button',click:function(){window.open(detailTarget,'_blank','noopener,noreferrer');}},_('在新窗口打开'));
 		var refresh=E('button',{type:'button','class':'cbi-button',click:function(){update(true);}},_('刷新'));
+		var logout=E('button',{type:'button','class':'cbi-button',title:_('清除当前 SIM 的共享登录，其他浏览器也需要重新登录。'),click:function(){
+			if(loggingOut)return;
+			var id=selector.value, request=++generation;loggingOut=true;logout.disabled=true;
+			fetch(L.url('admin/modem/unicom_api/shared')+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout',config_section:id})}).then(function(response){return response.json().then(function(result){if(!response.ok || !result.ok)throw new Error(result.msg || _('登出失败'));return result;});}).then(function(){
+				if(request===generation && selector.value===id)paint({ok:false,code:'TOKEN_EXPIRED'});
+			}).catch(function(error){if(request===generation && selector.value===id)dom.content(status,error.message);}).finally(function(){loggingOut=false;logout.disabled=false;});
+		}},_('登出'));
 		var actions=E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;'},[login,refresh,details]);
 		function message(text,kind) {
 			rendered=false;
@@ -64,8 +75,6 @@ return L.Class.extend({
 			var target=queryUrl(uci.get('qmodem','main','unicom_query_url'));
 			if (!target) throw new Error(_('The carrier query page address is invalid.'));
 			var url=new URL(target); url.searchParams.set('modem',id); detailTarget=url.href;
-			var loginUrl=new URL('/qmodem-unicom/',window.location.href);
-			loginUrl.searchParams.set('modem',id); loginUrl.searchParams.set('login','1'); loginTarget=loginUrl.href;
 			status.className='cbi-value-description';
 			dom.content(summary,[]); dom.content(status,_('正在读取登录状态…'));
 			login.style.display=''; refresh.disabled=true;
@@ -89,11 +98,19 @@ return L.Class.extend({
 			(data.details || []).forEach(function(item){
 				rows.push(E('tr',{'class':'tr'},[E('td',{'class':'td'},item.name),E('td',{'class':'td'},item.unlimited ? _('不限量') : flow(item.remaining_mb)),E('td',{'class':'td'},item.unlimited ? _('不限量') : flow(item.total_mb))]));
 			});
-			dom.content(summary,[E('table',{'class':'table',style:'margin-bottom:0;'},rows),E('p',{'class':'cbi-value-description'},_('更新时间')+': '+new Date(data.updated_at*1000).toLocaleString())]);
+			var networkRows=[
+				E('tr',{'class':'tr'},[E('th',{'class':'th'},_('网络信息')),E('th',{'class':'th',colspan:2},_('当前值'))]),
+				E('tr',{'class':'tr'},[E('td',{'class':'td'},_('签约速率')),E('td',{'class':'td',colspan:2,title:_('套餐签约值，不代表实时测速结果。')},data.signed_rate || '—')]),
+				E('tr',{'class':'tr'},[E('td',{'class':'td'},'QCI'),E('td',{'class':'td',colspan:2,title:_('标注“推断”的数值根据已订网络质量业务推断，并非运营商直接返回。')},data.qci || '—')])
+			];
+			function columns(){return E('colgroup',{},[E('col',{style:'width:50%;'}),E('col',{style:'width:25%;'}),E('col',{style:'width:25%;'})]);}
+			dom.content(summary,[E('table',{'class':'table',style:'table-layout:fixed;margin-bottom:12px;'},[columns(),E('tbody',{},networkRows)]),E('table',{'class':'table',style:'table-layout:fixed;margin-bottom:0;'},[columns(),E('tbody',{},rows)]),E('div',{style:'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;'},[
+				logout,E('span',{'class':'cbi-value-description',style:'margin-left:auto;text-align:right;'},_('更新时间')+': '+new Date(data.updated_at*1000).toLocaleString())
+			])]);
 		}
 		function update(force) {
-			if(!active) return Promise.resolve();
-			if(pending) return pending;
+			if(!active || loggingOut) return Promise.resolve();
+			if(pending){if(force)refreshQueued=true;return pending;}
 			var id=selector.value, request=generation;
 			refresh.disabled=true;
 			pending=qmodem.getSimInfo(id).then(function(data){
@@ -102,6 +119,7 @@ return L.Class.extend({
 				var sim=identify(data), key=id+':'+sim.carrier+':'+sim.status+':'+sim.identity;
 				dom.content(carrierValue,sim.carrier==='unicom' ? _('中国联通') : sim.carrier==='mobile' ? _('中国移动') : sim.carrier==='telecom' ? _('中国电信') : _('未识别'));
 				if(key!==current) {
+					if(loginDialog){loginDialog.close();loginDialog=null;}
 					current=key;
 					if(sim.status && sim.status!=='ready') {message(_('The SIM card is not ready. Insert or unlock the SIM card first.'));return;}
 					if(sim.carrier!=='unicom') {message(sim.carrier==='mobile' ? _('China Mobile usage queries are not supported yet.') : sim.carrier==='telecom' ? _('China Telecom usage queries are not supported yet.') : _('Unable to identify a supported SIM carrier. Only China Unicom is supported for now.'));return;}
@@ -115,11 +133,11 @@ return L.Class.extend({
 				if(request!==generation || selector.value!==id) return;
 				if(rendered) dom.content(status,_('查询未更新')+': '+error.message);
 				else { current='';message(error.message,'error'); }
-			}).finally(function(){pending=null;refresh.disabled=false;if(active && request!==generation) update();});
+			}).finally(function(){pending=null;refresh.disabled=false;if(active && (request!==generation || refreshQueued)){var forceRefresh=refreshQueued;refreshQueued=false;update(forceRefresh);}});
 			return pending;
 		}
-		function reset(){generation++;current='';dom.content(carrierValue,_('正在识别…'));message(_('Identifying the SIM carrier...'));}
+		function reset(){if(loginDialog){loginDialog.close();loginDialog=null;}generation++;current='';dom.content(carrierValue,_('正在识别…'));message(_('Identifying the SIM carrier...'));}
 		reset();
-		return {node:node,update:function(){return update(false);},activate:function(value){active=value;if(active)return update(false);},change:function(){reset();return update(false);}};
+		return {node:node,update:function(){return update(false);},activate:function(value){active=value;if(active)return update(false);if(loginDialog){loginDialog.close();loginDialog=null;}},change:function(){reset();return update(false);}};
 	}
 });

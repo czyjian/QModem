@@ -38,6 +38,10 @@ assert.equal(query.flow(null),'—');assert.equal(query.flow(1024),'1.00 GB');as
   assert.equal(requests.at(-1).config_section,'second');assert.equal(requests.at(-1).action,'usage');
   assert(!JSON.stringify(requests).includes('ecs_token'),'compact view queries without carrier credentials');
   sims.push(()=>Promise.reject(new Error('temporary RPC failure')));await panel.update();assert.match(text(panel.node),/1.00 GB/);
+  const descendants=node=>!node || typeof node!=='object' ? [] : Array.isArray(node) ? node.flatMap(descendants) : [node,...descendants(node.children)];
+  responses.push({ok:true});descendants(panel.node).find(node=>node.tag==='button' && node.children==='登出').attrs.click();
+  for(let i=0;i<5;i++)await new Promise(done=>setImmediate(done));
+  assert.equal(requests.at(-1).action,'logout');assert(!text(panel.node).includes('1.00 GB'));assert.match(text(panel.node),/尚未登录/);
   selector.value='third';sims.push(()=>Promise.resolve(sim('UNICOM','','pin')));await panel.change();assert(!text(panel.node).includes('1.00 GB'));
   panel.activate(false);const count=calls;await panel.update();assert.equal(calls,count);
   console.log('PASS: native compact table, credential-free requests, operator detection, SIM switch races, login and details links');

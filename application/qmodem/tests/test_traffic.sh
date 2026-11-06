@@ -94,5 +94,24 @@ mv "$tmp/ram/new" "$tmp/ram/modem0.json"
 get_current | jq -e '.cycle_total==300 and .cycle_adjustment==0' >/dev/null
 printf '%s\n' '{"config_section":"modem0"}' | sh "$rpc_file" call clear_correction | jq -e '.success' >/dev/null
 get_current | jq -e '.cycle_total==300' >/dev/null
+# Carrier MB is binary; the exact-byte endpoint must not apply decimal GB units.
+printf '%s\n' '{"config_section":"modem0","target_bytes":"1073741824","cycle":"cycle2"}' | sh "$rpc_file" call correct_bytes | jq -e '.success' >/dev/null
+printf '%s\n' '{"config_section":"modem0"}' | sh "$rpc_file" call get | jq -e '.cycle_total==1073741824 and .cycle_rx==100 and .cycle_tx==200 and .total_rx==300000000 and .daily["2026-11-01"].rx==200000000' >/dev/null
+printf '%s\n' '{"config_section":"modem0","target_bytes":"1073741824","threshold_bytes":"2147483648","cycle":"cycle2"}' | sh "$rpc_file" call correct_bytes | jq -e '.success' >/dev/null
+grep -q 'traffic_threshold_bytes=2147483648' "$tmp/uci.log"
+for bytes in '-1' '1e9' '0.5' '1000000000000001'; do
+    if printf '{"config_section":"modem0","target_bytes":"%s","cycle":"cycle2"}\n' "$bytes" | sh "$rpc_file" call correct_bytes >/dev/null 2>&1; then exit 1; fi
+done
+for limit in '0' '-1' '1e9' '0.5' '1000000000000001'; do
+    if printf '{"config_section":"modem0","target_bytes":"1","threshold_bytes":"%s","cycle":"cycle2"}\n' "$limit" | sh "$rpc_file" call correct_bytes >/dev/null 2>&1; then exit 1; fi
+done
+if printf '%s\n' '{"config_section":"modem0","target_bytes":"1","cycle":"old"}' | sh "$rpc_file" call correct_bytes >/dev/null 2>&1; then exit 1; fi
+printf '%s\n' '{"config_section":"modem0","enabled":false,"hour":3,"minute":0}' | sh "$rpc_file" call calibration_configure | jq -e '.success' >/dev/null
+if printf '%s\n' '{"config_section":"modem0","enabled":true,"hour":24,"minute":0}' | sh "$rpc_file" call calibration_configure >/dev/null 2>&1; then exit 1; fi
+printf '%s\n' '{"config_section":"modem0","target_gb":"1","cycle":"cycle2","unit_base":1024}' | sh "$rpc_file" call correct | jq -e '.success' >/dev/null
+get_current | jq -e '.cycle_total==1073741824' >/dev/null
+printf '%s\n' '{"config_section":"modem0","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"139","unit_base":1024}' | sh "$rpc_file" call configure | jq -e '.success' >/dev/null
+grep -q 'traffic_threshold_bytes=149250113536' "$tmp/uci.log"
+echo 'PASS: binary manual calibration and threshold; legacy decimal inputs unchanged'
 echo 'PASS: billing calendar, IPv4/IPv6 deduplication, counter resets, reboot, cycle rollover and history'
 echo 'PASS: cycle corrections, future increments, persistence, negative offsets, rollover and clear'
