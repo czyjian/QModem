@@ -32,7 +32,7 @@ return {
 			let query = http.getenv('QUERY_STRING') ?? '';
 			if (!match(query, /^action=(send|login|password|validate)$/)) return fail(400, '无效的登录操作');
 			path = '/gettoken/?' + query;
-		} else if (endpoint == 'ocs_proxy' || endpoint == 'basicdata_proxy' || endpoint == 'qci_proxy' || endpoint == 'shared') {
+		} else if (endpoint == 'ocs_proxy' || endpoint == 'basicdata_proxy' || endpoint == 'qci_proxy' || endpoint == 'shared' || endpoint == 'telecom_test') {
 			path = '/' + endpoint + '/';
 		} else return fail(404, '接口不存在');
 

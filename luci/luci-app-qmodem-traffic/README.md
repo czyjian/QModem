@@ -1,0 +1,47 @@
+# QModem 流量插件
+
+独立包为 `luci-app-qmodem-traffic`，依赖 `luci-app-qmodem-next`。菜单仍位于“模组管理 → 流量监控”，包含流量记录、历史图表、手动/自动校准和运营商流量查询。只安装 QModem Next 时不安装本插件的页面、采样服务和查询后端。
+
+## 编译和首次启动
+
+将完整 QModem 仓库作为 feed 加入 OpenWrt，更新并安装 feeds 后，在 LuCI → Applications 选中 `luci-app-qmodem-traffic`。编入固件时选 y，不要只选 m。依赖由包定义自动选择，无需在刷机后运行 npm、pip 或复制额外脚本。
+
+支持前提：目标 feeds 必须提供 Node.js >=22.23.2、Python 3、requests、cryptodome、certifi 和 ucode 版 LuCI。当前实际运行环境为 x86_64 ImmortalWrt 25.12-SNAPSHOT；未验证旧版 23.05、MIPS 或不提供上述运行时的目标。不把不支持的目标声明为可用。
+
+插件依赖 qmodem-carrier-service：包含路由器查询服务、锁定版本的 50 个纯 JavaScript 依赖、原版 Python 电信客户端、HTTPS CA 和联通详情网页。npm 包走 OpenWrt Download 机制，每个 tarball 有 SHA-256；生成时已与 package-lock 的 SHA-512 核对。首启不下载依赖。www 是 web 源码构建的发布资源，web-assets.json 记录内容哈希；修改 web 后需要重新构建并同步发布资源与清单。
+
+首次开机的 uci-defaults 自动启用 qmodem_unicom 和 qmodem_traffic；运行时通过 procd 管理。已有固件安装后，可检查：
+
+```sh
+/etc/init.d/qmodem_unicom status
+/etc/init.d/qmodem_traffic status
+curl -fsS http://127.0.0.1:8788/healthz
+ubus list qmodem.traffic
+```
+
+首次运营商登录仍需用户操作短信/安全验证；没有预置账号。运营商会话仅在路由器保存，文件权限 0600，目录 0700。正常 sysupgrade 保留流量历史和登录目录；恢复出厂或不保留配置会清除。真实硬件整固件构建和刷机首启尚未在本次环境执行。
+
+## 运营商查询
+
+按当前 SIM 的归属运营商选择登录方式，电信使用 DeviceId 短信授权后服务密码登录，联通使用原生短信登录。没有单独的临时测试按钮。登录成功关闭弹框，在主页面显示套餐总量、剩余量和分包信息。签约速率/QCI 只有查到有效值时显示。
+
+电信短信监听使用短信内容“中国电信”及“验证码”识别，兼容 106598731 等不同地区号段；同时过滤点击发送前的短信 ID、早于发送时间的短信、发送记录及不完整长短信。时间采用路由器 PDU 对应的本地时标，每 3 秒轮询，最多 5 分钟；提供复制按钮，不自动提交验证码。
+
+校准按 1024 进制，电信与联通各自使用对应共享会话。总量未知、不限量、登录失效、换卡、采样过期或本地账期不匹配时跳过，保留手动校准。
+
+## 验证
+
+```sh
+python3 luci/luci-app-qmodem-traffic/tests/check_package.py
+node luci/luci-app-qmodem-traffic/tests/test_traffic.js
+node luci/luci-app-qmodem-traffic/tests/test_traffic_units.js
+node luci/luci-app-qmodem-traffic/tests/test_traffic_query.js
+node luci/luci-app-qmodem-traffic/tests/test_carrier_login.js
+node luci/luci-app-qmodem-traffic/tests/test_telecom_login.js
+node luci/luci-app-qmodem-traffic/tests/test_telecom_sms.js
+sh luci/luci-app-qmodem-traffic/tests/test_traffic.sh
+sh luci/luci-app-qmodem-traffic/tests/test_traffic_calibration.sh
+sh luci/luci-app-qmodem-traffic/tests/test_carrier_calibration.sh
+```
+
+shell 检查需 Linux/OpenWrt 和 jq，只使用临时目录。查询服务的后端测试位于 application/qmodem_unicom/server/test，Python 测试位于 server/python。本次完成安装配方的隔离落盘、从安装目录运行后端 100 项检查、短信/界面回归和流量校准测试；完整 SDK/刷机验证不能由这些检查替代。

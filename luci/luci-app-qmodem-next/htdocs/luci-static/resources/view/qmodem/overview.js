@@ -5,7 +5,7 @@
 'require dom';
 'require uci';
 'require qmodem.qmodem as qmodem';
-'require qmodem.traffic as traffic';
+var traffic=null;
 
 // Load CSS
 document.head.appendChild(E('link', {
@@ -218,7 +218,8 @@ LuciTable.prototype = {
 return view.extend({
 	load: function() {
 		return Promise.all([
-			uci.load('qmodem')
+			uci.load('qmodem'),
+            L.require('qmodem.traffic').then(function(module){traffic=module;}).catch(function(){traffic=null;})
 		]);
 	},
 
@@ -462,7 +463,7 @@ return view.extend({
 			
 			// Update refresh time
 			if (updateTimeElement) {
-				var timeStr = traffic.formatDate(Date.now()/1000);
+				var timeStr = traffic ? traffic.formatDate(Date.now()/1000) : new Date().toLocaleString();
 				updateTimeElement.textContent = _('Last update') + ': ' + timeStr;
 			}
 		}).catch(function(e) {
@@ -539,6 +540,7 @@ return view.extend({
 		updateTimeSection.appendChild(trafficWarning);
 		container.appendChild(updateTimeSection);
 		function updateTraffic() {
+            if(!traffic){dom.content(trafficInline,[]);dom.content(trafficWarning,[]);return Promise.resolve();}
 			var id = select.value;
 			return traffic.current(id).then(function(data) {
 				if (select.value !== id) return;

@@ -1,0 +1,15 @@
+{
+  "admin/modem/qmodem/traffic": {
+    "title": "Traffic Monitor",
+    "order": 4,
+    "action": {
+      "type": "view",
+      "path": "qmodem/traffic"
+    },
+    "depends": {
+      "acl": [
+        "luci-app-qmodem-next"
+      ]
+    }
+  }
+}

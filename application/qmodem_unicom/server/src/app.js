@@ -7,6 +7,8 @@ import { registerGetToken } from "./routes/gettoken.js";
 import { registerProxy } from "./routes/proxy.js";
 import { createUnicomUpstream } from "./upstream/unicom.js";
 import { createSessionStore } from './sessions.js';
+import { registerTelecomTest } from './routes/telecom-test.js';
+import { createTelecomStore } from './telecom-store.js';
 import { registerShared } from './routes/shared.js';
 
 function registerBodyParser(app) {
@@ -95,6 +97,7 @@ export function buildApp(config, overrides = {}) {
   registerGetToken(app, { upstream, captcha, limiter, config, store });
   registerProxy(app, { upstream, store });
   registerShared(app, { upstream, store });
+  registerTelecomTest(app, {limiter,upstream:overrides.telecomUpstream,store:overrides.telecomStore ?? createTelecomStore(config.sessionStorePath ? config.sessionStorePath+'.telecom' : '')});
 
   return app;
 }

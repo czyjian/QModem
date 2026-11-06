@@ -1,0 +1,43 @@
+{
+  "luci-app-qmodem-traffic": {
+    "description": "QModem traffic monitor and carrier queries",
+    "read": {
+      "ubus": {
+        "qmodem.traffic": [
+          "get",
+          "current",
+          "calibration_status"
+        ],
+        "qmodem": [
+          "sim_info"
+        ],
+        "qmodem.sms": [
+          "list"
+        ],
+        "system": [
+          "info"
+        ]
+      },
+      "uci": [
+        "qmodem"
+      ]
+    },
+    "write": {
+      "ubus": {
+        "qmodem.traffic": [
+          "configure",
+          "correct",
+          "clear_correction",
+          "calibration_configure",
+          "calibration_run"
+        ],
+        "qmodem.sms": [
+          "sync"
+        ]
+      },
+      "uci": [
+        "qmodem"
+      ]
+    }
+  }
+}

@@ -9,7 +9,7 @@
       "methods": ["cookie:sysauth_https", "cookie:sysauth_http"],
       "login": false
     },
-    "depends": { "acl": ["luci-app-qmodem-next"] },
+    "depends": { "acl": ["luci-app-qmodem-traffic"] },
     "firstchild_ineligible": true
   }
 }

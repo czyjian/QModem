@@ -1,0 +1,6 @@
+luci/luci-app-qmodem-traffic/** text eol=lf
+application/qmodem_unicom/files/** text eol=lf
+application/qmodem_unicom/Makefile text eol=lf
+application/qmodem_unicom/npm-deps.mk text eol=lf
+application/qmodem_unicom/www/** -text -whitespace
+application/qmodem_unicom/server/python/vendor/*.py -text -whitespace

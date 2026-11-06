@@ -1,0 +1,6 @@
+#!/bin/sh
+[ -n "$IPKG_INSTROOT" ] || {
+    /etc/init.d/qmodem_unicom enable
+    /etc/init.d/qmodem_unicom start
+}
+exit 0

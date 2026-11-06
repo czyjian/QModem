@@ -1,3 +1,0 @@
-#!/bin/sh
-[ -n "$IPKG_INSTROOT" ] || /etc/init.d/qmodem_traffic enable
-exit 0

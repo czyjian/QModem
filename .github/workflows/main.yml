@@ -222,6 +222,14 @@ jobs:
           path: 'qmodem'
 
 
+      - name: Validate traffic addon
+        run: |
+          cd qmodem
+          python3 luci/luci-app-qmodem-traffic/tests/check_package.py
+          node luci/luci-app-qmodem-next/tests/test_optional_traffic.js
+          for check in luci/luci-app-qmodem-traffic/tests/test_*.js; do
+            node "$check"
+          done
       - name: Import Env
         run: cat qmodem/.github/workflows/${{ matrix.build_arch }}.env >> "$GITHUB_ENV"
 
@@ -315,9 +323,6 @@ jobs:
           # unavailable legacy GPIO module exclusion immediately before build.
           sed -i '/^CONFIG_PACKAGE_gpio-button-hotplug=/d' .config
           echo 'CONFIG_PACKAGE_gpio-button-hotplug=n' >> .config
-          sed -i '/^CONFIG_PACKAGE_libopenssl=/d;/^CONFIG_PACKAGE_openssl-util=/d' .config
-          echo 'CONFIG_PACKAGE_libopenssl=n' >> .config
-          echo 'CONFIG_PACKAGE_openssl-util=n' >> .config
 
       - name: Compile QModem
         id: compile
@@ -345,11 +350,22 @@ jobs:
           for package in $arch_package; do
             compile_package "$package"
           done
+          # Carrier runtime requires Node >=22.23.2. Current APK SDK targets
+          # provide it; older IPK and mips SDKs are not claimed as supported.
+          traffic_addon=false
+          case "${{ matrix.build_arch }}" in
+            x64_apk|arm64_apk)
+              compile_package qmodem_unicom
+              compile_package luci-app-qmodem-traffic
+              traffic_addon=true
+              ;;
+          esac
           package_dir="bin/packages/${{ env.SDK_ARCH }}/qmodem"
           required_packages=(
             qmodem qmodem-smsd sms-forwarder-next qmodem-uplink-manager luci-app-qmodem-uplink
             luci-app-qmodem-next luci-i18n-qmodem-next-zh-cn
           )
+          if [ "$traffic_addon" = true ]; then required_packages+=(qmodem-carrier-service luci-app-qmodem-traffic); fi
           for package in "${required_packages[@]}"; do
             compgen -G "$package_dir/${package}[-_]*" >/dev/null || {
               echo "missing required release package: $package" >&2

@@ -1,0 +1,26 @@
+.qmodem-traffic-page,
+.qmodem-traffic-page :is(td, p, input, select, button, .cbi-value-title, .cbi-value-field) {
+	font-size: var(--text-sm, inherit);
+	line-height: var(--text-sm--line-height, normal);
+}
+
+.qmodem-chart { position: relative; min-width: 0; }
+.qmodem-chart svg { display: block; width: 100%; height: 260px; overflow: visible; font: inherit; }
+.qmodem-chart-legend { display: flex; justify-content: flex-end; align-items: center; gap: 20px; padding: 0 24px 8px; }
+.qmodem-chart-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.qmodem-chart-legend i { display: inline-block; width: 20px; border-top: 2px solid currentColor; }
+.qmodem-chart-legend .qmodem-chart-upload i { border-top-style: dashed; }
+.qmodem-chart-download { color: var(--primary, currentColor); }
+.qmodem-chart-upload { color: var(--muted-foreground, currentColor); }
+.qmodem-chart-grid { stroke: var(--border, currentColor); stroke-opacity: .55; stroke-dasharray: 3 5; }
+.qmodem-chart-axis { fill: var(--muted-foreground, currentColor); font: inherit; }
+.qmodem-chart-line { stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.qmodem-chart-line.qmodem-chart-upload { stroke-dasharray: 6 4; stroke-width: 1.5; }
+.qmodem-chart-point { fill: currentColor; }
+.qmodem-chart-guide { stroke: var(--muted-foreground, currentColor); stroke-opacity: .5; stroke-dasharray: 3 4; }
+.qmodem-chart-tooltip {
+	position: absolute; pointer-events: none; z-index: 1; padding: 8px 12px; white-space: pre-line;
+	color: var(--popover-foreground, CanvasText); background: var(--popover, Canvas);
+	border: 1px solid var(--border, GrayText); font: inherit;
+}
+.qmodem-chart-tooltip[hidden] { display: none; }
