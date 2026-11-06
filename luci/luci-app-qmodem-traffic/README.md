@@ -6,9 +6,9 @@
 
 将完整 QModem 仓库作为 feed 加入 OpenWrt，更新并安装 feeds 后，在 LuCI → Applications 选中 `luci-app-qmodem-traffic`。编入固件时选 y，不要只选 m。依赖由包定义自动选择，无需在刷机后运行 npm、pip 或复制额外脚本。
 
-支持前提：目标 feeds 必须提供 Node.js >=22.23.2、Python 3、requests、cryptodome、certifi 和 ucode 版 LuCI。当前实际运行环境为 x86_64 ImmortalWrt 25.12-SNAPSHOT；未验证旧版 23.05、MIPS 或不提供上述运行时的目标。不把不支持的目标声明为可用。
+支持前提：目标 feeds 必须提供 Node.js >=22.23.2 和 ucode 版 LuCI。当前实际运行环境为 x86_64 ImmortalWrt 25.12-SNAPSHOT；未验证旧版 23.05、MIPS 或不提供上述运行时的目标。不把不支持的目标声明为可用。
 
-插件依赖 qmodem-carrier-service：包含路由器查询服务、锁定版本的 50 个纯 JavaScript 依赖、原版 Python 电信客户端、HTTPS CA 和联通详情网页。npm 包走 OpenWrt Download 机制，每个 tarball 有 SHA-256；生成时已与 package-lock 的 SHA-512 核对。首启不下载依赖。www 是 web 源码构建的发布资源，web-assets.json 记录内容哈希；修改 web 后需要重新构建并同步发布资源与清单。
+插件依赖 qmodem-carrier-service：包含路由器查询服务、锁定版本的 50 个纯 JavaScript 依赖、纯 Node.js 电信客户端、HTTPS CA 和联通详情网页。npm 包走 OpenWrt Download 机制，每个 tarball 有 SHA-256；生成时已与 package-lock 的 SHA-512 核对。首启不下载依赖。www 是 web 源码构建的发布资源，web-assets.json 记录内容哈希；修改 web 后需要重新构建并同步发布资源与清单。
 
 首次开机的 uci-defaults 自动启用 qmodem_unicom 和 qmodem_traffic；运行时通过 procd 管理。已有固件安装后，可检查：
 
@@ -44,4 +44,4 @@ sh luci/luci-app-qmodem-traffic/tests/test_traffic_calibration.sh
 sh luci/luci-app-qmodem-traffic/tests/test_carrier_calibration.sh
 ```
 
-shell 检查需 Linux/OpenWrt 和 jq，只使用临时目录。查询服务的后端测试位于 application/qmodem_unicom/server/test，Python 测试位于 server/python。本次完成安装配方的隔离落盘、从安装目录运行后端 100 项检查、短信/界面回归和流量校准测试；完整 SDK/刷机验证不能由这些检查替代。
+shell 检查需 Linux/OpenWrt 和 jq，只使用临时目录。查询服务的后端测试位于 application/qmodem_unicom/server/test；固件运行不再需要 Python。本次完成安装配方的隔离落盘、从安装目录运行后端检查、短信/界面回归和流量校准测试；完整 SDK/刷机验证不能由这些检查替代。

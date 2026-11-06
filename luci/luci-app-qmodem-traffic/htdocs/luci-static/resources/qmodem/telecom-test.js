@@ -3,7 +3,7 @@
 'require dom';
 'require qmodem.telecom-sms as telecomSms';
 return L.Class.extend({
- open:function(section,onLogin){
+ open:function(section,onLogin,options){
   var session='',authSession='',closed=false,pending=false,sent=false,hasShared=false,verifying=false,observer=null;
   var phone=E('input',{type:'tel',maxlength:11,'class':'cbi-input-text',autocomplete:'off'});
   var password=E('input',{type:'password',maxlength:6,'class':'cbi-input-text',autocomplete:'off'});
@@ -71,7 +71,7 @@ return L.Class.extend({
   function finish(){pending=false;if(!closed){login.disabled=false;refresh.disabled=!hasShared;}}
   function failure(error){if(!closed)dom.content(status,error.message);}
   var login=E('button',{type:'button','class':'cbi-button cbi-button-action',click:function(){
-   if(pending || closed)return;pending=true;login.disabled=true;refresh.disabled=true;dom.content(status,_('正在使用原版协议登录…'));
+   if(pending || closed)return;pending=true;login.disabled=true;refresh.disabled=true;dom.content(status,_('正在登录电信…'));
    var old=session;session='';if(old)request({action:'logout',session_id:old}).catch(function(){});
    var promise=request({action:'login',shared:true,phone:phone.value.trim(),password:password.value,device_id:device.value.trim()});password.value='';
    promise.then(function(data){if(closed){request({action:'logout',session_id:data.session_id});return;}session=data.session_id;dom.content(status,_('登录成功，正在查询…'));return query();}).catch(failure).finally(finish);
@@ -90,8 +90,10 @@ return L.Class.extend({
   ]);restore();
   phone.addEventListener('input',function(){if(!pending){dropAuth();device.value='';}});
   if(window.MutationObserver){observer=new window.MutationObserver(function(){if(!closed && (!document.body.classList.contains('modal-overlay-active') || (!root.isConnected && !verifying)))cleanup();});observer.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});}
-  pending=true;login.disabled=true;
-  request({action:'shared_status'}).then(function(data){if(!closed && data.logged_in)return query();}).catch(failure).finally(finish);
+  if(!options || !options.forceLogin){
+   pending=true;login.disabled=true;
+   request({action:'shared_status'}).then(function(data){if(!closed && data.logged_in)return query();}).catch(failure).finally(finish);
+  }
   return {close:leave};
  }
 });

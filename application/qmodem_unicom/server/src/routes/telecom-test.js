@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {contextKey} from '../sessions.js';
-import {createTelecomUpstream} from '../upstream/hlhk-python.js';
+import {createTelecomUpstream} from '../upstream/telecom-node.js';
 import {createTelecomStore} from '../telecom-store.js';
 export function registerTelecomTest(app,{limiter,upstream=createTelecomUpstream(),store=createTelecomStore(),now=()=>Date.now()}){
   const sessions=new Map(),busy=new Set(),cache=new Map();
@@ -71,13 +71,13 @@ export function registerTelecomTest(app,{limiter,upstream=createTelecomUpstream(
     try{
       if(body.action==='login'){
         const result=await upstream.login(body.phone,body.password,body.device_id || '');
-        if(!result.ok)return {ok:false,msg:'原版协议登录失败（'+result.code+'）；若为 3006，请检查短信授权 DeviceId。'};
+        if(!result.ok)return {ok:false,msg:'电信登录失败（'+result.code+'）；若为 3006，请检查短信授权 DeviceId。'};
         const session_id=randomUUID();sessions.set(session_id,{context,credentials:result.credentials,expires:now()+900000});
         if(body.shared===true){store.put(body._sim,result.credentials);cache.delete(context);}
         return {ok:true,session_id};
       }
       const result=await upstream.usage(session.credentials);
-      if(!result.ok)return {ok:false,msg:'原版协议流量查询失败（'+result.code+'）；未自动重新登录，请保留弹框。'};
+      if(!result.ok)return {ok:false,msg:'电信流量查询失败（'+result.code+'）；未自动重新登录，请保留弹框。'};
       return result;
     }finally{busy.delete(context);}
   });

@@ -17,7 +17,7 @@ define Package/qmodem-carrier-service
   CATEGORY:=Network
   TITLE:=QModem carrier usage query service
   EXTRA_DEPENDS:=node (>=22.23.2)
-  DEPENDS:=+qmodem +node +curl +ca-bundle +ca-certificates +python3 +python3-requests +python3-cryptodome +python3-certifi +luci-base +ucode +ucode-mod-fs
+  DEPENDS:=+qmodem +node +curl +ca-bundle +ca-certificates +luci-base +ucode +ucode-mod-fs
 endef
 
 define Package/qmodem-carrier-service/description
@@ -30,11 +30,9 @@ define Package/qmodem-carrier-service/conffiles
 endef
 
 define Build/Prepare
+	$(RM) -r $(PKG_BUILD_DIR)/server
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/server
 	$(CP) ./server/src $(PKG_BUILD_DIR)/server/
-	$(INSTALL_DIR) $(PKG_BUILD_DIR)/server/python/vendor
-	$(CP) ./server/python/vendor/. $(PKG_BUILD_DIR)/server/python/vendor/
-	$(CP) ./server/python/hlhk_worker.py $(PKG_BUILD_DIR)/server/python/
 	$(CP) ./server/package.json $(PKG_BUILD_DIR)/server/
 	$(call Build/InstallNodeModules)
 endef

@@ -1,0 +1,197 @@
+[
+  {
+    "kind": "password",
+    "body": {
+      "content": {
+        "fieldData": {
+          "accountType": "",
+          "authentication": "345678",
+          "deviceUid": "313000000000",
+          "isChinatelecom": "0",
+          "loginAuthCipherAsymmertric": "cipher:iPhone 14 15.4.0fixture-devi13000000000202611061630001234560$$$0.",
+          "loginType": "4",
+          "phoneNum": "35222222222",
+          "systemVersion": "15.4.0",
+          "androidId": "hkzvwtg/fgxkeg/kf"
+        },
+        "attach": "iPhone"
+      },
+      "headerInfos": {
+        "code": "userLoginNormal",
+        "clientType": "#12.2.0#channel50#iPhone 14 Pro#",
+        "timestamp": "20261106163000",
+        "shopId": "20002",
+        "source": "110003",
+        "sourcePassword": "Sid98s",
+        "userLoginName": "35222222222"
+      }
+    }
+  },
+  {
+    "kind": "getLoginRandomCode",
+    "body": {
+      "headerInfos": {
+        "broadAccount": "",
+        "broadToken": "",
+        "fixedLineAccount": "",
+        "fixedLineToken": "",
+        "provinceCode": "",
+        "code": "getLoginRandomCode",
+        "source": "120002",
+        "sourcePassword": "TiqmIZ",
+        "userLoginName": "",
+        "clientType": "#13.4.0#channel50#iPhone 11 Pro Max#",
+        "token": "",
+        "timestamp": "20261106163059",
+        "shopId": "20004"
+      },
+      "content": {
+        "attach": "iPhone",
+        "fieldData": {
+          "deviceUid": "48d11bf14beef3bc654b1ceeab39106e",
+          "imsi": "",
+          "key": "",
+          "payType": "",
+          "phoneNum": "35222222222",
+          "salesProdId": "",
+          "scene": "55",
+          "signSignatureString": "",
+          "validationCode": ""
+        }
+      }
+    }
+  },
+  {
+    "kind": "getSliderVerificationPicture",
+    "body": {
+      "headerInfos": {
+        "broadAccount": "",
+        "broadToken": "",
+        "fixedLineAccount": "",
+        "fixedLineToken": "",
+        "provinceCode": "",
+        "code": "getSliderVerificationPicture",
+        "source": "120002",
+        "sourcePassword": "TiqmIZ",
+        "userLoginName": "",
+        "clientType": "#13.4.0#channel50#iPhone 11 Pro Max#",
+        "token": "",
+        "timestamp": "20261106163059",
+        "shopId": "20004"
+      },
+      "content": {
+        "attach": "iPhone",
+        "fieldData": {
+          "account": "35222222222",
+          "clientType": "1",
+          "deviceUid": "6:f33dh36dggh5de876d3eggcd5;328g",
+          "scene": "1"
+        }
+      }
+    }
+  },
+  {
+    "kind": "verificationSliderPicture",
+    "body": {
+      "headerInfos": {
+        "broadAccount": "",
+        "broadToken": "",
+        "fixedLineAccount": "",
+        "fixedLineToken": "",
+        "provinceCode": "",
+        "code": "verificationSliderPicture",
+        "source": "120002",
+        "sourcePassword": "TiqmIZ",
+        "userLoginName": "",
+        "clientType": "#13.4.0#channel50#iPhone 11 Pro Max#",
+        "token": "",
+        "timestamp": "20261106163059",
+        "shopId": "20004"
+      },
+      "content": {
+        "attach": "iPhone",
+        "fieldData": {
+          "account": "35222222222",
+          "clientType": "1",
+          "deviceUid": "6:f33dh36dggh5de876d3eggcd5;328g",
+          "distance": "n56qNZJV5caLvdKRJCApKw==",
+          "endTime": "IrcIWQuKj6E9zAaaE92vEg==",
+          "startTime": "NwDVJcMiFHwpyRNXDxUH4A==",
+          "key": "slider",
+          "scene": "1",
+          "shopId": "20002",
+          "slidingTrack": "FKf6HZBj9TIhXwdyeerkcA=="
+        }
+      }
+    }
+  },
+  {
+    "kind": "getLoginRandomCode",
+    "body": {
+      "headerInfos": {
+        "broadAccount": "",
+        "broadToken": "",
+        "fixedLineAccount": "",
+        "fixedLineToken": "",
+        "provinceCode": "",
+        "code": "getLoginRandomCode",
+        "source": "120002",
+        "sourcePassword": "TiqmIZ",
+        "userLoginName": "",
+        "clientType": "#13.4.0#channel50#iPhone 11 Pro Max#",
+        "token": "",
+        "timestamp": "20261106163059",
+        "shopId": "20004"
+      },
+      "content": {
+        "attach": "iPhone",
+        "fieldData": {
+          "deviceUid": "48d11bf14beef3bc654b1ceeab39106e",
+          "imsi": "",
+          "key": "before",
+          "payType": "",
+          "phoneNum": "35222222222",
+          "salesProdId": "",
+          "scene": "55",
+          "signSignatureString": "signature",
+          "validationCode": ""
+        }
+      }
+    }
+  },
+  {
+    "kind": "userLoginNormal",
+    "body": {
+      "headerInfos": {
+        "broadAccount": "",
+        "broadToken": "",
+        "fixedLineAccount": "",
+        "fixedLineToken": "",
+        "provinceCode": "",
+        "code": "userLoginNormal",
+        "source": "120002",
+        "sourcePassword": "TiqmIZ",
+        "userLoginName": "35222222222",
+        "clientType": "#13.4.0#channel50#iPhone 11 Pro Max#",
+        "token": "",
+        "timestamp": "20261106163059",
+        "shopId": "20004"
+      },
+      "content": {
+        "attach": "iPhone",
+        "fieldData": {
+          "accountType": "",
+          "authentication": "ODc2NTQz",
+          "clientType": "1",
+          "deviceUid": "48d11bf14beef3bc654b1ceeab39106e",
+          "isChinatelecom": "0",
+          "loginAuthCipherAsymmertric": "cipher:iPhone 11 16.1.48d11bf14bee13000000000202611061630596543210$$$0.",
+          "loginType": "2",
+          "phoneNum": "35222222222",
+          "signSignatureString": "",
+          "systemVersion": "16.1.1"
+        }
+      }
+    }
+  }
+]

@@ -16,9 +16,12 @@ assert "if(!traffic)" in overview
 assert "+luci-app-qmodem-next" in (plugin/"Makefile").read_text()
 assert "+qmodem-carrier-service" in (plugin/"Makefile").read_text()
 make=(runtime/"Makefile").read_text()
-for dependency in ("node","curl","ca-bundle","ca-certificates","python3","python3-requests","python3-cryptodome","python3-certifi","luci-base","ucode","ucode-mod-fs"):
+for dependency in ("node","curl","ca-bundle","ca-certificates","luci-base","ucode","ucode-mod-fs"):
     assert "+"+dependency in make,dependency
 assert ">=22.23.2" in make
+assert "+python" not in make
+assert not list((runtime/"server").rglob("*.py"))
+assert not (runtime/"server/src/upstream/hlhk-python.js").exists()
 lock=load(runtime/"server/package-lock.json")
 sources=(runtime/"npm-deps.mk").read_text()
 packages=[p for p in lock["packages"] if p]
