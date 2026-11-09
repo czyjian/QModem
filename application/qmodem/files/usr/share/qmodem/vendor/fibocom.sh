@@ -782,9 +782,11 @@ set_network_prefer()
 get_voltage()
 {
 	local voltage=$(cmd_cbc "$at_port" | grep "+CBC:" | awk -F',' '{print $2}' | sed 's/\r//g')
-    [ -n $voltage ] && {
+    if [ -n "$voltage" ]; then
         voltage="${voltage}mV"
-    }
+    else
+        voltage="获取失败"
+    fi
     add_plain_info_entry "voltage" "$voltage" "Voltage"
 }
 
@@ -813,9 +815,11 @@ get_temperature()
     }
 
     local temperature
-    [ -n "$response" ] && {
+    if [ -n "$response" ]; then
         temperature="${response}$(printf "\xc2\xb0")C"
-    }
+    else
+        temperature="获取失败"
+    fi
 
     add_plain_info_entry "temperature" "$temperature" "Temperature"
 }
