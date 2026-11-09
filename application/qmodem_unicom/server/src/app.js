@@ -8,6 +8,8 @@ import { registerProxy } from "./routes/proxy.js";
 import { createUnicomUpstream } from "./upstream/unicom.js";
 import { createSessionStore } from './sessions.js';
 import { registerTelecomTest } from './routes/telecom-test.js';
+import {registerMobile} from './routes/mobile.js';
+import {createMobileStore} from './mobile-store.js';
 import { createTelecomStore } from './telecom-store.js';
 import { registerShared } from './routes/shared.js';
 
@@ -98,6 +100,7 @@ export function buildApp(config, overrides = {}) {
   registerProxy(app, { upstream, store });
   registerShared(app, { upstream, store });
   registerTelecomTest(app, {limiter,upstream:overrides.telecomUpstream,store:overrides.telecomStore ?? createTelecomStore(config.sessionStorePath ? config.sessionStorePath+'.telecom' : '')});
+  registerMobile(app,{limiter,upstream:overrides.mobileUpstream,store:overrides.mobileStore ?? createMobileStore(config.sessionStorePath ? config.sessionStorePath+'.mobile' : '')});
 
   return app;
 }

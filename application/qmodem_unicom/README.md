@@ -45,3 +45,21 @@ node --test test/*.test.js
 从仓库根目录运行 `python3 luci/luci-app-qmodem-traffic/tests/check_package.py` 只做开发机上的打包静态检查，不安装到固件，也不引入 Python 运行依赖。界面及短信测试位于该插件 tests 目录。
 
 纯 Node 查询已与原版在同一真实会话上对照一致，并在无法查找到解释器命令的 PATH 下重复成功；2026-11-06 已由用户手动完成纯 Node.js 的全新滑块验证、短信授权 DeviceId、服务密码登录及分包查询，全链路成功；总量及余量 120.60 GB，分包为 57.60 GB、60 GB、3 GB。安装目录不含 Python worker，并在 PATH=/nonexistent 下通过全部 108 项后端测试。完整 SDK 编译及刷机首启验证不能由本地单元检查替代。
+
+## 中国移动接入（2026-11-09）
+
+移动使用纯 Node.js 实现（无新增 npm/Python 依赖）：官方图片验证码 → 手动识别 → 短信随机码 → RSA 登录 → 官方 SSO 跳转。已对照当日官方 login_qr_fun.js 核对发码参数，图片从官方 captchazh.htm 取得，验证使用 verifyCaptcha.htm，随后 loadToken.action 和 sendRandomCodeAction.action；不进行 OCR 或自动识别。
+
+登录页对应 native LuCI 组件 mobile-login.js；短信监控复用现有组件，新增 mobile 分支，按 10086/中国移动及验证码/随机码关键词识别本次收到的短信。识别移动 SIM 后，主页面“登录”“刷新”“登出”和详情按钮使用移动链路。登录成功关闭弹框并更新主表格。
+
+Cookie 按 domain/path/到期时间隔离，SSO 仅允许 HTTPS 的 login.10086.cn、shop.10086.cn、wx.10086.cn，不跟随任意跳转。正式会话保存到 SESSION_STORE + .mobile，权限 0600，目录 0700，按真实 SIM 绑定；不保存短信验证码、图片验证码或密码。临时验证 10 分钟过期、单次发码、最多 5 次登录尝试，关闭清理。
+
+查询优先使用官方网上营业厅的 GET /i/v1/fee/planbal/<加密号码>，基于官网 public commonutil 的双 Base64/AES-CBC 解包。只读取 type=1 的有效套餐资源和 resCode=04 的移动数据流量，排除语音、WLAN、失效套餐及套餐外收费记录。未知单位或资源限制不当作零；合计包含定向、校园、结转等流量包，显示范围说明。网上营业厅单位 03=KB、04=MB、05=GB，与微信网厅不同，分开解析，统一输出 MB，再按 1024 进制显示。
+
+网上营业厅不可用时再尝试 wx 的 getNewMarginInfo。403/412 或维护公告保留会话，不自动发码。两条链路均明确鉴权失效时才清除登录，避免把某个站点维护误判为账号退出。请求总预算 22 秒，固定官方 HTTPS 域名，并限制响应大小。
+
+2026-11-09 实测：补齐官网 loadSendflag.htm 初始化和 chkNumberAction.action 号码检查后，用户完成图片与短信登录；保存的 SSO 会话可查询网上营业厅余量，服务重启与独立 LuCI 会话查询均成功。微信站点当时返回系统升级公告，网上营业厅正常。该账号返回 7 个流量包，合计总量 275119 MB、已用 36345 MB、剩余 238774 MB（约 268.67 / 35.49 / 233.18 GB）。后台自动校准已加入移动归属运营商和 /mobile/usage 路由；继续校验当前 SIM、号码、账期、采样和总量，定向/校园等资源范围会在查询页说明。
+
+发送成功或失败都保留官方图片及用户输入，只有手动刷新图片或关闭弹框才清除。SMS_1/SMS_3 按官网提示冷却至少 60 秒后允许人工重试，服务端同样检查冷却；确认已发送后禁止重复发送。网络不确定等错误不自动重试。
+
+协议来源与 MIT 许可见 third-party/MOBILE-SOURCES.md 和 cn-carrier-monitor-LICENSE。未使用第三方登录代理。

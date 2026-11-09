@@ -29,4 +29,9 @@ test_identity=460011234567890
 calibration_probe modem0 true > "$tmp/result"
 grep -q '/shared/' "$tmp/url"
 jq -e '.action=="usage"' "$tmp/payload" >/dev/null
-echo 'PASS: telecom and unicom calibration select matching carrier session and preserve exact byte units'
+test_identity=460001234567890
+calibration_probe modem0 true > "$tmp/result"
+grep -q '/mobile/' "$tmp/url"
+jq -e '.action=="usage"' "$tmp/payload" >/dev/null
+jq -e '.available==true' "$tmp/result" >/dev/null
+echo 'PASS: mobile, telecom and unicom calibration select matching sessions and exact byte units'

@@ -8,9 +8,10 @@ var listSms=rpc.declare({object:'qmodem.sms',method:'list',params:['modem_id','l
 var syncSms=rpc.declare({object:'qmodem.sms',method:'sync',params:['modem_id'],expect:{}});
 var clock=rpc.declare({object:'system',method:'info',expect:{}});
 return L.Class.extend({
- create:function(section,onChanged){
+ create:function(section,onChanged,carrier){
   var alive=true,timer=null,version=0,after=null,baseline=new Set(),deadline=0,identity='';
-  var state=E('p',{'class':'cbi-value-description'},_('发送验证码后，仅显示本次操作之后收到的电信短信。')),messages=E('div');
+  carrier=carrier || 'telecom';
+  var state=E('p',{'class':'cbi-value-description'},_('发送验证码后，仅显示本次操作之后收到的运营商短信。')),messages=E('div');
   async function sim(){
    var data=await qmodem.getSimInfo(section),fields={};
    ((data && data.modem_info) || []).forEach(function(item){fields[item.key]=String(item.value || '').trim();});
@@ -47,8 +48,8 @@ return L.Class.extend({
    if(Date.now()>deadline){stop();dom.content(state,_('本次短信监听已结束，请在短信页查看。'));return;}
    try{
     await sim();var all=await list();if(!alive || version!==watching)return;
-    var recent=carrierLogin.recentMessages(all,baseline,after,'telecom');render(recent);
-    dom.content(state,recent.length ? _('仅显示本次发送操作之后的电信短信，请复制验证码。') : _('等待本次发送之后的电信短信…'));
+    var recent=carrierLogin.recentMessages(all,baseline,after,carrier);render(recent);
+    dom.content(state,recent.length ? _('仅显示本次发送操作之后的运营商短信，请复制验证码。') : _('等待本次发送之后的运营商短信…'));
    }catch(error){if(!alive || version!==watching)return;if(error.simChanged){stop();dom.content(messages,[]);if(onChanged)onChanged(error);return;}dom.content(state,_('暂时无法读取短信')+': '+error.message);}
    if(alive && version===watching)timer=window.setTimeout(poll,3000);
   }

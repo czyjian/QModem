@@ -51,12 +51,14 @@ calibration_probe()
     carrier=''
     if printf '%s' "$identity" | grep -Eq '^460'; then
         if printf '%s' "$identity" | grep -Eq '^460(01|06|09|10)'; then carrier=unicom;
-        elif printf '%s' "$identity" | grep -Eq '^460(03|05|11|12)'; then carrier=telecom; fi
+        elif printf '%s' "$identity" | grep -Eq '^460(03|05|11|12)'; then carrier=telecom;
+        elif printf '%s' "$identity" | grep -Eq '^460(00|02|04|07|08|13)'; then carrier=mobile; fi
     elif printf '%s' "$isp" | grep -Eiq 'unicom|联通'; then carrier=unicom;
-    elif printf '%s' "$isp" | grep -Eiq 'telecom|电信'; then carrier=telecom; fi
+    elif printf '%s' "$isp" | grep -Eiq 'telecom|电信'; then carrier=telecom;
+    elif printf '%s' "$isp" | grep -Eiq 'mobile|cmcc|移动'; then carrier=mobile; fi
     endpoint=shared
     action=usage
-    if [ "$carrier" = telecom ]; then endpoint=telecom_test; action=shared_usage; fi
+    if [ "$carrier" = telecom ]; then endpoint=telecom_test; action=shared_usage; elif [ "$carrier" = mobile ]; then endpoint=mobile; fi
     reason=''
     if [ "$(printf '%s' "$fields" | jq -r '.["SIM Status"] // empty')" != ready ]; then
         reason='SIM 卡尚未就绪'

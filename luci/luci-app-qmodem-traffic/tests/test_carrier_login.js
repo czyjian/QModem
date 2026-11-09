@@ -29,6 +29,10 @@ function setup(){
   assert.equal(api.recentMessages([{...telecom,content:'验证码123456【其他公司】'}],new Set(),1001,'telecom').length,0);
   assert.equal(api.recentMessages([telecom],new Set([api.smsKey(telecom)]),1001,'telecom').length,0);
   assert.equal(api.recentMessages([telecom],new Set(),1003,'telecom').length,0);
+  const mobile={id:60,type:'received',sender:'106999',timestamp:1002,content:'中国移动短信随机码：123456'};
+  assert.equal(api.recentMessages([mobile],new Set(),1001,'mobile').length,1);
+  assert.equal(api.recentMessages([{...mobile,content:'中国移动账单通知'}],new Set(),1001,'mobile').length,0);
+  assert.equal(api.recentMessages([{...mobile,content:'其他公司验证码：123456'}],new Set(),1001,'mobile').length,0);
   const baseline=new Set([api.smsKey(old)]);
   assert.deepEqual(api.recentMessages([old,fresh,{...fresh,id:3,timestamp:999},{...fresh,id:4,sender:'12345',content:'private message'},{...fresh,id:5,type:'sent'},{...fresh,id:6,complete:0}],baseline,1000),[fresh]);
   const session=first.open();await flush();assert.equal(first.queries,0,'opening the login dialog must not read SMS history');

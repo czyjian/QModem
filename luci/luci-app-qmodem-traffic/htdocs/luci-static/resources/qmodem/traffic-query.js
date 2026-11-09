@@ -4,6 +4,7 @@
 'require qmodem.qmodem as qmodem';
 'require qmodem.carrier-login as carrierLogin';
 'require qmodem.telecom-test as telecomTest';
+'require qmodem.mobile-login as mobileLogin';
 
 // Prefer the SIM's home network over the registered network (roaming).
 function identify(data) {
@@ -53,7 +54,7 @@ return L.Class.extend({
 		]);
 		var status=E('div',{'class':'cbi-value-description'}), summary=E('div'), login=E('button',{type:'button','class':'cbi-button',click:function(){
 			if(loginDialog)loginDialog.close();
-			loginDialog=(currentCarrier==='telecom' ? telecomTest : carrierLogin).open(selector.value,function(){loginDialog=null;update(true);});
+			loginDialog=(currentCarrier==='mobile' ? mobileLogin : currentCarrier==='telecom' ? telecomTest : carrierLogin).open(selector.value,function(){loginDialog=null;update(true);});
 		}},_('登录'));
 		var statusBox=E('div',{'class':'cbi-value',style:'display:block;margin:0 0 12px;padding:0;'},[
 			E('div',{'class':'cbi-value-field',style:'margin:0;width:100%;'},[status])
@@ -63,7 +64,7 @@ return L.Class.extend({
 		var logout=E('button',{type:'button','class':'cbi-button',title:_('清除当前 SIM 的共享登录，其他浏览器也需要重新登录。'),click:function(){
 			if(loggingOut)return;
 			var id=selector.value, request=++generation;loggingOut=true;logout.disabled=true;
-			fetch(L.url('admin/modem/unicom_api/'+(currentCarrier==='telecom' ? 'telecom_test' : 'shared'))+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:currentCarrier==='telecom' ? 'shared_logout' : 'logout',config_section:id})}).then(function(response){return response.json().then(function(result){if(!response.ok || !result.ok)throw new Error(result.msg || _('登出失败'));return result;});}).then(function(){
+			fetch(L.url('admin/modem/unicom_api/'+(currentCarrier==='mobile' ? 'mobile' : currentCarrier==='telecom' ? 'telecom_test' : 'shared'))+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:currentCarrier==='telecom' ? 'shared_logout' : 'logout',config_section:id})}).then(function(response){return response.json().then(function(result){if(!response.ok || !result.ok)throw new Error(result.msg || _('登出失败'));return result;});}).then(function(){
 				if(request===generation && selector.value===id)paint({ok:false,code:'TOKEN_EXPIRED'});
 			}).catch(function(error){if(request===generation && selector.value===id)dom.content(status,error.message);}).finally(function(){loggingOut=false;logout.disabled=false;});
 		}},_('登出'));
@@ -73,9 +74,9 @@ return L.Class.extend({
 			dom.content(node,[carrierRow,actions,E('p',{'class':kind ? 'alert-message '+kind : ''},text)]);
 		}
 		function prepare(id) {
-			var target=currentCarrier==='telecom' ? 'https://www.189.cn/web/' : queryUrl(uci.get('qmodem','main','unicom_query_url'));
+			var target=currentCarrier==='mobile' ? 'https://wx.10086.cn/website/spa/main/newHome' : currentCarrier==='telecom' ? 'https://www.189.cn/web/' : queryUrl(uci.get('qmodem','main','unicom_query_url'));
 			if (!target) throw new Error(_('The carrier query page address is invalid.'));
-			var url=new URL(target); if(currentCarrier!=='telecom')url.searchParams.set('modem',id); detailTarget=url.href;
+			var url=new URL(target); if(currentCarrier==='unicom')url.searchParams.set('modem',id); detailTarget=url.href;
 			status.className='cbi-value-description';
 			dom.content(summary,[]); dom.content(status,_('正在读取登录状态…'));
 			login.style.display=''; refresh.disabled=true;
@@ -88,12 +89,13 @@ return L.Class.extend({
 					login.style.display=''; dom.content(summary,[]);
 					dom.content(status,_('尚未登录或登录已过期，请登录后查询。')); return;
 				}
-				throw new Error(data.msg || _('联通流量查询失败'));
+				if(data.logged_in){login.style.display='none';dom.content(status,data.msg || _('查询暂不可用'));if(!summary.firstChild)dom.content(summary,[logout]);return;}
+                throw new Error(data.msg || _('流量查询失败'));
 			}
 			login.style.display='none';
 			status.className='';
-			var caption=_(currentCarrier==='telecom' ? '中国电信' : '中国联通')+(data.mobile ? ' · '+data.mobile : '')+(data.package_name ? ' · '+data.package_name : '');
-			dom.content(status,caption);
+			var caption=_(currentCarrier==='mobile' ? '中国移动' : currentCarrier==='telecom' ? '中国电信' : '中国联通')+(data.mobile ? ' · '+data.mobile : '')+(data.package_name ? ' · '+data.package_name : '');
+			dom.content(status,data.scope_note ? [caption,E('div',{'class':'cbi-value-description'},data.scope_note)] : caption);
 			var rows=[E('tr',{'class':'tr'},[E('th',{'class':'th'},_('流量包')),E('th',{'class':'th'},_('剩余流量')),E('th',{'class':'th'},_('总流量'))])];
 			rows.push(E('tr',{'class':'tr'},[E('td',{'class':'td'},_('合计')),E('td',{'class':'td'},flow(data.remaining_mb)),E('td',{'class':'td'},flow(data.total_mb))]));
 			(data.details || []).forEach(function(item){
@@ -123,11 +125,11 @@ return L.Class.extend({
 
 					current=key;currentCarrier=sim.carrier;
 					if(sim.status && sim.status!=='ready') {message(_('The SIM card is not ready. Insert or unlock the SIM card first.'));return;}
-					if(sim.carrier!=='unicom' && sim.carrier!=='telecom') {message(sim.carrier==='mobile' ? _('China Mobile usage queries are not supported yet.') : sim.carrier==='telecom' ? _('China Telecom usage queries are not supported yet.') : _('Unable to identify a supported SIM carrier. Only China Unicom is supported for now.'));return;}
+					if(sim.carrier!=='unicom' && sim.carrier!=='telecom' && sim.carrier!=='mobile') {message(_('当前 SIM 卡运营商暂不支持流量查询。'));return;}
 					prepare(id);
 				}
-				if((sim.carrier!=='unicom' && sim.carrier!=='telecom') || (sim.status && sim.status!=='ready')) return;
-				return fetch(L.url('admin/modem/unicom_api/'+(currentCarrier==='telecom' ? 'telecom_test' : 'shared'))+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:currentCarrier==='telecom' ? 'shared_usage' : 'usage',config_section:id,refresh:force===true})}).then(function(response){
+				if((sim.carrier!=='unicom' && sim.carrier!=='telecom' && sim.carrier!=='mobile') || (sim.status && sim.status!=='ready')) return;
+				return fetch(L.url('admin/modem/unicom_api/'+(currentCarrier==='mobile' ? 'mobile' : currentCarrier==='telecom' ? 'telecom_test' : 'shared'))+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:currentCarrier==='telecom' ? 'shared_usage' : 'usage',config_section:id,refresh:force===true})}).then(function(response){
 					return response.json().then(function(result){if(!response.ok) throw new Error(result.msg || _('联通查询服务不可用'));return result;});
 				}).then(function(result){if(request===generation && selector.value===id) paint(result);});
 			}).catch(function(error){

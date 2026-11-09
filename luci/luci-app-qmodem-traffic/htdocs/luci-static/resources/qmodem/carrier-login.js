@@ -17,7 +17,7 @@ function recentMessages(messages,baseline,after,carrier) {
 	return messages.filter(function(message){
 		var sender=String(message.sender || '').replace(/^(?:\+86|0086|86)/,'').replace(/\s/g,'');
 		return message.type!=='sent' && message.direction!=='sent' && message.complete!==0 && message.complete!==false &&
-			(carrier==='telecom' ? ((/^10000\d*$/.test(sender) || /中国电信/.test(String(message.content || ''))) && /验证码/.test(String(message.content || ''))) : (/^10010\d*$/.test(sender) || /【中国联通】/.test(String(message.content || '')))) &&
+			(carrier==='mobile' ? ((/^10086\d*$/.test(sender) || /中国移动/.test(String(message.content || ''))) && /验证码|随机码/.test(String(message.content || ''))) : carrier==='telecom' ? ((/^10000\d*$/.test(sender) || /中国电信/.test(String(message.content || ''))) && /验证码/.test(String(message.content || ''))) : (/^10010\d*$/.test(sender) || /【中国联通】/.test(String(message.content || '')))) &&
 			Number(message.timestamp)>=after && !baseline.has(smsKey(message));
 	}).sort(function(a,b){return Number(b.timestamp)-Number(a.timestamp);}).slice(0,10);
 }

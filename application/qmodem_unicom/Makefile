@@ -21,7 +21,7 @@ define Package/qmodem-carrier-service
 endef
 
 define Package/qmodem-carrier-service/description
-  Router-shared China Unicom and China Telecom usage queries with native
+  Router-shared China Unicom, China Telecom and China Mobile usage queries with native
   LuCI login. Credentials stay on the router; no first-boot npm install.
 endef
 

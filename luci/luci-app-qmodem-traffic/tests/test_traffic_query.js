@@ -1,14 +1,14 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../htdocs/luci-static/resources/qmodem/traffic-query.js'),'utf8');
-const sims=[],responses=[],requests=[];let calls=0,telecomOpens=0;
+const sims=[],responses=[],requests=[];let calls=0,telecomOpens=0,mobileOpens=0;
 const E=(tag,attrs,children)=>({tag,attrs,children,style:{}});
-const query=new Function('L','E','_','dom','uci','qmodem','window','fetch','carrierLogin','telecomTest',source)(
+const query=new Function('L','E','_','dom','uci','qmodem','window','fetch','carrierLogin','telecomTest','mobileLogin',source)(
   {Class:{extend:value=>value},url:value=>'/cgi-bin/luci/'+value},E,value=>value,
   {content:(node,children)=>{node.children=children;}},{get:()=>undefined},
   {getSimInfo:()=>{calls++;return sims.shift()();}},
   {location:{href:'http://192.168.88.1/cgi-bin/luci/admin/modem/qmodem/traffic'}},
-  async(url,options)=>{requests.push({url,...JSON.parse(options.body)});return{ok:true,json:async()=>responses.shift()};}, {open:()=>({close:()=>{}})}, {open:()=>{telecomOpens++;return {close:()=>{}};}}
+  async(url,options)=>{requests.push({url,...JSON.parse(options.body)});return{ok:true,json:async()=>responses.shift()};}, {open:()=>({close:()=>{}})}, {open:()=>{telecomOpens++;return {close:()=>{}};}}, {open:()=>{mobileOpens++;return {close:()=>{}};}}
 );
 const sim=(isp,imsi,status='ready')=>({modem_info:[{key:'ISP',value:isp},{key:'IMSI',value:imsi},{key:'SIM Status',value:status}]});
 const unicom=()=>Promise.resolve(sim('China Unicom','460011234567890'));
@@ -26,9 +26,9 @@ assert.equal(query.flow(null),'—');assert.equal(query.flow(1024),'1.00 GB');as
   let resolve;
   sims.push(()=>new Promise(done=>{resolve=done;}));const initial=panel.activate(true);
   selector.value='second';panel.change();
-  sims.push(()=>Promise.resolve(sim('CMCC','460001234567890')));
+  sims.push(()=>Promise.resolve(sim('Unknown','460201234567890')));
   resolve(sim('UNICOM','460011234567890'));await initial;await new Promise(done=>setImmediate(done));
-  assert.match(text(panel.node),/China Mobile/);assert.equal(requests.length,0);
+  assert.match(text(panel.node),/暂不支持/);assert.equal(requests.length,0);
   sims.push(unicom);responses.push({ok:false,code:'TOKEN_EXPIRED'});await panel.update();
   assert.match(text(panel.node),/尚未登录/);assert.match(text(panel.node),/当前SIM卡运营商/);assert.match(text(panel.node),/中国联通/);
   assert(!text(panel.node).includes('iframe'),'no embedded full website');
@@ -52,6 +52,11 @@ assert.equal(query.flow(null),'—');assert.equal(query.flow(1024),'1.00 GB');as
   responses.push({ok:true});descendants(panel.node).find(n=>n.tag==='button' && n.children==='登出').attrs.click();
   for(let i=0;i<5;i++)await new Promise(done=>setImmediate(done));
   assert.equal(requests.at(-1).action,'shared_logout');
+  selector.value='mobile';sims.push(()=>Promise.resolve(sim('CMCC','460001234567890')));responses.push({ok:false,code:'TOKEN_EXPIRED'});await panel.change();
+  assert.equal(requests.at(-1).action,'usage');assert.match(requests.at(-1).url,/mobile/);
+  descendants(panel.node).find(n=>n.tag==='button' && n.children==='登录').attrs.click();assert.equal(mobileOpens,1);
+  sims.push(()=>Promise.resolve(sim('CMCC','460001234567890')));responses.push({...usage,carrier:'mobile'});await panel.update();assert.match(text(panel.node),/中国移动/);assert.match(text(panel.node),/测试流量包/);
+  sims.push(()=>Promise.resolve(sim('CMCC','460001234567890')));responses.push({ok:false,logged_in:true,code:'QUERY_BLOCKED',msg:'查询站点拒绝访问，请勿重复发码'});await panel.update();assert.match(text(panel.node),/请勿重复发码/);
   panel.activate(false);const count=calls;await panel.update();assert.equal(calls,count);
   console.log('PASS: native compact table, credential-free requests, operator detection, SIM switch races, login and details links');
 })().catch(error=>{console.error(error);process.exitCode=1;});
