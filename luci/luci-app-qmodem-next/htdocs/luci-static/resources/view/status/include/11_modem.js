@@ -16,7 +16,7 @@ function progressbar(value, max, min, unit) {
 }
 
 return baseclass.extend({
-	title: _('Modem Info'),
+	title: _('模组信息'),
 
 	load: function() {
 		return qmodem.getModemSections().then(function(sections) {
@@ -78,7 +78,8 @@ return baseclass.extend({
 					
 					if ((entry.class == 'Base Information') || 
 						(entry.class == 'Cell Information' && entry.type == 'progress_bar')) {
-						fields.push(extra_info ? '%s (%s)'.format(_(full_name), extra_info) : _(full_name));
+						var label = entry.key === 'ISP' ? _('运营商') : _(full_name);
+						fields.push(extra_info ? '%s (%s)'.format(label, extra_info) : label);
 						fields.push(entry);
 					}
 				}
@@ -100,7 +101,7 @@ return baseclass.extend({
 							(entry.value != null) ? progressbar(entry.value, entry.max_value, entry.min_value, entry.unit) : '?'
 						]);
 					} else {
-						value = E('td', { 'class': 'td left' }, [ (entry.value != null) ? entry.value : '?' ]);
+						value = E('td', { 'class': 'td left' }, [ (entry.value != null) ? qmodem.displayValue(entry.key,entry.value) : '?' ]);
 					}
 
 					table.appendChild(E('tr', { 'class': 'tr' }, [

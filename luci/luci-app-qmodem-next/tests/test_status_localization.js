@@ -1,0 +1,23 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const root=__dirname+'/../htdocs/luci-static/resources/';
+const common=fs.readFileSync(root+'qmodem/qmodem.js','utf8');
+const helper=common.slice(common.indexOf('// Localize display values only;'),common.indexOf('return L.Class.extend({'));
+const displayValue=new Function('_',helper+'return displayValue;')(x=>x);
+assert.equal(displayValue('connect_status','Yes'),'已连接');
+assert.equal(displayValue('connect_status','No'),'未连接');
+assert.equal(displayValue('SIM Status','ready'),'已就绪');
+assert.equal(displayValue('ISP','China Telecom'),'中国电信');
+assert.equal(displayValue('ISP','China Unicom'),'中国联通');
+assert.equal(displayValue('ISP','China Mobile'),'中国移动');
+assert.equal(displayValue('name','Yes'),'Yes');
+assert.equal(displayValue('ISP','Unknown carrier'),'Unknown carrier');
+function E(tag,attrs,children){return {tag,attrs,children:children||[],appendChild(child){this.children.push(child);}};}
+const source=fs.readFileSync(root+'view/status/include/11_modem.js','utf8');
+const status=new Function('baseclass','qmodem','E','_',source)({extend:o=>o},{displayValue},E,x=>x);
+const entry={key:'connect_status',full_name:'Connect Status',class:'Base Information',type:'plain_text',value:'Yes'};
+const result=JSON.stringify(status.render([{info:[entry]}]));
+assert(result.includes('已连接'));
+assert(!result.includes('"Yes"'));
+assert.equal(entry.value,'Yes');
+assert(fs.readFileSync(root+'view/qmodem/overview.js','utf8').includes('qmodem.displayValue(key,value)'));
+console.log('PASS: system overview and plugin overview share field-scoped localization without mutating RPC values');

@@ -350,7 +350,30 @@ function renderSmsTabs(chatNode) {
 	return container;
 }
 
+// Localize display values only; RPC data remains unchanged for other consumers.
+function displayValue(key, value) {
+	var text=String(value == null ? '' : value).trim(), normalized=text.toLowerCase();
+	if (key === 'connect_status') {
+		if (normalized === 'yes') return _('已连接');
+		if (normalized === 'no') return _('未连接');
+	}
+	if (key === 'SIM Status') {
+		if (normalized === 'ready') return _('已就绪');
+		if (normalized === 'miss') return _('未检测到 SIM 卡');
+		if (text === 'MT is waiting SIM PIN to be given') return _('需要输入 SIM 卡 PIN 码');
+		if (text === 'MT is waiting SIM PUK to be given') return _('SIM 卡已锁定，需要输入 PUK 码');
+	}
+	if (key === 'ISP') {
+		if (/^(china\s*telecom|ch[n]?[- ]?ct|ctcc|460(?:03|05|11|12))$/i.test(text)) return _('中国电信');
+		if (/^(china\s*unicom|ch[n]?[- ]?unicom|unicom|460(?:01|06|09|10))$/i.test(text)) return _('中国联通');
+		if (/^(china\s*mobile|ch[n]?[- ]?cmcc|cmcc|460(?:00|02|04|07|08|13))$/i.test(text)) return _('中国移动');
+		if (/^(china\s*broadnet|cbn|46015)$/i.test(text)) return _('中国广电');
+	}
+	return value;
+}
+
 return L.Class.extend({
+	displayValue: displayValue,
 	formatModemName: formatModemName,
 	realAlias: realAlias,
 
