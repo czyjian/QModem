@@ -16,10 +16,14 @@ function bytes(n, base) {
 function cycleTotal(s) { return s.cycle_total != null ? s.cycle_total : (s.cycle_rx || 0)+(s.cycle_tx || 0); }
 function cycleBreakdown(s) {
 	var bytes = function(n){return formatBytes(n,s.unit_base);};
-	return _('Download')+': '+bytes(s.cycle_rx)+' / '+_('Upload')+': '+bytes(s.cycle_tx)+
-		(s.cycle_adjustment ? ' / '+_('Adjustment')+': '+(s.cycle_adjustment>0?'+':'−')+bytes(Math.abs(s.cycle_adjustment)) : '');
+	return _('Download')+': '+bytes(s.cycle_rx)+' / '+_('Upload')+': '+bytes(s.cycle_tx);
 }
 var formatBytes=bytes;
+function carrierBreakdown(s) {
+	var totals=s.cycle_carriers || {unknown:(s.cycle_rx || 0)+(s.cycle_tx || 0)};
+	var names={telecom:_('中国电信'),unicom:_('中国联通'),mobile:_('中国移动'),unknown:_('未归属')};
+	return Object.keys(names).filter(function(key){return totals[key]>0;}).map(function(key){return names[key]+': '+formatBytes(totals[key],s.unit_base);}).join(' / ');
+}
 function formatDate(value) {
 	if(typeof value==='string') return value.replace(/-/g,'/')+(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value)?':00':'');
 	if(!value) return '—';
@@ -148,13 +152,15 @@ return baseclass.extend({
 		var bytes=function(n){return formatBytes(n,s.unit_base);}, quota=(s.config.threshold_bytes!=null?s.config.threshold_bytes:s.config.threshold_gb*1e9)/Math.pow(s.unit_base===1000?1000:1024,3), quotaText=Number(quota.toFixed(3))+' GB';
 		var rows = [
 			[_('Current download / upload'), (s.rx_rate * 8 / 1000000).toFixed(2) + ' / ' + (s.tx_rate * 8 / 1000000).toFixed(2) + ' Mbps'],
-			[_('Current billing cycle'), bytes(cycleTotal(s)) + ' (' + cycleBreakdown(s) + ')'],
-			[_('Total recorded traffic'), bytes((s.total_rx || 0)+(s.total_tx || 0))],
+			[_('本周期已用流量'), bytes(cycleTotal(s)) + ' (' + cycleBreakdown(s) + ')'],
+			[_('本周期剩余流量'), quota > 0 ? bytes(Math.max(0, quota * Math.pow(s.unit_base===1000?1000:1024,3) - cycleTotal(s))) : _('Not set')],
 			[_('Recording since'), formatDate(s.since)],
 			[_('Billing cycle starts'), s.cycle ? formatDate(s.cycle) : '—'],
-			[_('Traffic threshold'), s.config.threshold_gb > 0 ? quotaText : _('Not set')]
+			[_('Traffic threshold'), s.config.threshold_gb > 0 ? quotaText : _('Not set')],
+			[_('本周期累计流量'), bytes((s.cycle_rx || 0)+(s.cycle_tx || 0)) + (carrierBreakdown(s) ? ' ('+carrierBreakdown(s)+')' : '')]
 		];
 		var content = [];
+		if (s.carrier_name) rows.unshift([_('当前运营商'),s.carrier_name]);
 		if (s.exceeded) content.push(E('div', {'class':'alert-message warning'}, _('Traffic usage has reached the configured threshold.') + ' ' + bytes(cycleTotal(s)) + ' / ' + quotaText));
 		if (s.stale) content.push(E('p', {'class':'alert-message warning'}, _('Traffic samples are stale. Check the monitoring service.')));
 		content.push(E('table', {'class':'table'}, rows.map(function(row) { return E('tr', {'class':'tr'}, [E('td', {'class':'td',width:'33%'},row[0]), E('td', {'class':'td'},row[1])]); })));

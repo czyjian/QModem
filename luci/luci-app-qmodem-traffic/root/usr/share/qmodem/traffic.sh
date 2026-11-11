@@ -45,7 +45,7 @@ traffic_devices()
 
 traffic_sample()
 {
-    local section=$1 enabled rd rh rm dev counters='[]' rx tx idx sample old cycle stamp
+    local section=$1 enabled rd rh rm dev counters='[]' rx tx idx sample old cycle stamp sim_cache
     [ "$(date +%s)" -ge 1577836800 ] || return 0
     config_get enabled "$section" traffic_enabled 1
     old="$TRAFFIC_RAM/$section.json"
@@ -77,10 +77,22 @@ traffic_sample()
     [ -f "$old" ] || { [ ! -f "$TRAFFIC_STORE/$section.json" ] || cp "$TRAFFIC_STORE/$section.json" "$old"; }
     [ -f "$old" ] || echo '{}' > "$old"
     sample="$TRAFFIC_RAM/$section.sample"
+    sim_cache="/tmp/cache_sim_info_$section"
+    [ -r "$sim_cache" ] || sim_cache=/dev/null
     jq -n --argjson now "$(date +%s)" --argjson uptime "$(cut -d' ' -f1 /proc/uptime)" \
         --arg boot "$(cat /proc/sys/kernel/random/boot_id)" --arg cycle "$cycle" \
-        --arg day "$(date +%F)" --arg month "$(date +%Y-%m)" --argjson devices "$counters" \
-        '{now:$now,uptime:$uptime,boot:$boot,cycle:$cycle,day:$day,month:$month,devices:$devices}' > "$sample"
+        --arg day "$(date +%F)" --arg month "$(date +%Y-%m)" --argjson devices "$counters" --rawfile sim "$sim_cache" \
+        '(($sim | fromjson? // {}).modem_info // [] | map({key:.key,value:.value}) | from_entries) as $f |
+        ($f.IMSI // "") as $imsi | ($imsi[3:5]) as $mnc | ($f.ISP // "" | ascii_downcase) as $isp |
+        (if $f["SIM Status"] != "ready" then "unknown"
+         elif ($imsi|startswith("460")) then
+           if (["01","06","09","10"]|index($mnc)) != null then "unicom"
+           elif (["00","02","04","07","08","13"]|index($mnc)) != null then "mobile"
+           elif (["03","05","11","12"]|index($mnc)) != null then "telecom" else "unknown" end
+         elif ($isp|contains("联通") or contains("unicom")) then "unicom"
+         elif ($isp|contains("移动") or contains("cmcc") or contains("china mobile")) then "mobile"
+         elif ($isp|contains("电信") or contains("telecom")) then "telecom" else "unknown" end) as $carrier |
+        {now:$now,uptime:$uptime,boot:$boot,cycle:$cycle,day:$day,month:$month,devices:$devices,carrier:$carrier}' > "$sample"
     if jq --slurpfile sample "$sample" -f "$TRAFFIC_HOME/traffic.jq" "$old" > "$old.new"; then
         mv "$old.new" "$old"
     fi

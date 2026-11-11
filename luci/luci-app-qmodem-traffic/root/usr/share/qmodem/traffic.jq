@@ -7,7 +7,12 @@
   then {rx: ($d.rx - $p.rx), tx: ($d.tx - $p.tx)} else {rx: 0, tx: 0} end
 ] | {rx: (map(.rx)|add // 0), tx: (map(.tx)|add // 0)}) as $delta |
 ((if $old.boot == $s.boot then $s.uptime - ($old.uptime // $s.uptime) else 0 end)) as $elapsed |
+(if $old.cycle == $s.cycle then
+  $old.cycle_carriers // {unknown:(($old.cycle_rx // 0)+($old.cycle_tx // 0))}
+ else {} end) as $carriers |
+(if $old.carrier == $s.carrier and (["unicom","mobile","telecom"] | index($s.carrier)) != null then $s.carrier else "unknown" end) as $carrier |
 ($s + {
+  cycle_carriers: ($carriers | .[$carrier] = ((.[$carrier] // 0)+$delta.rx+$delta.tx)),
   total_rx: (($old.total_rx // 0) + $delta.rx),
   total_tx: (($old.total_tx // 0) + $delta.tx),
   cycle_rx: ((if $old.cycle == $s.cycle then $old.cycle_rx // 0 else 0 end) + $delta.rx),

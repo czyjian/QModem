@@ -70,9 +70,11 @@ return view.extend({
 			if(pending) return Promise.resolve();
 			pending=true;
 			var id=selector.value;
-			return traffic.get(id).then(function(s){
+			return Promise.all([traffic.get(id),qmodem.getSimInfo(id).catch(function(){return null;})]).then(function(results){
+				var s=results[0], sim=trafficQuery.identify(results[1]);
 				if (selector.value !== id) return;
 				if (s.error) throw new Error(s.error);
+				s.carrier_name=sim.carrier==='unicom' ? _('中国联通') : sim.carrier==='mobile' ? _('中国移动') : sim.carrier==='telecom' ? _('中国电信') : _('未识别');
 				s.unit_base=unitBase;state=s;dom.content(unitNote,_('流量统一按 1024 进制显示，1 GB = 1,024 MB = 1,073,741,824 字节；流量阈值与手动校准使用相同口径。'));
 				dom.content(summary,traffic.summary(s));
 				if(selected !== id || (s.now || 0) - chartUpdated >= 10) { histories(); chartUpdated=s.now || 0; }
