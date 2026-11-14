@@ -10,6 +10,7 @@ menu=load(plugin/"root/usr/share/luci/menu.d/luci-app-qmodem-traffic.json")
 assert "admin/modem/qmodem/traffic" in menu
 assert "admin/modem/qmodem/traffic" not in load(base/"root/usr/share/luci/menu.d/luci-app-qmodem-next.json")
 assert not (base/"htdocs/luci-static/resources/view/qmodem/traffic.js").exists()
+assert not (root/"application/qmodem/files/lib/upgrade/keep.d/qmodem-traffic").exists()
 overview=(base/"htdocs/luci-static/resources/view/qmodem/overview.js").read_text(encoding="utf-8-sig")
 assert "require qmodem.traffic as traffic" not in overview
 assert "if(!traffic)" in overview
