@@ -134,6 +134,7 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Package/$(PKG_NAME)/conffiles
+/etc/config/qmodem
 /etc/config/qmodem_led
 endef
 

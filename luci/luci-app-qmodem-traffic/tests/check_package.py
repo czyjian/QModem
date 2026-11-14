@@ -15,6 +15,8 @@ assert "require qmodem.traffic as traffic" not in overview
 assert "if(!traffic)" in overview
 assert "+luci-app-qmodem-next" in (plugin/"Makefile").read_text()
 assert "+qmodem-carrier-service" in (plugin/"Makefile").read_text()
+core_recipe=(root/"application/qmodem/Makefile").read_text()
+assert "/etc/config/qmodem\n" in re.search(r"define Package/\$\(PKG_NAME\)/conffiles\n(.*?)endef",core_recipe,re.S).group(1)
 for package in (plugin, root/"luci/luci-app-qmodem-sipd"):
     recipe=(package/"Makefile").read_text()
     assert "call BuildPackage" in recipe,package
