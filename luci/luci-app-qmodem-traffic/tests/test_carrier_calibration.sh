@@ -34,4 +34,9 @@ calibration_probe modem0 true > "$tmp/result"
 grep -q '/mobile/' "$tmp/url"
 jq -e '.action=="usage"' "$tmp/payload" >/dev/null
 jq -e '.available==true' "$tmp/result" >/dev/null
+
+curl() { cat >/dev/null; echo '{"ok":false,"code":"TOKEN_EXPIRED"}'; }
+calibration_probe modem0 false | jq -e '.login_required==true and .logged_in==false' >/dev/null
+curl() { cat >/dev/null; echo '{"ok":false,"code":"MAINTENANCE","logged_in":true}'; }
+calibration_probe modem0 false | jq -e '.login_required==false' >/dev/null
 echo 'PASS: mobile, telecom and unicom calibration select matching sessions and exact byte units'

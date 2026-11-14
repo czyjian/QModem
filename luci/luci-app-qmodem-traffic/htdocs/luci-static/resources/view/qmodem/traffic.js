@@ -24,7 +24,7 @@ return view.extend({
 		var query = trafficQuery.create(selector), unitBase=1024;
 		var unitNote=E('span');
 		function quotaValue(s){return String(Number(((s.config.threshold_bytes!=null?s.config.threshold_bytes:s.config.threshold_gb*1e9)/Math.pow(unitBase,3)).toFixed(3)));}
-		var summary = E('div'), live = E('div'), daily = E('div'), monthly = E('div'), state = {}, selected = '', thresholdLast = '', pending = false, chartUpdated = 0;
+		var summary = E('div'), loginNotice=E('div'), live = E('div'), daily = E('div'), monthly = E('div'), state = {}, selected = '', thresholdLast = '', pending = false, chartUpdated = 0;
 		var month = E('select', {'class':'cbi-input-select'});
 		for (var i=0; i<14; i++) {
 			var d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
@@ -43,7 +43,7 @@ return view.extend({
 		}
 		var enabled=E('input',{type:'checkbox'}), day=E('input',{type:'number',min:1,max:31,'class':'cbi-input-text'}), time=E('input',{type:'time','class':'cbi-input-text'}), threshold=E('input',{type:'number',min:0,max:1000000,step:0.001,'class':'cbi-input-text'});
 		var correction=E('input',{type:'number',min:0,max:1000000,step:0.001,'class':'cbi-input-text',placeholder:_('Current usage reported by your carrier')});
-		var autoEnabled=E('input',{type:'checkbox'}), autoTime=E('input',{type:'time','class':'cbi-input-text',value:'03:00'});
+		var autoEnabled=E('input',{type:'checkbox'}),autoSwitch=E('input',{type:'checkbox',checked:true}), autoTime=E('input',{type:'time','class':'cbi-input-text',value:'03:00'});
 		var autoLogin=E('span',{},_('正在检查登录状态…')),autoAvailable=E('span'),autoLast=E('span',{},'—');
 		var autoLoaded='',autoPending=false,autoGeneration=0,monitorActive=true;
 		var fieldId=0;
@@ -107,7 +107,7 @@ return view.extend({
 				return update();
 			}).catch(function(e){ui.addNotification(null,E('p',{},e.message),'error');}).finally(function(){correctButton.disabled=false;clearButton.disabled=false;});
 		}
-		var correctButton=E('button',{'class':'cbi-button cbi-button-apply',click:function(){correctUsage(false);}},_('Correct cycle usage'));
+		var correctButton=E('button',{'class':'cbi-button cbi-button-apply',click:function(){correctUsage(false);}},_('手动校准本周期流量'));
 		var clearButton=E('button',{'class':'cbi-button',click:function(){correctUsage(true);}},_('Restore measured usage'));
 		function autoStatus() {
 			if(autoPending || !monitorActive)return Promise.resolve();
@@ -115,9 +115,13 @@ return view.extend({
 			return traffic.calibrationStatus(id).then(function(result){
 				if(selector.value!==id || generation!==autoGeneration)return;
 				if(result.error || !result.config)throw new Error(result.error || _('自动校准服务不可用'));
-				if(autoLoaded!==id){autoEnabled.checked=result.config.enabled;autoTime.value=String(result.config.hour).padStart(2,'0')+':'+String(result.config.minute).padStart(2,'0');autoLoaded=id;}
+				if(autoLoaded!==id){autoEnabled.checked=result.config.enabled;autoSwitch.checked=result.config.simchange_enabled!==false;autoTime.value=String(result.config.hour).padStart(2,'0')+':'+String(result.config.minute).padStart(2,'0');autoLoaded=id;}
+				dom.content(loginNotice,result.login_required ? E('div',{'class':'alert-message notice'},[
+					E('span',{},_('当前 SIM 卡尚未登录流量查询或登录已过期，请登录后进行自动校准。')+' '),
+					E('button',{type:'button','class':'cbi-button',click:function(){show('query');}},_('前往流量查询登录'))
+				]) : []);
 				dom.content(autoLogin,result.logged_in ? _('已登录')+(result.mobile ? '（'+result.mobile+'）' : '') : _('未登录或查询不可用'));
-				dom.content(autoAvailable,!result.config.enabled ? _('已关闭')+(result.available ? _('（查询已就绪）') : '：'+result.reason) : result.available ? _('可用，等待每天设定时间执行') : _('不可用')+'：'+result.reason);
+				dom.content(autoAvailable,result.available ? (result.config.enabled ? (result.config.simchange_enabled!==false ? _('可用，每日定时及换卡时校准') : _('可用，按每日设定时间校准')) : (result.config.simchange_enabled!==false ? _('可用，换卡时校准；每日定时校准已关闭') : _('自动校准已关闭，可使用立即校准'))) : _('不可用')+'：'+result.reason);
 				var last=result.last || {};
 				dom.content(autoLast,last.time ? (last.local_time || traffic.formatDate(last.time))+' · '+last.reason+(last.status==='success' ? '（'+'已用 '+traffic.bytes(last.target_bytes,unitBase)+'，阈值 '+traffic.bytes(last.threshold_bytes,unitBase)+'）' : '') : _('尚未执行'));
 			}).catch(function(error){if(selector.value===id && generation===autoGeneration){dom.content(autoLogin,_('无法检查登录状态'));dom.content(autoAvailable,error.message);}}).finally(function(){autoPending=false;if(monitorActive && (selector.value!==id || generation!==autoGeneration))autoStatus();});
@@ -129,23 +133,23 @@ return view.extend({
 		var autoSave=E('button',{type:'button','class':'cbi-button cbi-button-apply',click:function(){
 			if(!autoTime.value || !autoTime.checkValidity()){ui.addNotification(null,E('p',{},_('请输入有效的每日校准时间。')),'error');return;}
 			var id=selector.value,parts=autoTime.value.split(':');autoSave.disabled=true;
-			traffic.configureCalibration(id,autoEnabled.checked,Number(parts[0]),Number(parts[1])).then(function(result){if(!result.success)throw new Error(result.error || _('自动校准设置保存失败'));if(selector.value===id){autoLoaded='';autoGeneration++;return autoStatus();}}).catch(function(error){ui.addNotification(null,E('p',{},error.message),'error');}).finally(function(){autoSave.disabled=false;});
+			traffic.configureCalibration(id,autoEnabled.checked,Number(parts[0]),Number(parts[1]),autoSwitch.checked).then(function(result){if(!result.success)throw new Error(result.error || _('自动校准设置保存失败'));if(selector.value===id){autoLoaded='';autoGeneration++;return autoStatus();}}).catch(function(error){ui.addNotification(null,E('p',{},error.message),'error');}).finally(function(){autoSave.disabled=false;});
 		}},_('Save'));
-		selector.addEventListener('change',function(){selected='';autoLoaded='';autoGeneration++;dom.content(autoLogin,_('正在检查登录状态…'));dom.content(autoAvailable,[]);dom.content(autoLast,'—');update();autoStatus();query.change();});month.addEventListener('change',histories);
+		selector.addEventListener('change',function(){selected='';autoLoaded='';autoGeneration++;dom.content(loginNotice,[]);dom.content(autoLogin,_('正在检查登录状态…'));dom.content(autoAvailable,[]);dom.content(autoLast,'—');update();autoStatus();query.change();});month.addEventListener('change',histories);
 		update(); poll.add(update,1);
 		poll.add(query.update, 15);
 		poll.add(autoStatus,30);
 		var monitorPanel = E('div', {}, [
-			section(_('Traffic Monitor'),[summary,note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]),
-			section(_('Real-time speed'),[live,note(_('Speed refreshes every second; charts update every 10 seconds.'))]),
+			section(_('Traffic Monitor'),[loginNotice,summary,note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]),
+			section(_('Real-time speed'),[live,note(_('趋势图每 10 秒更新。'))]),
 			section(_('Daily traffic'),[row(_('Month'),month),daily,note(_('Daily history is retained for 400 days and is not deleted at billing resets.'))]),
 			section(_('Monthly traffic'),[monthly,note(_('Monthly history is retained for 24 months and is not deleted at billing resets.'))]),
-			section(_('Traffic settings'),[
+			section(_('手动校准'),[
 				E('table',{'class':'table'},[E('tbody',{},[
 					row(_('Enable traffic monitoring'),enabled,true,_('Records are saved every 15 minutes and on normal shutdown. Sudden power loss may lose the latest 15 minutes.')),
 					row(_('Monthly reset day'),day,true,_('If the selected reset day does not exist in a month, the last day of that month is used.')),
 					row(_('Reset time'),time,true,_('The billing cycle resets at this local time on the monthly reset day. Historical records are preserved.')),
-					row(_('Cycle threshold (GB)'),threshold,true,_('阈值按本周期上传与下载合计计算，包含手动校准；设为 0 时不提醒。')),
+					row(_('Cycle threshold (GB)'),threshold,true,_('本周期已用流量达到此值时提醒，设为 0 时不提醒。')),
 					row(_('Current-cycle usage (GB)'),correction,true,_('Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved.')),
 					row('',E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;'},[correctButton,clearButton]),true)
 				])]),
@@ -154,7 +158,8 @@ return view.extend({
 			]),
 			section(_('自动校准'),[
 				E('table',{'class':'table'},[E('tbody',{},[
-					row(_('使用流量查询页自动校准'),autoEnabled,true,_('默认关闭。开启后由路由器后台每天按查询结果校准已用流量，并将流量阈值设为套餐总量，保留手动校准及原始流量历史。')),
+					row(_('换卡时自动校准'),autoSwitch,true,_('默认开启。换卡后校准一次，需先登录该卡的流量查询。')),
+					row(_('每日定时校准'),autoEnabled,true,_('默认关闭。开启后每天按设定时间校准已用量和流量阈值，保留手动校准及原始流量历史。')),
 					row(_('每天校准时间'),autoTime,true,_('按路由器本地时间执行；路由器在该分钟离线时，等待下一天。')),
 					row(_('流量查询登录状态'),autoLogin,true),
 					row(_('自动校准可用状态'),autoAvailable,true),

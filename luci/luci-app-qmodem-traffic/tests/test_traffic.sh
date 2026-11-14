@@ -107,6 +107,12 @@ for limit in '0' '-1' '1e9' '0.5' '1000000000000001'; do
 done
 if printf '%s\n' '{"config_section":"modem0","target_bytes":"1","cycle":"old"}' | sh "$rpc_file" call correct_bytes >/dev/null 2>&1; then exit 1; fi
 printf '%s\n' '{"config_section":"modem0","enabled":false,"hour":3,"minute":0}' | sh "$rpc_file" call calibration_configure | jq -e '.success' >/dev/null
+: > "$tmp/uci.log"
+printf '%s\n' '{"config_section":"modem0","enabled":false,"hour":3,"minute":0,"simchange_enabled":false}' | sh "$rpc_file" call calibration_configure | jq -e '.success' >/dev/null
+grep -q 'traffic_calibration_simchange=0' "$tmp/uci.log"
+: > "$tmp/uci.log"
+if printf '%s\n' '{"config_section":"modem0","enabled":false,"hour":3,"minute":0,"simchange_enabled":"false"}' | sh "$rpc_file" call calibration_configure >/dev/null 2>&1; then exit 1; fi
+[ ! -s "$tmp/uci.log" ]
 if printf '%s\n' '{"config_section":"modem0","enabled":true,"hour":24,"minute":0}' | sh "$rpc_file" call calibration_configure >/dev/null 2>&1; then exit 1; fi
 printf '%s\n' '{"config_section":"modem0","target_gb":"1","cycle":"cycle2","unit_base":1024}' | sh "$rpc_file" call correct | jq -e '.success' >/dev/null
 get_current | jq -e '.cycle_total==1073741824' >/dev/null

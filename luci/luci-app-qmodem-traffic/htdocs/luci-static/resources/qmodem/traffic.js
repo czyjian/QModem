@@ -16,7 +16,9 @@ function bytes(n, base) {
 function cycleTotal(s) { return s.cycle_total != null ? s.cycle_total : (s.cycle_rx || 0)+(s.cycle_tx || 0); }
 function cycleBreakdown(s) {
 	var bytes = function(n){return formatBytes(n,s.unit_base);};
-	return _('Download')+': '+bytes(s.cycle_rx)+' / '+_('Upload')+': '+bytes(s.cycle_tx);
+	var rx=Object.prototype.hasOwnProperty.call(s,'sim_cycle_rx') ? s.sim_cycle_rx : s.cycle_rx;
+	var tx=Object.prototype.hasOwnProperty.call(s,'sim_cycle_tx') ? s.sim_cycle_tx : s.cycle_tx;
+	return _('Download')+': '+(rx==null ? '—' : bytes(rx))+' / '+_('Upload')+': '+(tx==null ? '—' : bytes(tx));
 }
 var formatBytes=bytes;
 function carrierBreakdown(s) {
@@ -140,7 +142,7 @@ return baseclass.extend({
 	clearCorrection: rpc.declare({object:'qmodem.traffic',method:'clear_correction',params:['config_section']}),
 	calibrateNow: rpc.declare({object:'qmodem.traffic',method:'calibration_run',params:['config_section'],timeout:60000}),
 	calibrationStatus: rpc.declare({object:'qmodem.traffic',method:'calibration_status',params:['config_section']}),
-	configureCalibration: rpc.declare({object:'qmodem.traffic',method:'calibration_configure',params:['config_section','enabled','hour','minute']}),
+	configureCalibration: rpc.declare({object:'qmodem.traffic',method:'calibration_configure',params:['config_section','enabled','hour','minute','simchange_enabled']}),
 	bytes: bytes,
 	cycleTotal: cycleTotal,
 	cycleBreakdown: cycleBreakdown,

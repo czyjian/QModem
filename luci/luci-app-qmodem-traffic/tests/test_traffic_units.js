@@ -6,4 +6,6 @@ assert.equal(api.bytes(1073741824,1000),'1.07 GB');
 assert.equal(api.bytes(1073741824),'1.00 GB');
 assert.equal(api.bytes(34678.31*1048576,1024),'33.87 GB');
 assert.equal(api.cycleBreakdown({unit_base:1024,cycle_rx:1073741824,cycle_tx:1048576,cycle_adjustment:1048576}),'Download: 1.00 GB / Upload: 1.00 MB');
+assert.equal(api.cycleBreakdown({unit_base:1024,cycle_rx:50000000000,cycle_tx:20000000000,sim_cycle_rx:1073741824,sim_cycle_tx:1048576}),'Download: 1.00 GB / Upload: 1.00 MB');
+assert.equal(api.cycleBreakdown({cycle_rx:50000000000,sim_cycle_rx:null,sim_cycle_tx:null}),'Download: — / Upload: —');
 console.log('PASS: Unicom binary units, legacy decimal units and calibration breakdown');

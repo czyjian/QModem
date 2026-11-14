@@ -3,7 +3,7 @@ TRAFFIC_RAM=${QMODEM_TRAFFIC_RAM:-/var/run/qmodem/traffic}
 TRAFFIC_STORE=${QMODEM_TRAFFIC_STORE:-/etc/qmodem/traffic}
 case "$1" in
 list)
-    echo '{"get":{"config_section":"string"},"current":{"config_section":"string"},"correct":{"config_section":"string","target_gb":"string","cycle":"string","unit_base":1000},"correct_bytes":{"config_section":"string","target_bytes":"string","threshold_bytes":"string","cycle":"string"},"clear_correction":{"config_section":"string"},"calibration_run":{"config_section":"string"},"calibration_status":{"config_section":"string"},"calibration_configure":{"config_section":"string","enabled":true,"hour":3,"minute":0},"configure":{"config_section":"string","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"string","unit_base":1000}}'
+    echo '{"get":{"config_section":"string"},"current":{"config_section":"string"},"correct":{"config_section":"string","target_gb":"string","cycle":"string","unit_base":1000},"correct_bytes":{"config_section":"string","target_bytes":"string","threshold_bytes":"string","cycle":"string"},"clear_correction":{"config_section":"string"},"calibration_run":{"config_section":"string"},"calibration_status":{"config_section":"string"},"calibration_configure":{"config_section":"string","enabled":true,"hour":3,"minute":0,"simchange_enabled":true},"configure":{"config_section":"string","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"string","unit_base":1000}}'
     ;;
 call)
     read -r input
@@ -72,13 +72,17 @@ call)
         /bin/sh "${QMODEM_HOME:-/usr/share/qmodem}/traffic_calibration.sh" status "$section"
         ;;
     calibration_configure)
-        printf '%s' "$input" | jq -e '(.enabled|type=="boolean") and ([.hour,.minute]|all(type=="number" and floor==.)) and (.hour>=0 and .hour<=23) and (.minute>=0 and .minute<=59)' >/dev/null || { echo '{"error":"Invalid calibration settings"}'; exit 2; }
+        printf '%s' "$input" | jq -e '(.enabled|type=="boolean") and ([.hour,.minute]|all(type=="number" and floor==.)) and (.hour>=0 and .hour<=23) and (.minute>=0 and .minute<=59) and (if has("simchange_enabled") then (.simchange_enabled|type=="boolean") else true end)' >/dev/null || { echo '{"error":"Invalid calibration settings"}'; exit 2; }
         qmodem_config_lock
         for pair in 'enabled traffic_calibration_enabled' 'hour traffic_calibration_hour' 'minute traffic_calibration_minute'; do
             set -- $pair
             value=$(printf '%s' "$input" | jq -r --arg key "$1" '.[$key] | if type=="boolean" then (if . then "1" else "0" end) else tostring end')
             uci set "qmodem.$section.$2=$value" || { qmodem_config_unlock; exit 1; }
         done
+        if printf '%s' "$input" | jq -e 'has("simchange_enabled")' >/dev/null; then
+            value=$(printf '%s' "$input" | jq -r 'if .simchange_enabled then "1" else "0" end')
+            uci set "qmodem.$section.traffic_calibration_simchange=$value" || { qmodem_config_unlock; exit 1; }
+        fi
         uci commit qmodem
         qmodem_config_unlock
         echo '{"success":true}'

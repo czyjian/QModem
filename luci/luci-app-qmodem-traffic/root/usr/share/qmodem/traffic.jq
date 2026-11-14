@@ -11,7 +11,14 @@
   $old.cycle_carriers // {unknown:(($old.cycle_rx // 0)+($old.cycle_tx // 0))}
  else {} end) as $carriers |
 (if $old.carrier == $s.carrier and (["unicom","mobile","telecom"] | index($s.carrier)) != null then $s.carrier else "unknown" end) as $carrier |
+(if $old.cycle == $s.cycle then $old.cycle_sims // {} else {} end |
+  if ($s.sim_key // "") != "" and $old.sim_key == $s.sim_key then
+    .[$s.sim_key] = ((.[$s.sim_key] // {rx:0,tx:0}) | .rx += $delta.rx | .tx += $delta.tx)
+  else . end) as $sims |
 ($s + {
+  cycle_sims: $sims,
+  sim_cycle_rx: (if ($s.sim_key // "") != "" then $sims[$s.sim_key].rx // 0 else null end),
+  sim_cycle_tx: (if ($s.sim_key // "") != "" then $sims[$s.sim_key].tx // 0 else null end),
   cycle_carriers: ($carriers | .[$carrier] = ((.[$carrier] // 0)+$delta.rx+$delta.tx)),
   total_rx: (($old.total_rx // 0) + $delta.rx),
   total_tx: (($old.total_tx // 0) + $delta.tx),

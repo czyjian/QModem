@@ -43,6 +43,8 @@ sh luci/luci-app-qmodem-traffic/tests/test_traffic.sh
 sh luci/luci-app-qmodem-traffic/tests/test_traffic_carriers.sh
 sh luci/luci-app-qmodem-traffic/tests/test_traffic_calibration.sh
 sh luci/luci-app-qmodem-traffic/tests/test_carrier_calibration.sh
+sh luci/luci-app-qmodem-traffic/tests/test_sim_change_calibration.sh
+sh luci/luci-app-qmodem-traffic/tests/test_sim_traffic.sh
 ```
 
 shell 检查需 Linux/OpenWrt 和 jq，只使用临时目录。查询服务的后端测试位于 application/qmodem_unicom/server/test；固件运行不再需要 Python。本次完成安装配方的隔离落盘、从安装目录运行后端检查、短信/界面回归和流量校准测试；完整 SDK/刷机验证不能由这些检查替代。
@@ -50,3 +52,7 @@ shell 检查需 Linux/OpenWrt 和 jq，只使用临时目录。查询服务的�
 移动已验证短信登录、SSO 与官方网上营业厅套餐余量查询。优先使用 shop.10086.cn 的只读套餐余量接口，微信网厅作为回退；两套接口的单位代码分别处理。服务重启和独立 LuCI 会话可复用登录，移动自动校准已加入相同的 SIM/账期校验。定向、校园和结转等流量包均列出并说明合计范围；查询不到签约速率/QCI 时不显示。没有新增 Python 或 npm 依赖。
 
 流量监控显示当前 SIM 运营商、本周期已用量及剩余量。剩余量按阈值减去校准后的已用量计算，最低为零；未设阈值时显示未设置。本周期累计流量按实测上传与下载合计，并持久保存电信、联通、移动各自用量，账期切换后重新累计；不包含校准偏移。运营商来自 QModem 的 SIM 信息缓存，不额外发送 AT 指令。升级前未分类的历史流量及切卡交界处无法确定归属的流量显示为未归属，不追溯猜测运营商。
+
+“换卡时自动校准”默认开启，可独立勾选保存，关闭后不因换卡自动校准，手动校准与每日定时设置不受影响。后台每 15 秒检测 SIM 身份，首次启用及换卡后各触发一次校准。SIM 指纹与待处理状态持久保存，服务或路由器重启不重复触发；未就绪、采样暂停、任务占用或未登录时等待，登录后继续。只轮询路由器本地登录状态，实际用量请求执行一次，网络或套餐数据错误不持续重试。校准继续校验 SIM 身份、账号、账期和数据有效性。流量监控页对当前卡未登录或会话过期显示登录入口；查询故障不误报为未登录。
+
+本周期已用量旁的下载、上传使用当前 SIM 指纹对应的实测记录，同运营商的不同卡分别累计，换回原卡继续其记录。旧版本未保存每张卡的下载、上传，升级时不猜测归属，从升级后的采样开始分类；切卡交界处无法可靠归属的增量仍保留在跨卡累计量中。运营商校准提供总用量，不推算历史下载、上传比例。
