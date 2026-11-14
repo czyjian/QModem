@@ -17,6 +17,12 @@ PKG_RELEASE:=$(QMODEM_RELEASE)
 PKG_LICENSE:=GPLv3
 PKG_PROVIDES:=qmodem-luci-ui
 
+# Match the translation's build mode to the main package without a dependency cycle.
+define Package/luci-app-qmodem-next/config
+  config PACKAGE_luci-i18n-qmodem-next-zh-cn
+    default PACKAGE_luci-app-qmodem-next
+endef
+
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

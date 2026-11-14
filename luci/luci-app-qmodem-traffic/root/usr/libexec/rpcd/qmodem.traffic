@@ -140,7 +140,7 @@ call)
           $s + {config:$cfg, cycle_total:$total, cycle_adjustment:$offset, stale:($now - ($s.now // 0) > 30),
           exceeded:($cfg.enabled and $cfg.threshold_bytes > 0 and $total >= $cfg.threshold_bytes)} |
           (if .stale or ($cfg.enabled|not) then .rx_rate=0 | .tx_rate=0 else . end) |
-          if $method == "current" then del(.daily,.monthly,.live,.devices,.boot,.uptime) else . end' "$file"
+          if $method == "current" then .today = (($s.daily // {})[($s.day // "")] // {rx:0,tx:0}) | del(.daily,.monthly,.live,.devices,.boot,.uptime) else . end' "$file"
         ;;
     *) exit 2;;
     esac

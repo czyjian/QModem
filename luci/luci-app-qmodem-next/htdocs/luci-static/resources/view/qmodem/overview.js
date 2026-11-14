@@ -12,7 +12,7 @@ document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
 	// versioned like the view scripts, so a package upgrade never serves stale CSS
-	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=traffic-inline-2'
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=traffic-inline-3'
 }));
 
 // Check if cbi-progressbar class exists
@@ -550,9 +550,10 @@ return view.extend({
 					dom.content(trafficInline, data.stale ? _('Traffic samples are stale. Check the monitoring service.') : _('Waiting for the first traffic sample...'));
 					return;
 				}
+				var today = data.today || {}, todayRx = today.rx || 0, todayTx = today.tx || 0;
 				dom.content(trafficInline, [
 					E('span', {}, _('Current download / upload') + ': ' + (data.rx_rate * 8 / 1000000).toFixed(2) + ' / ' + (data.tx_rate * 8 / 1000000).toFixed(2) + ' Mbps'),
-					E('span', {}, _('Current billing cycle') + ': ' + traffic.bytes(traffic.cycleTotal(data)) + ' (' + traffic.cycleBreakdown(data) + ')')
+					E('span', {}, _('今日已用流量') + ': ' + traffic.bytes(todayRx + todayTx) + ' (' + _('Download') + ': ' + traffic.bytes(todayRx) + ' / ' + _('Upload') + ': ' + traffic.bytes(todayTx) + ')')
 				]);
 				if (data.exceeded) dom.content(trafficWarning, E('div', { 'class': 'alert-message warning' }, _('Traffic usage has reached the configured threshold.') + ' ' + traffic.bytes(traffic.cycleTotal(data)) + ' / ' + data.config.threshold_gb + ' GB'));
 			}).catch(function() {

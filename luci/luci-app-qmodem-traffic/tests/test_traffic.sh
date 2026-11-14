@@ -72,10 +72,12 @@ for expr in '.reset_day=0' '.reset_day=32' '.reset_day=1.5' '.reset_hour=24' '.r
 done
 export QMODEM_TRAFFIC_RAM="$tmp/ram" QMODEM_TRAFFIC_STORE="$tmp/store"
 mkdir -p "$QMODEM_TRAFFIC_RAM" "$QMODEM_TRAFFIC_STORE"
-jq -n --argjson now "$(date +%s)" '{now:$now,cycle:"cycle1",cycle_rx:200000000,cycle_tx:100000000,total_rx:200000000,total_tx:100000000,daily:{"2026-11-01":{rx:200000000,tx:100000000}},monthly:{"2026-11":{rx:200000000,tx:100000000}}}' > "$tmp/ram/modem0.json"
+jq -n --argjson now "$(date +%s)" '{now:$now,day:"2026-11-01",cycle:"cycle1",cycle_rx:200000000,cycle_tx:100000000,total_rx:200000000,total_tx:100000000,daily:{"2026-11-01":{rx:200000000,tx:100000000}},monthly:{"2026-11":{rx:200000000,tx:100000000}}}' > "$tmp/ram/modem0.json"
 printf '%s\n' '{"config_section":"modem0","target_gb":"2.5","cycle":"cycle1"}' | sh "$rpc_file" call correct | jq -e '.success' >/dev/null
 get_current() { printf '%s\n' '{"config_section":"modem0"}' | sh "$rpc_file" call current; }
 get_current | jq -e '.cycle_total==2500000000 and .cycle_adjustment==2200000000 and .total_rx==200000000 and .exceeded' >/dev/null
+# The lightweight overview uses the same daily entry as the trend chart, unaffected by calibration.
+get_current | jq -e '.today=={rx:200000000,tx:100000000} and (has("daily")|not)' >/dev/null
 # Future traffic accumulates on the corrected baseline, without rewriting history.
 jq '.cycle_rx+=100000000 | .total_rx+=100000000' "$tmp/ram/modem0.json" > "$tmp/ram/new"
 mv "$tmp/ram/new" "$tmp/ram/modem0.json"
@@ -118,6 +120,12 @@ printf '%s\n' '{"config_section":"modem0","target_gb":"1","cycle":"cycle2","unit
 get_current | jq -e '.cycle_total==1073741824' >/dev/null
 printf '%s\n' '{"config_section":"modem0","enabled":true,"reset_day":1,"reset_hour":0,"reset_minute":0,"threshold_gb":"139","unit_base":1024}' | sh "$rpc_file" call configure | jq -e '.success' >/dev/null
 grep -q 'traffic_threshold_bytes=149250113536' "$tmp/uci.log"
+# A new day without samples shows zero rather than yesterday or the billing-cycle total.
+jq '.day="2026-11-02"' "$tmp/ram/modem0.json" > "$tmp/ram/new"
+mv "$tmp/ram/new" "$tmp/ram/modem0.json"
+get_current | jq -e '.today=={rx:0,tx:0}' >/dev/null
+echo 'PASS: overview daily totals match history and stay independent of calibration'
+
 echo 'PASS: binary manual calibration and threshold; legacy decimal inputs unchanged'
 echo 'PASS: billing calendar, IPv4/IPv6 deduplication, counter resets, reboot, cycle rollover and history'
 echo 'PASS: cycle corrections, future increments, persistence, negative offsets, rollover and clear'
