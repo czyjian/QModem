@@ -9,8 +9,8 @@ export function registerTelecomTest(app,{limiter,upstream=createTelecomUpstream(
     if(!context)return reply.code(400).send({ok:false,msg:'模组上下文无效'});
     for(const [id,s] of sessions)if(s.expires<=now())sessions.delete(id);
     const session=sessions.get(body.session_id);
-    if(body.action==='shared_logout'){store.remove(body._sim);cache.delete(context);return {ok:true};}
-    if(body.action==='shared_status')return {ok:true,logged_in:!!store.get(body._sim)};
+    if(body.action==='shared_logout'){store.remove(body._sim);cache.delete(context);for(const [id,s] of sessions)if(s.context===context)sessions.delete(id);return {ok:true};}
+    if(body.action==='shared_status'){const saved=store.get(body._sim);return {ok:true,logged_in:!!saved,session_revision:saved?.updatedAt || 0};}
     if(body.action==='shared_usage' || body.action==='inspect'){
       const saved=store.get(body._sim);
       if(!saved)return {ok:false,code:'TOKEN_EXPIRED',msg:'请先登录电信'};
@@ -32,9 +32,9 @@ export function registerTelecomTest(app,{limiter,upstream=createTelecomUpstream(
       }finally{busy.delete(context);}
     }
     if(body.action==='logout'){if(session?.context===context)sessions.delete(body.session_id);return {ok:true};}
-    if(!['challenge','send_sms','authorize','login','usage'].includes(body.action))return reply.code(400).send({ok:false,msg:'不支持的操作'});
+    if(!['challenge','send_sms','authorize','sms_login','login','usage'].includes(body.action))return reply.code(400).send({ok:false,msg:'不支持的操作'});
     if(busy.has(context))return reply.code(409).send({ok:false,msg:'请求处理中，请稍候'});
-    if(['challenge','send_sms','authorize'].includes(body.action)){
+    if(['challenge','send_sms','authorize','sms_login'].includes(body.action)){
       if(body.action==='challenge'){
         if(typeof body.phone!=='string' || !/^1\d{10}$/.test(body.phone))return reply.code(400).send({ok:false,msg:'请输入 11 位手机号'});
         if(sessions.size>=100 || !limiter.take('hlhk-challenge:'+context,10))return reply.code(429).send({ok:false,msg:'获取验证过于频繁'});
@@ -56,6 +56,12 @@ export function registerTelecomTest(app,{limiter,upstream=createTelecomUpstream(
           return {ok:true,session_id,challenge:result.challenge};
         }
         if(action==='send_sms'){session.state=result.state;return {ok:true};}
+        if(action==='sms_login'){
+          if(sessions.get(body.session_id)!==session)return {ok:false,code:'SESSION_CHANGED',msg:'登录已取消，请重新操作'};
+          if(!result.credentials)return {ok:false,msg:'短信登录未取得查询会话'};
+          sessions.set(body.session_id,{context,credentials:result.credentials,smsLogin:true,shared:body.shared===true,sharedBaseline:store.get(body._sim),expires:now()+900000});
+          return {ok:true,session_id:body.session_id};
+        }
         sessions.delete(body.session_id);
         return {ok:true,device_id:result.device_id};
       }finally{busy.delete(context);}
@@ -76,8 +82,15 @@ export function registerTelecomTest(app,{limiter,upstream=createTelecomUpstream(
         if(body.shared===true){store.put(body._sim,result.credentials);cache.delete(context);}
         return {ok:true,session_id};
       }
+      if(session.smsLogin && store.get(body._sim)!==session.sharedBaseline)return {ok:false,code:'SESSION_CHANGED',msg:'共享登录已更新，请关闭弹框后刷新'};
       const result=await upstream.usage(session.credentials);
       if(!result.ok)return {ok:false,msg:'电信流量查询失败（'+result.code+'）；未自动重新登录，请保留弹框。'};
+      if(session.smsLogin && session.shared){
+        if(sessions.get(body.session_id)!==session || store.get(body._sim)!==session.sharedBaseline)return {ok:false,code:'SESSION_CHANGED',msg:'登录状态已更新，请关闭弹框后刷新'};
+        const saved=store.put(body._sim,session.credentials);
+        session.sharedBaseline=saved;
+        cache.set(context,{session:saved,time:now(),result:{...result,carrier:'telecom',mobile:saved.mobile,logged_in:true}});
+      }
       return result;
     }finally{busy.delete(context);}
   });

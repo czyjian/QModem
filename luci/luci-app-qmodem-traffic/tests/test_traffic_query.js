@@ -1,13 +1,13 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../htdocs/luci-static/resources/qmodem/traffic-query.js'),'utf8');
-const sims=[],responses=[],requests=[];let calls=0,telecomOpens=0,mobileOpens=0;
+const sims=[],responses=[],requests=[],opened=[];let calls=0,telecomOpens=0,mobileOpens=0;
 const E=(tag,attrs,children)=>({tag,attrs,children,style:{}});
 const query=new Function('L','E','_','dom','uci','qmodem','window','fetch','carrierLogin','telecomTest','mobileLogin',source)(
   {Class:{extend:value=>value},url:value=>'/cgi-bin/luci/'+value},E,value=>value,
   {content:(node,children)=>{node.children=children;}},{get:()=>undefined},
   {getSimInfo:()=>{calls++;return sims.shift()();}},
-  {location:{href:'http://192.168.88.1/cgi-bin/luci/admin/modem/qmodem/traffic'}},
+  {location:{href:'http://192.168.88.1/cgi-bin/luci/admin/modem/qmodem/traffic'},open:(...args)=>opened.push(args)},
   async(url,options)=>{requests.push({url,...JSON.parse(options.body)});return{ok:true,json:async()=>responses.shift()};}, {open:()=>({close:()=>{}})}, {open:()=>{telecomOpens++;return {close:()=>{}};}}, {open:()=>{mobileOpens++;return {close:()=>{}};}}
 );
 const sim=(isp,imsi,status='ready')=>({modem_info:[{key:'ISP',value:isp},{key:'IMSI',value:imsi},{key:'SIM Status',value:status}]});
@@ -18,7 +18,8 @@ for(const name of ['CHN-UNICOM','中国联通','46001'])assert.equal(query.ident
 assert.equal(query.identify(sim('UNICOM','460031234567890')).carrier,'telecom');
 assert.equal(query.identify(sim('CMCC','460011234567890')).carrier,'unicom');
 assert.equal(query.identify(sim('UNICOM','','pin')).carrier,'');
-for(const url of ['javascript:alert(1)','file:///etc/passwd','https://user:secret@example.com'])assert.equal(query.queryUrl(url),null);
+assert(!source.includes('unicom_query_url'));
+assert(!source.includes('/qmodem-unicom/'));
 assert.equal(query.flow(null),'—');assert.equal(query.flow(1024),'1.00 GB');assert.equal(query.flow(10),'10.00 MB');
 (async()=>{
   const selector={value:'first'},panel=query.create(selector);
@@ -39,6 +40,8 @@ assert.equal(query.flow(null),'—');assert.equal(query.flow(1024),'1.00 GB');as
   assert(!JSON.stringify(requests).includes('ecs_token'),'compact view queries without carrier credentials');
   sims.push(()=>Promise.reject(new Error('temporary RPC failure')));await panel.update();assert.match(text(panel.node),/1.00 GB/);
   const descendants=node=>!node || typeof node!=='object' ? [] : Array.isArray(node) ? node.flatMap(descendants) : [node,...descendants(node.children)];
+  descendants(panel.node).find(node=>node.tag==='button' && node.children==='在新窗口打开').attrs.click();
+  assert.deepEqual(opened.at(-1),['https://www.10010.com/e5/index.html','_blank','noopener,noreferrer']);
   responses.push({ok:true});descendants(panel.node).find(node=>node.tag==='button' && node.children==='登出').attrs.click();
   for(let i=0;i<5;i++)await new Promise(done=>setImmediate(done));
   assert.equal(requests.at(-1).action,'logout');assert(!text(panel.node).includes('1.00 GB'));assert.match(text(panel.node),/尚未登录/);

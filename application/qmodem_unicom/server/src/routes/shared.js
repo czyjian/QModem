@@ -55,7 +55,7 @@ export function registerShared(app, { upstream, store }) {
     const context = request.body?._sim;
     if (!store || !contextKey(context)) return reply.code(400).send({ok:false,msg:'SIM 卡上下文无效'});
     const action = request.body.action;
-    if (action === 'status') { const session=store.get(context); return {ok:true,logged_in:!!session,mobile:session?.mobile || '',token:session ? ROUTER_TOKEN : ''}; }
+    if (action === 'status') { const session=store.get(context); return {ok:true,logged_in:!!session,session_revision:session?.updatedAt || 0,mobile:session?.mobile || '',token:session ? ROUTER_TOKEN : ''}; }
     if (action === 'logout') { store.remove(context); cache.delete(contextKey(context)); return {ok:true}; }
     if (action === 'import') {
       const token=request.body.ecs_token, cookie=request.body.cookie || '';

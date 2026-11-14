@@ -41,9 +41,8 @@ define Build/Compile
 endef
 
 define Package/qmodem-carrier-service/install
-	$(INSTALL_DIR) $(1)/usr/share/qmodem-unicom/server $(1)/usr/share/qmodem-unicom/third-party $(1)/www/qmodem-unicom
+	$(INSTALL_DIR) $(1)/usr/share/qmodem-unicom/server $(1)/usr/share/qmodem-unicom/third-party
 	$(CP) $(PKG_BUILD_DIR)/server/. $(1)/usr/share/qmodem-unicom/server/
-	$(CP) ./www/. $(1)/www/qmodem-unicom/
 	$(CP) ./third-party/. $(1)/usr/share/qmodem-unicom/third-party/
 	$(CP) ./files/. $(1)/
 	$(INSTALL_DIR) $(1)/etc/qmodem-unicom

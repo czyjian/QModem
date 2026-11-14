@@ -1,6 +1,6 @@
 # QModem 运营商查询服务
 
-本服务由独立插件 `luci-app-qmodem-traffic` 自动依赖，使用 Node.js 完成联通和电信登录、授权及流量查询。固件运行不需要 Python、pip、requests 或 cryptodome。
+本服务由独立插件 `luci-app-qmodem-traffic` 自动依赖，使用 Node.js 完成联通、电信和移动登录、授权及流量查询。固件运行不需要 Python、pip、requests 或 cryptodome。
 
 ## 安装与启动
 
@@ -13,11 +13,11 @@
 curl -fsS http://127.0.0.1:8788/healthz
 ```
 
-`www` 是 `web` 源码构建的联通详情页面，哈希记录在 `web-assets.json`；修改 web 后需要重新构建并同步发布资源与清单。日常查询使用 LuCI 原生界面，详情按钮可手动打开详情页。
+三家运营商统一使用 LuCI 原生登录弹框和流量表格，不再打包独立联通面板及其前端源码、构建资源。联通“在新窗口打开”跳转官方网上营业厅 https://www.10010.com/e5/index.html，不附带路由器或 SIM 参数；该网站使用独立的登录状态。
 
 ## 电信纯 Node.js 实现
 
-- `server/src/upstream/telecom-node.js`：短信预检、手动滑块验证、发送短信、短信授权 DeviceId、RSA PKCS#1 v1.5 服务密码登录。
+- `server/src/upstream/telecom-node.js`：短信预检、手动滑块验证、发送短信、纯短信登录、短信授权 DeviceId、RSA PKCS#1 v1.5 服务密码登录。
 - `server/src/upstream/telecom-node-query.js`：固定官方 HTTPS 端点、压缩与大小限制、超时、基础用量和独立流量包查询。使用 Node 内置 https、zlib、crypto，无子进程或解释器。
 - `third-party/TELECOM-SOURCES.md`：协议来源、固定上游版本及 MIT 许可。测试向量从原版代码在模拟网络环境下生成，只含固定的合成测试数据。
 
@@ -25,7 +25,9 @@ curl -fsS http://127.0.0.1:8788/healthz
 
 授权预检可能返回要求安全验证的非成功业务码，仍继续获取官方滑块，与原版流程一致；网络错误不继续。只有用户手动完成验证才发送短信。授权状态保存在后端内存、按实际 SIM 绑定、10 分钟过期；每次挑战只发一次短信，验证码最多尝试 5 次。
 
-服务密码不保存。共享查询会话仅保存 Token、手机号和查询所需省市代码，位于 `SESSION_STORE + .telecom`；联通仍使用 `SESSION_STORE`。文件权限 0600，目录 0700。其他已登录 LuCI 的浏览器以及服务重启后可复用；登出清除，查询鉴权失败不自动重新提交密码。临时授权状态不持久化。
+服务密码和短信验证码不保存。共享查询会话仅保存 Token、手机号、查询所需省市代码及短信登录的协议类型标记，位于 `SESSION_STORE + .telecom`；联通仍使用 `SESSION_STORE`。文件权限 0600，目录 0700。其他已登录 LuCI 的浏览器以及服务重启后可复用；登出清除，查询鉴权失败不自动重新提交密码。临时授权状态不持久化。
+
+电信原生弹框保留纯短信登录和服务密码登录两个可切换入口，默认使用短信。短信授权取得的 Token 需要配套的 13.4.0 / 120002 查询参数，不能混用旧服务密码登录的客户端参数；用量查询成功后才替换共享会话，失败保留原会话和短期测试会话供用户刷新，不自动重发短信。2026-11-14 已验证同一次手动滑块、短信验证码直接登录和分包查询成功，服务重启后主表可继续查询，无需服务密码。
 
 合计优先使用 qryImportantData 的显式 total/used/balance（KB），分包使用 userFluxPackage 的独立 productInfos。单位按 1024 换算，不把未知、不限量当成零；分包接口失败时保留合计结果。没有明确的签约速率/QCI 字段时不推断、不显示。
 

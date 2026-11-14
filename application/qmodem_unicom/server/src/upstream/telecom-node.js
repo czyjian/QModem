@@ -68,10 +68,12 @@ export function createTelecomUpstream({post=postTelecom,now=()=>new Date(),encry
           if(!result.ok && result.code!=='0' && !result.smsHint)return {ok:false,code:result.code || 'SMS_FAILED'};
           return {ok:true,state};
         }
-        if(body.action==='authorize'){
+        if(body.action==='authorize' || body.action==='sms_login'){
           const date=now();
           const result=await callV2('userLoginNormal',smsBody(state,body.code,date,encrypt),{userLoginName:encodeAccount(state.phone),timestamp:timestamp(date)});
-          if(!result.data?.loginSuccessResult?.token)return {ok:false,code:result.code || 'SMS_LOGIN_FAILED'};
+          const info=result.data?.loginSuccessResult;
+          if(typeof info?.token!=='string' || !info.token)return {ok:false,code:result.code || 'SMS_LOGIN_FAILED'};
+          if(body.action==='sms_login')return {ok:true,credentials:{token:info.token,phonenum:state.phone,provinceCode:info.provinceCode || '',cityCode:info.cityCode || '',auth_profile:'sms_v2'}};
           return {ok:true,device_id:state._uid};
         }
         return {ok:false,code:'INVALID_ACTION'};

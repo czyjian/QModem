@@ -152,14 +152,16 @@ return baseclass.extend({
 		if (!s.config || !s.config.enabled) return E('p', {}, _('Traffic monitoring is disabled.'));
 		if (!s.now) return E('p', {}, _('Waiting for the first traffic sample...'));
 		var bytes=function(n){return formatBytes(n,s.unit_base);}, quota=(s.config.threshold_bytes!=null?s.config.threshold_bytes:s.config.threshold_gb*1e9)/Math.pow(s.unit_base===1000?1000:1024,3), quotaText=Number(quota.toFixed(3))+' GB';
+		var today=(s.daily || {})[s.day] || {}, todayRx=today.rx || 0, todayTx=today.tx || 0;
 		var rows = [
 			[_('Current download / upload'), (s.rx_rate * 8 / 1000000).toFixed(2) + ' / ' + (s.tx_rate * 8 / 1000000).toFixed(2) + ' Mbps'],
-			[_('本周期已用流量'), bytes(cycleTotal(s)) + ' (' + cycleBreakdown(s) + ')'],
+			[_('本周期已用流量'), bytes(cycleTotal(s))],
 			[_('本周期剩余流量'), quota > 0 ? bytes(Math.max(0, quota * Math.pow(s.unit_base===1000?1000:1024,3) - cycleTotal(s))) : _('Not set')],
-			[_('Recording since'), formatDate(s.since)],
-			[_('Billing cycle starts'), s.cycle ? formatDate(s.cycle) : '—'],
 			[_('Traffic threshold'), s.config.threshold_gb > 0 ? quotaText : _('Not set')],
-			[_('本周期累计流量'), bytes((s.cycle_rx || 0)+(s.cycle_tx || 0)) + (carrierBreakdown(s) ? ' ('+carrierBreakdown(s)+')' : '')]
+			[_('今日已用流量'), bytes(todayRx+todayTx)+' ('+_('Download')+': '+bytes(todayRx)+' / '+_('Upload')+': '+bytes(todayTx)+')'],
+			[_('本周期累计流量'), bytes((s.cycle_rx || 0)+(s.cycle_tx || 0)) + (carrierBreakdown(s) ? ' ('+carrierBreakdown(s)+')' : '')],
+			[_('Billing cycle starts'), s.cycle ? formatDate(s.cycle) : '—'],
+			[_('Recording since'), formatDate(s.since)]
 		];
 		var content = [];
 		if (s.carrier_name) rows.unshift([_('当前运营商'),s.carrier_name]);

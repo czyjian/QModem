@@ -15,6 +15,16 @@ test('matches original query payload and minute timestamp without mixing two pro
  assert.equal(packages.content.attach,'test');
  assert.equal(packages.content.fieldData.accessAuth,'1');
 });
+test('SMS-issued tokens use their matching query client profile while legacy sessions stay unchanged',()=>{
+ for(const kind of ['usage','packages']){
+  const sms=queryBody({...credentials,auth_profile:'sms_v2'},kind).headerInfos;
+  assert.equal(sms.source,'120002');assert.equal(sms.sourcePassword,'TiqmIZ');assert.equal(sms.shopId,'20004');
+  assert.equal(sms.clientType,'#13.4.0#channel50#iPhone 11 Pro Max#');
+  const old=queryBody(credentials,kind).headerInfos;
+  assert.equal(old.source,'110003');assert.equal(old.sourcePassword,'Sid98s');assert.equal(old.shopId,'20002');
+ }
+});
+
 test('uses binary units, explicit totals, missing fields remain unknown',()=>{
  assert.equal(basicSummary(base).total_mb,4096);
  assert.equal(basicSummary(base).remaining_mb,2048);

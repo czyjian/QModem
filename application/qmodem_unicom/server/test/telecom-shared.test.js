@@ -19,6 +19,9 @@ test('shared telecom persists only required credentials, reuses token and logs o
   assert(!readFileSync(path,'utf8').includes('never-save'));
   assert.equal(statSync(path).mode & 0o777,0o600);
   assert.equal(createTelecomStore(path).get(sim).credentials.token,'fixture');
+  store.put(sim,{token:'fixture',phonenum:'13000000000',auth_profile:'sms_v2',code:'never-save'});
+  assert.equal(createTelecomStore(path).get(sim).credentials.auth_profile,'sms_v2');
+  assert(!readFileSync(path,'utf8').includes('never-save'));
   assert.equal(createTelecomStore(path).get({...sim,identity:'999999999999999'}),null);
   assert.equal((await call({action:'shared_usage'})).remaining_mb,1024);
   assert.equal((await call({action:'shared_usage'})).remaining_mb,1024);assert.equal(queries,1);

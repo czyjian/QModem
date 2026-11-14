@@ -23,7 +23,12 @@ assert(!traffic.cycleBreakdown({...state,cycle_adjustment:-100000000}).includes(
 text=JSON.stringify(traffic.summary({...state,cycle_carriers:{telecom:1073741824,unicom:2147483648}}));
 assert(text.includes('中国电信: 1.00 GB / 中国联通: 2.00 GB'));
 assert(text.includes('本周期已用流量'));
+assert(!text.includes('1.02 GB (Download:'));
 assert(!text.includes('Adjustment'));
+const dailyView=traffic.summary({...state,day:'2026-11-14',daily:{'2026-11-14':{rx:1073741824,tx:536870912},'2026-11-13':{rx:99999999999,tx:99999999999}}});
+const dailyRows=dailyView.children.find(n=>n.tag==='table').children;
+assert.deepEqual(dailyRows.slice(-4).map(row=>row.children[0].children),['今日已用流量','本周期累计流量','Billing cycle starts','Recording since']);
+assert.equal(dailyRows[dailyRows.length-4].children[1].children,'1.50 GB (Download: 1.00 GB / Upload: 512.00 MB)');
 assert.equal(traffic.formatDate('2026-11-01 00:00'),'2026/11/01 00:00:00');
 assert(/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(traffic.formatDate(1793786187)));
 const smooth = new Function('rpc', source.slice(0,source.indexOf('var chartSequence'))+'\nreturn smoothPath;')({declare:()=>()=>{}});

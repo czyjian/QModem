@@ -80,6 +80,7 @@ calibration_probe()
         elif [ "$(printf '%s' "$usage" | jq -r '.ok')" != true ]; then
             case "$(printf '%s' "$usage" | jq -r '.code // empty')" in
                 TOKEN_EXPIRED|BLACKLIST) reason='尚未登录或登录已过期';;
+                BUSY) reason='流量查询正在进行，请稍后重试';;
                 *) reason='运营商用量查询失败';;
             esac
         fi
@@ -96,7 +97,7 @@ calibration_probe()
         result=$(jq -nc --arg reason "$reason" '{available:false,reason:$reason}')
     fi
     printf '%s' "$result" | jq -c --argjson cfg "$cfg" --argjson last "$last" --argjson usage "$usage" --arg identity "$identity" '
-      . + {config:$cfg,last:$last,logged_in:($usage.ok==true),login_required:($usage.code=="TOKEN_EXPIRED" or $usage.code=="BLACKLIST"),mobile:($usage.mobile // ""),used_mb:($usage.used_mb // null),sim_identity:$identity}'
+      . + {config:$cfg,last:$last,logged_in:($usage.ok==true),login_required:($usage.code=="TOKEN_EXPIRED" or $usage.code=="BLACKLIST"),query_busy:($usage.code=="BUSY"),mobile:($usage.mobile // ""),used_mb:($usage.used_mb // null),sim_identity:$identity}'
 }
 
 calibration_record()
@@ -155,6 +156,7 @@ calibration_tick()
         jq -c '{success:(.status=="success"),message:.reason,error:(if .status=="success" then null else .reason end)}' "$TRAFFIC_STORE/$section.autocalibration.json"
     fi
     flock -u 7; exec 7>&-
+    if [ "$mode" = simchange ] && [ "$(printf '%s' "$probe" | jq -r '.query_busy // false')" = true ]; then return 2; fi
     if [ "$mode" = simchange ] && [ "$(printf '%s' "$probe" | jq -r '.login_required // false')" = true ]; then return 3; fi
 }
 
@@ -162,7 +164,7 @@ calibration_tick()
 # Only the local session status is polled; operator usage is fetched once.
 calibration_watch_sim()
 {
-    local section=$1 fields identity fingerprint carrier action response file previous pending temp code
+    local section=$1 fields identity fingerprint carrier action response file previous pending temp code revision saved_revision attempts next_at outcome
     qmodem_valid_instance "$section" || return 0
     [ "$(calibration_config "$section" | jq -r '.simchange_enabled != false')" = true ] || return 0
     fields=$(ubus -S call qmodem sim_info "{\"config_section\":\"$section\"}" 2>/dev/null | jq -c '[.modem_info[]? | {key:.key,value:.value}]|from_entries')
@@ -178,7 +180,12 @@ calibration_watch_sim()
         jq -nc --arg fingerprint "$fingerprint" '{fingerprint:$fingerprint,pending:true}' > "$temp" && mv "$temp" "$file"
     fi
     pending=$(jq -r '.pending // false' "$file" 2>/dev/null)
-    [ "$pending" = true ] || return 0
+    if [ "$pending" != true ]; then
+        # Migrate attempts consumed by older releases despite a failed query.
+        [ "$(jq -r '.completed // false' "$file")" != true ] || return 0
+        outcome=$(jq -r '.status // empty' "$TRAFFIC_STORE/$section.autocalibration.json" 2>/dev/null || true)
+        case "$outcome" in skipped|failed) ;; *) return 0;; esac
+    fi
     # Do not consume the attempt while traffic sampling is disabled or stale.
     [ "$(uci -q get "qmodem.$section.traffic_enabled")" != 0 ] || return 0
     jq -e --argjson now "$(date +%s)" '.now != null and $now-.now <= 30' "$TRAFFIC_RAM/$section.json" >/dev/null 2>&1 || return 0
@@ -192,15 +199,29 @@ calibration_watch_sim()
     response=$(jq -nc --arg section "$section" --arg identity "$identity" --arg action "$action" '{action:$action,_sim:{section:$section,identity:$identity}}' |
         curl --silent --fail --max-time 5 --noproxy '*' -H 'Content-Type: application/json' --data-binary @- "http://127.0.0.1:8788/$carrier/" 2>/dev/null) || return 0
     [ "$(printf '%s' "$response" | jq -r '.logged_in // false')" = true ] || return 0
+    revision=$(printf '%s' "$response" | jq -r '.session_revision // 0')
+    saved_revision=$(jq -r '.session_revision // ""' "$file")
+    attempts=$(jq -r '.attempts // 0' "$file")
+    next_at=$(jq -r '.next_at // 0' "$file")
+    if [ "$revision" != "$saved_revision" ]; then attempts=0; next_at=0; fi
+    # At most three attempts per login, one minute apart. A fresh login resets
+    # the budget; only the local session endpoint is polled while waiting.
+    [ "$attempts" -lt 3 ] && [ "$(date +%s)" -ge "$next_at" ] || return 0
     # Persist before querying so restart/failure cannot cause repeated requests.
     temp=$(mktemp "$TRAFFIC_STORE/.simwatch.XXXXXX") || return 1
-    jq '.pending=false' "$file" > "$temp" && mv "$temp" "$file" || return 1
+    jq --arg revision "$revision" --argjson attempts "$((attempts+1))" --argjson next_at "$(($(date +%s)+60))" '.pending=false | .session_revision=$revision | .attempts=$attempts | .next_at=$next_at' "$file" > "$temp" && mv "$temp" "$file" || return 1
     code=0
     calibration_tick "$section" simchange "$fingerprint" || code=$?
-    if [ "$code" = 2 ] || [ "$code" = 3 ]; then
-        temp=$(mktemp "$TRAFFIC_STORE/.simwatch.XXXXXX") || return 1
-        jq '.pending=true' "$file" > "$temp" && mv "$temp" "$file"
+    outcome=$(jq -r '.status // empty' "$TRAFFIC_STORE/$section.autocalibration.json" 2>/dev/null || true)
+    temp=$(mktemp "$TRAFFIC_STORE/.simwatch.XXXXXX") || return 1
+    if [ "$code" = 2 ]; then
+        jq --argjson next_at "$(($(date +%s)+17))" '.pending=true | .attempts-=1 | .next_at=$next_at' "$file" > "$temp"
+    elif [ "$code" = 3 ] || [ "$outcome" != success ]; then
+        jq '.pending=true | .completed=false' "$file" > "$temp"
+    else
+        jq '.pending=false | .completed=true' "$file" > "$temp"
     fi
+    mv "$temp" "$file"
 }
 
 calibration_loop()

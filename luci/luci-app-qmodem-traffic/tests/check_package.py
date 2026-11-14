@@ -1,6 +1,6 @@
 """Checks package ownership, runtime closure, immutable npm sources and boot files."""
 from pathlib import Path
-import hashlib, json, re
+import json, re
 root=Path(__file__).resolve().parents[3]
 plugin=root/"luci/luci-app-qmodem-traffic"
 base=root/"luci/luci-app-qmodem-next"
@@ -33,8 +33,10 @@ for name,value in lock["packages"].items():
     assert "$(PKG_BUILD_DIR)/server/"+name in sources,name
     folder,filename=value["resolved"].rsplit("/",1)
     assert "URL:="+folder in sources and "URL_FILE:="+filename in sources,name
-for filename,digest in load(runtime/"web-assets.json").items():
-    assert hashlib.sha256((runtime/"www"/filename).read_bytes()).hexdigest()==digest,filename
+assert not (runtime/"web-assets.json").exists()
+assert not (runtime/"www").exists()
+assert not (runtime/"web/package.json").exists()
+assert "/www/qmodem-unicom" not in make
 for folder in (plugin/"root",runtime/"files"):
     for p in folder.rglob("*"):
         if p.is_file():
@@ -49,4 +51,4 @@ acl=load(plugin/"root/usr/share/rpcd/acl.d/luci-app-qmodem-traffic.json")["luci-
 assert "info" in acl["read"]["ubus"]["system"]
 assert "sync" in acl["write"]["ubus"]["qmodem.sms"]
 assert "correct_bytes" not in str(acl)
-print("PASS: independent package ownership, declared runtime, 50 pinned npm dependencies, web hashes, POSIX text, boot permissions and least-privilege ACL")
+print("PASS: native-only carrier UI, independent package ownership, declared runtime, 50 pinned npm dependencies, POSIX text, boot permissions and least-privilege ACL")

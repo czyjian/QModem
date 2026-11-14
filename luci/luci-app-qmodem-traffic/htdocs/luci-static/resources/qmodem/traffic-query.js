@@ -1,6 +1,5 @@
 'use strict';
 'require dom';
-'require uci';
 'require qmodem.qmodem as qmodem';
 'require qmodem.carrier-login as carrierLogin';
 'require qmodem.telecom-test as telecomTest';
@@ -27,14 +26,6 @@ function identify(data) {
 	return { carrier: carrier, status: status, identity: imsi || fields.ICCID || isp };
 }
 
-function queryUrl(value) {
-	try {
-		var url = new URL(value || '/qmodem-unicom/', window.location.href);
-		if (!/^https?:$/.test(url.protocol) || url.username || url.password) return null;
-		return url.href;
-	} catch (e) { return null; }
-}
-
 function flow(value) {
 	if (typeof value !== 'number' || !isFinite(value) || value < 0) return '—';
 	return value >= 1024 ? (value / 1024).toFixed(2) + ' GB' : value.toFixed(2) + ' MB';
@@ -42,7 +33,6 @@ function flow(value) {
 
 return L.Class.extend({
 	identify: identify,
-	queryUrl: queryUrl,
 	flow: flow,
 	create: function(selector) {
 		var node=E('div'), active=false, generation=0, pending=null, current='', rendered=false, refreshQueued=false, loggingOut=false;
@@ -74,9 +64,7 @@ return L.Class.extend({
 			dom.content(node,[carrierRow,actions,E('p',{'class':kind ? 'alert-message '+kind : ''},text)]);
 		}
 		function prepare(id) {
-			var target=currentCarrier==='mobile' ? 'https://wx.10086.cn/website/spa/main/newHome' : currentCarrier==='telecom' ? 'https://www.189.cn/web/' : queryUrl(uci.get('qmodem','main','unicom_query_url'));
-			if (!target) throw new Error(_('The carrier query page address is invalid.'));
-			var url=new URL(target); if(currentCarrier==='unicom')url.searchParams.set('modem',id); detailTarget=url.href;
+			detailTarget=currentCarrier==='mobile' ? 'https://wx.10086.cn/website/spa/main/newHome' : currentCarrier==='telecom' ? 'https://www.189.cn/web/' : 'https://www.10010.com/e5/index.html';
 			status.className='cbi-value-description';
 			dom.content(summary,[]); dom.content(status,_('正在读取登录状态…'));
 			login.style.display=''; refresh.disabled=true;

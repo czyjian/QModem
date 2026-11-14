@@ -3,7 +3,8 @@
 'require dom';
 'require qmodem.telecom-sms as telecomSms';
 return L.Class.extend({
- open:function(section,onLogin,options){
+ open:function open(section,onLogin,options){
+  var smsOnly=!options || options.smsOnly!==false;
   var session='',authSession='',closed=false,pending=false,sent=false,hasShared=false,verifying=false,observer=null;
   var phone=E('input',{type:'tel',maxlength:11,'class':'cbi-input-text',autocomplete:'off'});
   var password=E('input',{type:'password',maxlength:6,'class':'cbi-input-text',autocomplete:'off'});
@@ -23,7 +24,7 @@ return L.Class.extend({
    var geometry=null,start=null,end=null,track=[];
    var background=E('img',{src:image(challenge.background_img),alt:_('电信验证背景'),style:'display:block;width:100%;'});
    var piece=E('img',{src:image(challenge.slider_img),alt:_('手动拖动的拼图'),style:'position:absolute;top:0;pointer-events:none;'});
-   var range=E('input',{type:'range',min:0,max:1000,value:0,step:1,disabled:true,style:'width:100%;','aria-label':_('手动拖动拼图滑块')});
+   var range=E('input',{type:'range',min:0,max:1000,value:0,step:1,disabled:true,style:'display:block;width:100%;box-sizing:border-box;margin:12px 0 0;','aria-label':_('手动拖动拼图滑块')});
    var hint=E('div',{'class':'cbi-value-description'},_('请手动拖动滑块，将拼图对齐缺口，再点击“验证并发送”。'));
    function move(){if(!geometry)return;var scale=background.clientWidth/background.naturalWidth;piece.style.width=(piece.naturalWidth*scale)+'px';piece.style.left=(Number(range.value)/1000*geometry.travel-geometry.left)*scale+'px';}
    range.addEventListener('pointerdown',function(){start=Date.now();track=[];end=null;});
@@ -34,11 +35,11 @@ return L.Class.extend({
     pending=true;submit.disabled=true;range.disabled=true;
     var snapshot=null;
     sms.snapshot().then(function(value){snapshot=value;if(closed)throw new Error(_('登录已关闭'));return request({action:'send_sms',session_id:authSession,distance:Number(range.value)/1000,track:track.join('%'),start_time:start,end_time:end});}).then(function(){
-     if(closed)return;sent=true;code.disabled=false;bind.disabled=false;dom.content(status,_('短信已发送，请输入验证码并点击“授权设备”。'));restore();sms.start(snapshot);
+     if(closed)return;sent=true;code.disabled=false;bind.disabled=false;dom.content(status,smsOnly ? _('短信已发送，请输入验证码并登录。') : _('短信已发送，请输入验证码并点击“授权设备”。'));restore();sms.start(snapshot);
     }).catch(function(error){if(!closed)dom.content(hint,error.message+_('；请取消后重新获取验证。'));}).finally(function(){pending=false;});
    }},_('验证并发送'));
    var cancel=E('button',{type:'button','class':'cbi-button',click:function(){if(pending)return;dropAuth();restore();}},_('取消验证'));
-   verifying=true;ui.showModal(_('电信官方滑块验证'),[E('div',{style:'position:relative;overflow:hidden;max-width:360px;margin:auto;'},[background,piece]),range,hint,E('div',{'class':'right'},[cancel,submit])]);
+   verifying=true;ui.showModal(_('电信官方滑块验证'),[E('div',{style:'width:100%;max-width:360px;margin:auto;'},[E('div',{style:'position:relative;overflow:hidden;'},[background,piece]),range]),hint,E('div',{'class':'right'},[cancel,submit])]);
    Promise.all([background.decode(),piece.decode()]).then(function(){
     if(closed)return;
     // Only inspect transparent margins; the user locates and solves the puzzle.
@@ -52,12 +53,12 @@ return L.Class.extend({
   var authorize=E('button',{type:'button','class':'cbi-button',click:function(){
    if(pending || closed)return;
    if(!/^1[0-9]{10}$/.test(phone.value.trim())){dom.content(status,_('请输入 11 位电信手机号'));return;}
-   dropAuth();pending=true;authorize.disabled=true;phone.disabled=true;device.value='';dom.content(status,_('正在获取设备授权验证…'));
+   dropAuth();if(session){request({action:'logout',session_id:session}).catch(function(){});session='';}pending=true;authorize.disabled=true;phone.disabled=true;device.value='';dom.content(status,_('正在获取官方验证…'));
    request({action:'challenge',phone:phone.value.trim()}).then(function(data){
     if(closed){request({action:'logout',session_id:data.session_id}).catch(function(){});return;}
     authSession=data.session_id;challengeDialog(data.challenge);
    }).catch(function(error){if(!closed){dropAuth();dom.content(status,error.message);}}).finally(function(){pending=false;authorize.disabled=false;});
-  }},_('短信授权 DeviceId'));
+  }},smsOnly ? _('获取验证码') : _('短信授权 DeviceId'));
   var bind=E('button',{type:'button','class':'cbi-button cbi-button-action',disabled:true,click:function(){
    if(pending || closed || !sent)return;
    if(!/^[0-9]{6}$/.test(code.value)){dom.content(status,_('请输入 6 位短信验证码'));return;}
@@ -67,11 +68,20 @@ return L.Class.extend({
   }},_('授权设备'));
   function field(label,input){return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title'},label),E('div',{'class':'cbi-value-field'},input)]);}
   function request(data){return fetch(L.url('admin/modem/unicom_api/telecom_test')+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({config_section:section},data))}).then(function(response){return response.json().then(function(data){if(!response.ok || !data.ok)throw new Error(data.msg || _('电信查询失败'));return data;});});}
-  function query(){return request({action:'shared_usage',refresh:true}).then(function(data){if(!closed){hasShared=true;leave();if(onLogin)onLogin(data);}});}
-  function finish(){pending=false;if(!closed){login.disabled=false;refresh.disabled=!hasShared;}}
+  function query(){return request(smsOnly && session ? {action:'usage',session_id:session} : {action:'shared_usage',refresh:true}).then(function(data){if(!closed){hasShared=true;leave();if(onLogin)onLogin(data);}});}
+  function finish(){pending=false;if(!closed){login.disabled=false;refresh.disabled=!(hasShared || smsOnly && session);}}
   function failure(error){if(!closed)dom.content(status,error.message);}
   var login=E('button',{type:'button','class':'cbi-button cbi-button-action',click:function(){
-   if(pending || closed)return;pending=true;login.disabled=true;refresh.disabled=true;dom.content(status,_('正在登录电信…'));
+   if(pending || closed)return;
+   if(smsOnly){
+    if(!session && (!sent || !/^[0-9]{6}$/.test(code.value))){dom.content(status,_('请先获取短信验证码，再输入 6 位验证码登录。'));return;}
+    pending=true;login.disabled=true;refresh.disabled=true;
+    if(session){query().catch(failure).finally(finish);return;}
+    dom.content(status,_('正在使用短信验证码登录…'));
+    var smsPayload={action:'sms_login',session_id:authSession,code:code.value,shared:true};code.value='';
+    request(smsPayload).then(function(data){if(closed){request({action:'logout',session_id:data.session_id}).catch(function(){});return;}session=data.session_id;authSession='';sent=false;sms.reset();dom.content(status,_('短信登录成功，正在查询流量…'));return query();}).catch(failure).finally(function(){smsPayload.code='';finish();});return;
+   }
+   pending=true;login.disabled=true;refresh.disabled=true;dom.content(status,_('正在登录电信…'));
    var old=session;session='';if(old)request({action:'logout',session_id:old}).catch(function(){});
    var promise=request({action:'login',shared:true,phone:phone.value.trim(),password:password.value,device_id:device.value.trim()});password.value='';
    promise.then(function(data){if(closed){request({action:'logout',session_id:data.session_id});return;}session=data.session_id;dom.content(status,_('登录成功，正在查询…'));return query();}).catch(failure).finally(finish);
@@ -81,13 +91,15 @@ return L.Class.extend({
   function leave(){cleanup();ui.hideModal();}
   window.addEventListener('hashchange',leave);window.addEventListener('pagehide',cleanup);
   var close=E('button',{type:'button','class':'cbi-button',click:leave},_('关闭'));
+  var switchMode=E('button',{type:'button','class':'cbi-button',click:function(){if(pending)return;leave();open(section,onLogin,{forceLogin:true,smsOnly:!smsOnly});}},smsOnly ? _('改用服务密码登录') : _('改用短信验证码登录'));
   var root=E('div',{},[
-   E('p',{},_('先点击“短信授权 DeviceId”，手动完成官方验证和短信授权，再用服务密码登录查询。密码不保存；查询会话保存在路由器，供已登录 LuCI 的浏览器共享，登出时清除。')),
-   field(_('电信手机号'),phone),field(_('设备授权'),authorize),field(_('短信验证码'),[code,bind]),field(_('短信授权 DeviceId'),device),field(_('服务密码'),password),
+   E('p',{},smsOnly ? _('完成滑块验证并获取短信验证码后登录，无需服务密码。') : _('先点击“短信授权 DeviceId”，手动完成官方验证和短信授权，再用服务密码登录查询。密码不保存；查询会话保存在路由器，供已登录 LuCI 的浏览器共享，登出时清除。')),
+   field(_('电信手机号'),phone),field(smsOnly ? _('官方验证') : _('设备授权'),authorize),field(_('短信验证码'),smsOnly ? code : [code,bind])
+  ].concat(smsOnly ? [] : [field(_('短信授权 DeviceId'),device),field(_('服务密码'),password)]).concat([
    sms.node,
-   E('div',{style:'display:flex;gap:8px;margin:12px 0;'},[login,refresh]),status,
+   E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;'},[login,refresh,switchMode]),status,
    E('div',{'class':'right'},close)
-  ]);restore();
+  ]));restore();
   phone.addEventListener('input',function(){if(!pending){dropAuth();device.value='';}});
   if(window.MutationObserver){observer=new window.MutationObserver(function(){if(!closed && (!document.body.classList.contains('modal-overlay-active') || (!root.isConnected && !verifying)))cleanup();});observer.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});}
   if(!options || !options.forceLogin){

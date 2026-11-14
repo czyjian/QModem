@@ -12,7 +12,7 @@ export function registerMobile(app,{limiter,store=createMobileStore(),upstream=c
   for(const [id,s] of sessions)if(s.expires<=now())sessions.delete(id);
   if(body.action==='logout'){store.remove(sim);cache.delete(key);for(const [id,s] of sessions)if(s.key===key)sessions.delete(id);return {ok:true};}
   if(body.action==='cancel'){const s=sessions.get(body.session_id);if(s?.key===key)sessions.delete(body.session_id);return {ok:true};}
-  if(body.action==='status')return {ok:true,logged_in:!!store.get(sim)};
+  if(body.action==='status'){const saved=store.get(sim);return {ok:true,logged_in:!!saved,session_revision:saved?.updatedAt || 0};}
   if(pending.has(key))return reply.code(409).send({ok:false,msg:'移动请求正在处理中'});
   if(body.action==='usage'){
    const saved=store.get(sim);if(!saved)return failure('TOKEN_EXPIRED');const previous=cache.get(key);

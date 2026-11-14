@@ -13,7 +13,7 @@ const api=new Function('L','E','_','ui','dom','telecomSms','window','fetch',fs.r
  async(url,options)=>{const body=JSON.parse(options.body);requests.push(body);return {ok:true,json:async()=>body.action==='shared_status' ? {ok:true,logged_in:false} : body.action==='login' ? {ok:true,session_id:'fixture'} : {ok:true,total_mb:2048,remaining_mb:1024}};}
 );
 (async()=>{
- api.open('2_1',()=>callback++);await flush();
+ api.open('2_1',()=>callback++,{smsOnly:false});await flush();
  assert.equal(modal.title,'中国电信登录');
  assert(nodes(modal.children).some(n=>n===sms.node));
  const login=nodes(modal.children).find(n=>n.tag==='button' && n.children==='登录');
@@ -22,5 +22,10 @@ const api=new Function('L','E','_','ui','dom','telecomSms','window','fetch',fs.r
  assert(requests.some(r=>r.action==='login' && r.shared===true));
  assert(requests.some(r=>r.action==='shared_usage'));
  assert(!requests.some(r=>r.action==='shared_logout'),'closing dialog must retain shared login');
+ api.open('2_1',()=>callback++,{forceLogin:true});await flush();
+ assert(!nodes(modal.children).some(n=>n.tag==='input' && n.attrs.type==='password'));
+ assert(nodes(modal.children).some(n=>n.tag==='button' && n.children==='获取验证码'));
+ nodes(modal.children).find(n=>n.tag==='button' && n.children==='登录').attrs.click();await flush();
+ assert(!requests.some(r=>r.action==='sms_login'),'must obtain and manually enter an SMS code first');
  console.log('PASS: telecom login includes SMS monitor, closes on success and refreshes parent without logging out shared session');
 })().catch(e=>{console.error(e);process.exitCode=1;});

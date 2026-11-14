@@ -16,6 +16,7 @@ export function createTelecomStore(path=''){
    if(!key || typeof credentials.token!=='string' || !credentials.token || credentials.token.length>4096 || !/^1\d{10}$/.test(credentials.phonenum))throw new Error('电信会话无效');
    const info={};
    for(const field of ['token','phonenum','provinceCode','cityCode'])if(typeof credentials[field]==='string')info[field]=credentials[field];
+   if(credentials.auth_profile==='sms_v2')info.auth_profile='sms_v2';
    const entry={credentials:info,updatedAt:Date.now(),mobile:info.phonenum.slice(0,3)+'****'+info.phonenum.slice(-4)};
    const next={...entries,[key]:entry};
    const keys=Object.keys(next).sort((a,b)=>next[b].updatedAt-next[a].updatedAt).slice(0,16);

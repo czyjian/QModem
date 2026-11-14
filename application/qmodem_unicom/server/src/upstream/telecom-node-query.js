@@ -10,7 +10,8 @@ export function queryBody(credentials,kind,date=new Date()){
   const timestamp=date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate())+pad(date.getHours())+pad(date.getMinutes())+'00';
   const account=encodeAccount(credentials.phonenum);
   const content=kind==='packages' ? {fieldData:{queryFlag:'0',accessAuth:'1',account},attach:'test'} : {fieldData:{provinceCode:credentials.provinceCode || '600101',cityCode:credentials.cityCode || '8441900',shopId:'20002',isChinatelecom:'0',account}};
-  return {content,headerInfos:{code:kind==='packages' ? 'userFluxPackage' : 'qryImportantData',clientType:CLIENT,timestamp,shopId:'20002',source:'110003',sourcePassword:'Sid98s',userLoginName:account,token:credentials.token}};
+  const profile=credentials.auth_profile==='sms_v2' ? {clientType:'#13.4.0#channel50#iPhone 11 Pro Max#',shopId:'20004',source:'120002',sourcePassword:'TiqmIZ'} : {clientType:CLIENT,shopId:'20002',source:'110003',sourcePassword:'Sid98s'};
+  return {content,headerInfos:{code:kind==='packages' ? 'userFluxPackage' : 'qryImportantData',...profile,timestamp,userLoginName:account,token:credentials.token}};
 }
 const ENDPOINTS={usage:['appfuwu.189.cn',9021,'/query/qryImportantData'],packages:['appfuwu.189.cn',9021,'/query/userFluxPackage'],password:['appgologin.189.cn',9031,'/login/client/userLoginNormal'],getLoginRandomCode:['appgologinsz.189.cn',443,'/login/client/getLoginRandomCode'],getSliderVerificationPicture:['appgologinsz.189.cn',443,'/login/client/getSliderVerificationPicture'],verificationSliderPicture:['appgologinsz.189.cn',443,'/login/client/verificationSliderPicture'],userLoginNormal:['appgologinsz.189.cn',443,'/login/client/userLoginNormal']};
 export function postTelecom(kind,body,{userAgent='python-requests/2.32.5',auth=false,timeoutMs=18000}={}){
@@ -32,7 +33,7 @@ export function postTelecom(kind,body,{userAgent='python-requests/2.32.5',auth=f
           if(response.headers['content-encoding']==='gzip')buffer=gunzipSync(buffer,{maxOutputLength:2097152});
           const raw=JSON.parse(buffer.toString('utf8')),data=raw?.responseData;
           if(data?.resultCode!=='0000'){
-            const code=String(data?.resultCode || 'INVALID_RESPONSE');
+            const code=String(data?.resultCode || (raw.headerInfos?.code!=='0000' && raw.headerInfos?.code) || 'INVALID_RESPONSE');
             const result={ok:false,code:/^[A-Za-z0-9_]{1,32}$/.test(code) ? code : 'INVALID_RESPONSE'};
             // Authentication sometimes returns a key/challenge with a nonzero
             // code. These fields stay internal; never forward raw messages.
@@ -48,7 +49,7 @@ export function postTelecom(kind,body,{userAgent='python-requests/2.32.5',auth=f
     req.end(payload);
   });
 }
-export const postQuery=(kind,body)=>postTelecom(kind,body);
+export const postQuery=(kind,body)=>postTelecom(kind,body,body?.headerInfos?.source==='120002' ? {userAgent:'P216010901'} : {});
 function number(value){return (typeof value==='number' || typeof value==='string' && value.trim()!=='') && Number.isFinite(Number(value)) && Number(value)>=0 ? Number(value) : null;}
 export function flowMb(value){
   const m=String(value ?? '').match(/^\s*(\d+(?:\.\d+)?)\s*(KB|MB|GB|TB|B)\s*$/i);
