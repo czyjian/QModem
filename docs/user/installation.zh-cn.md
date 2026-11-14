@@ -7,8 +7,9 @@ QModem 是一个 OpenWrt Feed，不是与任意固件通用的单个安装包。
 新部署推荐：
 
 ```text
-qmodem
 luci-app-qmodem-next
+luci-app-qmodem-traffic
+luci-i18n-qmodem-next-zh-cn
 ```
 
 `qmodem` 提供后端和运行服务，`luci-app-qmodem-next` 提供纯 JavaScript LuCI 页面。旧版 `luci-app-qmodem` 及其短信、MWAN、TTL 插件仍在仓库中，但不应与 Next 主界面同时安装。选择前先确认所需功能是否出现在对应界面中。
@@ -18,7 +19,7 @@ luci-app-qmodem-next
 在 `feeds.conf.default` 添加：
 
 ```text
-src-git qmodem https://github.com/FUjr/QModem.git;main
+src-git qmodem https://github.com/czyjian/QModem.git;main
 ```
 
 更新并安装 Feed 索引：
@@ -29,7 +30,11 @@ src-git qmodem https://github.com/FUjr/QModem.git;main
 make menuconfig
 ```
 
-在 `LuCI -> Applications` 选择主界面。根据目标硬件和模组接口选择 QMI、MBIM、MHI 或厂商驱动；不要仅因为菜单中存在某个驱动就全部启用。
+上面三个包均选择 `y` 编入固件，后端 `qmodem`、运营商查询服务、Node.js 和其他依赖会自动选择。不要同时选择旧版 `luci-app-qmodem`。
+
+目标 feeds 需提供 Node.js >=22.23.2 和 ucode 版 LuCI；当前验证目标为 x86_64 ImmortalWrt 25.12。首次开机自动启动采样和运营商查询服务，无需运行 npm/pip 或手工补文件；账号、流量记录及设备设置不会预置，运营商登录仍需用户完成短信和安全验证。详见[流量插件说明](../../luci/luci-app-qmodem-traffic/README.md)。
+
+根据目标硬件和模组接口选择 QMI、MBIM、MHI 或厂商驱动；不要仅因为菜单中存在某个驱动就全部启用。
 
 构建完整固件：
 

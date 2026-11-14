@@ -47,7 +47,7 @@ USB / PCIe 蜂窝模组
 在 OpenWrt 源码树的 `feeds.conf.default` 中添加：
 
 ```text
-src-git qmodem https://github.com/FUjr/QModem.git;main
+src-git qmodem https://github.com/czyjian/QModem.git;main
 ```
 
 然后更新 Feed：
@@ -58,7 +58,7 @@ src-git qmodem https://github.com/FUjr/QModem.git;main
 make menuconfig
 ```
 
-在 `LuCI -> Applications` 中选择 `luci-app-qmodem-next`。目标设备仍需具备与模组、拨号协议和当前内核匹配的 USB、串口、QMI、MBIM 或 MHI 驱动。
+选择 `luci-app-qmodem-next`、`luci-app-qmodem-traffic` 和 `luci-i18n-qmodem-next-zh-cn`，均设为 `y` 编入固件。流量插件会自动选择运营商登录、查询后端及运行依赖，刷机后无需手工复制文件或安装 npm、Python 依赖。账号、流量历史和设备设置在路由器上重新生成。详见[流量插件编译要求](luci/luci-app-qmodem-traffic/README.md)。目标设备仍需具备与模组、拨号协议和当前内核匹配的 USB、串口、QMI、MBIM 或 MHI 驱动。
 
 完整步骤见[安装指南](docs/user/installation.zh-cn.md)和[首次配置](docs/user/first-setup.zh-cn.md)。
 

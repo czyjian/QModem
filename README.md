@@ -46,7 +46,7 @@ The core package is `qmodem`. The pure-JavaScript `luci-app-qmodem-next` is the 
 Add the feed to `feeds.conf.default` in an OpenWrt source tree:
 
 ```text
-src-git qmodem https://github.com/FUjr/QModem.git;main
+src-git qmodem https://github.com/czyjian/QModem.git;main
 ```
 
 Then run:
@@ -57,7 +57,7 @@ Then run:
 make menuconfig
 ```
 
-Select `luci-app-qmodem-next` under `LuCI -> Applications`. The target firmware must also contain USB, serial, QMI, MBIM, or MHI drivers matching the modem, protocol, kernel, and hardware topology.
+Select `luci-app-qmodem-next`, `luci-app-qmodem-traffic`, and `luci-i18n-qmodem-next-zh-cn` as built-in (`y`) packages. The traffic plugin includes carrier login/query services and their runtime dependencies; no post-flash npm or Python installation is required. Accounts, traffic history, and device-specific settings are created on the router. See the [traffic plugin build requirements](luci/luci-app-qmodem-traffic/README.md). The target firmware must also contain USB, serial, QMI, MBIM, or MHI drivers matching the modem, protocol, kernel, and hardware topology.
 
 The detailed English manuals are currently maintained in the existing [user guide](docs/user-guide.md) and [developer guide](docs/developer-guide.md). The new structured documentation is being introduced in Chinese first:
 
