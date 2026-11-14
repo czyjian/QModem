@@ -15,3 +15,5 @@ define Build/Prepare/luci-app-qmodem-traffic
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
+
+# call BuildPackage - OpenWrt buildroot signature
