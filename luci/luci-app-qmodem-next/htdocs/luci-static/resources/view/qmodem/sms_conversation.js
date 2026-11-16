@@ -92,7 +92,7 @@ return view.extend({
 				'style': 'margin-right: 10px;',
 				'click': function(ev) {
 					ev.preventDefault();
-					window.location.href = L.url('admin/modem/qmodem/sms');
+					window.location.href = L.url('admin/modem/sms');
 				}
 			}, '← ' + _('Back')),
 			E('h2', { 'style': 'display: inline-block; margin: 0;' }, 

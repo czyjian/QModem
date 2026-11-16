@@ -1,5 +1,5 @@
 {
-  "admin/modem/qmodem/traffic": {
+  "admin/modem/traffic": {
     "title": "Traffic Monitor",
     "order": 4,
     "action": {
@@ -11,5 +11,12 @@
         "luci-app-qmodem-next"
       ]
     }
+  },
+  "admin/modem/qmodem/traffic": {
+    "action": {
+      "type": "alias",
+      "path": "admin/modem/traffic"
+    },
+    "firstchild_ineligible": true
   }
 }
