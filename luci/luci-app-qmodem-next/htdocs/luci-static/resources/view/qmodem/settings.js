@@ -433,7 +433,7 @@ return view.extend({
 	// ===========================================
 	// Modem Slot Configuration
 	// ===========================================
-	s = m.section(sectionForm.GridSection, 'modem-slot', _('Modem Slot Configuration'));
+	s = m.section(sectionForm.GridSection, 'modem-slot', _('Modem Slot'));
 	s.description = _('Configure physical slots for modem installation');
 	s.anonymous = false;
 	s.addremove = true;
