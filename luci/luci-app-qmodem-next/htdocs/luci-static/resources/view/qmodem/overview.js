@@ -12,7 +12,7 @@ document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
 	// versioned like the view scripts, so a package upgrade never serves stale CSS
-	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=traffic-inline-3'
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=traffic-inline-12'
 }));
 
 // Check if cbi-progressbar class exists
@@ -270,6 +270,10 @@ return view.extend({
 	// Attach collapse and drag handlers to a section
 	attachSectionHandlers: function(fieldset, className, modemId, infoContainer) {
 		var self = this;
+		fieldset.setAttribute('data-section', className);
+		fieldset.setAttribute('data-modem-id', modemId);
+		if (fieldset._qmodemHandlersAttached) return;
+		fieldset._qmodemHandlersAttached = true;
 		
 		// Collapse/expand handler
 		var legend = fieldset.querySelector('legend');
@@ -283,7 +287,7 @@ return view.extend({
 			
 			fieldset.classList.toggle('collapsed');
 			var isCollapsed = fieldset.classList.contains('collapsed');
-			self.saveCollapsedState(modemId, className, isCollapsed);
+			self.saveCollapsedState(fieldset.getAttribute('data-modem-id'), className, isCollapsed);
 		};
 		
 		if (legend) legend.addEventListener('click', toggleCollapse);
@@ -342,16 +346,16 @@ return view.extend({
 				// Extract className from legend or title
 				var legend = section.querySelector('legend');
 				var title = section.querySelector('.panel-title');
-				return (legend && legend.textContent) || (title && title.textContent) || '';
+				return section.getAttribute('data-section') || (legend && legend.textContent) || (title && title.textContent) || '';
 			}).filter(function(name) {
 				return name !== '';
 			});
 			
-			self.saveSectionOrder(modemId, newOrder);
+			self.saveSectionOrder(fieldset.getAttribute('data-modem-id'), newOrder);
 		});
 	},
 
-	updateModemInfo: function(modemId, tables_map, infoContainer, updateTimeElement, copyrightElement, loadingElement) {
+	updateModemInfo: function(modemId, tables_map, infoContainer, updateTimeElement, copyrightElement, loadingElement, trafficSection) {
 		var self = this;
 		
 		// Show loading state
@@ -398,6 +402,7 @@ return view.extend({
 
 			// Group by class
 			var grouped = {};
+			if (trafficSection) grouped['Traffic Monitoring'] = [];
 			all_info.forEach(function(entry) {
 				if (entry.type === 'warning_message') {
 					// Handle warning messages
@@ -405,6 +410,7 @@ return view.extend({
 				}
 				
 				var className = entry['class'] || 'General';
+				if (className === 'Cell Information') className = 'Network Information';
 				if (!grouped[className]) {
 					grouped[className] = [];
 				}
@@ -430,7 +436,10 @@ return view.extend({
 			
 			// First add classes in saved order
 			sectionOrder.forEach(function(className) {
-				if (grouped[className]) {
+				if (className === 'Cell Information' || className === _('Cell Information')) className = 'Network Information';
+				if (className === '流量监控') className = 'Traffic Monitoring';
+				if (!grouped[className]) className = Object.keys(grouped).find(function(key) { return _(key) === className; }) || className;
+				if (grouped[className] && orderedClasses.indexOf(className) === -1) {
 					orderedClasses.push(className);
 				}
 			});
@@ -445,12 +454,14 @@ return view.extend({
 			// Update or create tables in order
 			orderedClasses.forEach(function(className) {
 				if (!tables_map[className]) {
-					tables_map[className] = new LuciTable();
-					infoContainer.appendChild(tables_map[className].fieldset);
+					tables_map[className] = className === 'Traffic Monitoring' ? { fieldset: trafficSection } : new LuciTable();
 					self.attachSectionHandlers(tables_map[className].fieldset, className, modemId, infoContainer);
 				}
-				tables_map[className].setTitle(className);
-				tables_map[className].setData(grouped[className]);
+				if (!infoContainer.querySelector('.dragging')) infoContainer.appendChild(tables_map[className].fieldset);
+				if (className !== 'Traffic Monitoring') {
+					tables_map[className].setTitle(className);
+					tables_map[className].setData(grouped[className]);
+				}
 				
 				// Restore collapsed state
 				var collapsedState = self.getCollapsedState(modemId, className);
@@ -461,8 +472,9 @@ return view.extend({
 				}
 			});
 			
-			// Update refresh time
-			if (updateTimeElement) {
+			// Keep the refresh time inside the merged network section.
+			if (updateTimeElement && tables_map['Network Information']) {
+				tables_map['Network Information'].fieldset.appendChild(updateTimeElement);
 				var timeStr = traffic ? traffic.formatDate(Date.now()/1000) : new Date().toLocaleString();
 				updateTimeElement.textContent = _('Last update') + ': ' + timeStr;
 			}
@@ -519,7 +531,8 @@ return view.extend({
 		container.appendChild(copyrightDiv);
 		
 		// Create update time display
-		var updateTimeSection = E('fieldset', { 'class': 'cbi-section' });
+		var updateTimeSection = E('fieldset', { 'class': 'cbi-section collapsible draggable', 'draggable': 'true' });
+		if (traffic) updateTimeSection.appendChild(E('legend', { 'class': 'panel-title' }, _('流量监控')));
 		var updateStatusRow = E('div', {
 			'class': 'qmodem-overview-status'
 		});
@@ -532,32 +545,50 @@ return view.extend({
 			'id': 'update_time_display'
 		}, _('Last update') + ': -');
 		var trafficInline = E('div', { 'class': 'qmodem-overview-traffic' });
-		var trafficWarning = E('div');
-		updateTimeSection.appendChild(loadingDiv);
+		var trafficWarning = E('div', { 'class': 'qmodem-overview-warning' });
+		container.appendChild(loadingDiv);
 		updateStatusRow.appendChild(trafficInline);
-		updateStatusRow.appendChild(updateTimeDiv);
 		updateTimeSection.appendChild(updateStatusRow);
 		updateTimeSection.appendChild(trafficWarning);
-		container.appendChild(updateTimeSection);
+		var trafficRows = [], trafficNumbers = [], trafficModem = null;
+		function resetTrafficRows() { trafficRows = []; trafficNumbers = []; trafficModem = null; }
 		function updateTraffic() {
             if(!traffic){dom.content(trafficInline,[]);dom.content(trafficWarning,[]);return Promise.resolve();}
 			var id = select.value;
 			return traffic.current(id).then(function(data) {
 				if (select.value !== id) return;
 				dom.content(trafficWarning, []);
-				if (!data.config || !data.config.enabled) { dom.content(trafficInline, []); return; }
+				if (!data.config || !data.config.enabled) { resetTrafficRows(); dom.content(trafficInline, []); return; }
 				if (!data.now || data.stale) {
+					resetTrafficRows();
 					dom.content(trafficInline, data.stale ? _('Traffic samples are stale. Check the monitoring service.') : _('Waiting for the first traffic sample...'));
 					return;
 				}
 				var today = data.today || {}, todayRx = today.rx || 0, todayTx = today.tx || 0;
-				dom.content(trafficInline, [
-					E('span', {}, _('Current download / upload') + ': ' + (data.rx_rate * 8 / 1000000).toFixed(2) + ' / ' + (data.tx_rate * 8 / 1000000).toFixed(2) + ' Mbps'),
-					E('span', {}, _('今日已用流量') + ': ' + traffic.bytes(todayRx + todayTx) + ' (' + _('Download') + ': ' + traffic.bytes(todayRx) + ' / ' + _('Upload') + ': ' + traffic.bytes(todayTx) + ')')
-				]);
+				var threshold = data.config.threshold_bytes != null ? Number(data.config.threshold_bytes) : Number(data.config.threshold_gb || 0) * 1e9;
+				var remaining = threshold > 0 ? traffic.bytes(Math.max(0, threshold - traffic.cycleTotal(data))) : _('Not set');
+				var values = [(data.rx_rate * 8 / 1000000).toFixed(2), (data.tx_rate * 8 / 1000000).toFixed(2), traffic.bytes(todayRx + todayTx), traffic.bytes(todayRx), traffic.bytes(todayTx), remaining];
+				if (!trafficRows.length || trafficModem !== id) {
+					trafficNumbers = values.map(function(value) { return E('span', { 'class': 'qmodem-overview-number' }, value); });
+					function row(label, content) {
+						return E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left', 'width': '33%' }, label),
+							E('td', { 'class': 'td' }, content)
+						]);
+					}
+					trafficRows = [
+						row(_('Current download / upload'), [trafficNumbers[0], ' / ', trafficNumbers[1], ' Mbps']),
+						row(_('今日已用流量'), [trafficNumbers[2], ' (', _('Download') + ': ', trafficNumbers[3], ' / ', _('Upload') + ': ', trafficNumbers[4], ')']),
+						row(_('本周期剩余流量'), [trafficNumbers[5]])
+					];
+					trafficModem = id;
+					dom.content(trafficInline, E('table', { 'class': 'table' }, [E('tbody', { 'style': 'width: 100%' }, trafficRows)]));
+				} else {
+					trafficNumbers.forEach(function(number, index) { number.textContent = values[index]; });
+				}
 				if (data.exceeded) dom.content(trafficWarning, E('div', { 'class': 'alert-message warning' }, _('Traffic usage has reached the configured threshold.') + ' ' + traffic.bytes(traffic.cycleTotal(data)) + ' / ' + data.config.threshold_gb + ' GB'));
 			}).catch(function() {
-				if (select.value === id) dom.content(trafficInline, _('Traffic monitoring service is unavailable.'));
+				if (select.value === id) { resetTrafficRows(); dom.content(trafficInline, _('Traffic monitoring service is unavailable.')); }
 			});
 		}
 		select.addEventListener('change', updateTraffic);
@@ -585,7 +616,7 @@ return view.extend({
 				tables_map = {};
 			}
 			
-			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv);
+			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv, traffic ? updateTimeSection : null);
 		};
 		
 		// Selector change handler
@@ -599,7 +630,7 @@ return view.extend({
 		// Start polling (every 10 seconds)
 		poll.add(function() {
 			var selectedModem = select.value;
-			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv);
+			self.updateModemInfo(selectedModem, tables_map, infoContainer, updateTimeDiv, copyrightDiv, loadingDiv, traffic ? updateTimeSection : null);
 		}, 10);
 		
 		return container;
