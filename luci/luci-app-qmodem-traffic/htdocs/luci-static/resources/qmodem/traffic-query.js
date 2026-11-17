@@ -42,7 +42,7 @@ return L.Class.extend({
 				E('td',{'class':'td left',width:'33%'},_('当前SIM卡运营商')),carrierValue
 			])])])
 		]);
-		var status=E('div',{'class':'cbi-value-description'}), summary=E('div'), login=E('button',{type:'button','class':'cbi-button',click:function(){
+		var status=E('div',{'class':'cbi-value-description'}), summary=E('fieldset',{'class':'cbi-section'}), login=E('button',{type:'button','class':'cbi-button',click:function(){
 			if(loginDialog)loginDialog.close();
 			loginDialog=(currentCarrier==='mobile' ? mobileLogin : currentCarrier==='telecom' ? telecomTest : carrierLogin).open(selector.value,function(){loginDialog=null;update(true);});
 		}},_('登录'));

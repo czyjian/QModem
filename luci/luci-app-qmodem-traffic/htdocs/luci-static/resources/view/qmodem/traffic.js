@@ -10,7 +10,7 @@
 
 document.head.appendChild(E('link', {
 	'rel':'stylesheet',
-	'href':L.resource('qmodem/traffic.css') + (L.env.resource_version ? '?v='+L.env.resource_version+'&' : '?') + 'layout=traffic-chart-4'
+	'href':L.resource('qmodem/traffic.css') + (L.env.resource_version ? '?v='+L.env.resource_version+'&' : '?') + 'layout=native-panels-5'
 }));
 
 return view.extend({
@@ -24,7 +24,7 @@ return view.extend({
 		var query = trafficQuery.create(selector), unitBase=1024;
 		var unitNote=E('span');
 		function quotaValue(s){return String(Number(((s.config.threshold_bytes!=null?s.config.threshold_bytes:s.config.threshold_gb*1e9)/Math.pow(unitBase,3)).toFixed(3)));}
-		var summary = E('div'), loginNotice=E('div'), live = E('div'), daily = E('div'), monthly = E('div'), state = {}, selected = '', thresholdLast = '', pending = false, chartUpdated = 0;
+		var summary = E('fieldset',{'class':'cbi-section'},[E('legend',{},_('Traffic Monitor'))]), loginNotice=E('div'), live = E('div',{'class':'cbi-section-node'}), daily = E('div',{'class':'cbi-section-node'}), monthly = E('div',{'class':'cbi-section-node'}), state = {}, selected = '', thresholdLast = '', pending = false, chartUpdated = 0;
 		var month = E('select', {'class':'cbi-input-select'});
 		for (var i=0; i<14; i++) {
 			var d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
@@ -76,7 +76,9 @@ return view.extend({
 				if (s.error) throw new Error(s.error);
 				s.carrier_name=sim.carrier==='unicom' ? _('中国联通') : sim.carrier==='mobile' ? _('中国移动') : sim.carrier==='telecom' ? _('中国电信') : _('未识别');
 				s.unit_base=unitBase;state=s;dom.content(unitNote,_('流量统一按 1024 进制显示，1 GB = 1,024 MB = 1,073,741,824 字节；流量阈值与手动校准使用相同口径。'));
-				dom.content(summary,traffic.summary(s));
+				var renderedSummary = traffic.summary(s);
+				var summaryContent = renderedSummary.tagName === 'DIV' ? Array.from(renderedSummary.childNodes) : [renderedSummary];
+				dom.content(summary,[E('legend',{},_('Traffic Monitor')),loginNotice].concat(summaryContent,[note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]));
 				if(selected !== id || (s.now || 0) - chartUpdated >= 10) { histories(); chartUpdated=s.now || 0; }
 				if(selected !== id) {
 					correction.value='';
@@ -140,7 +142,7 @@ return view.extend({
 		poll.add(query.update, 15);
 		poll.add(autoStatus,30);
 		var monitorPanel = E('div', {}, [
-			section(_('Traffic Monitor'),[loginNotice,summary,note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]),
+			summary,
 			section(_('Real-time speed'),[live,note(_('趋势图每 10 秒更新。'))]),
 			section(_('Daily traffic'),[row(_('Month'),month),daily,note(_('Daily history is retained for 400 days and is not deleted at billing resets.'))]),
 			section(_('Monthly traffic'),[monthly,note(_('Monthly history is retained for 24 months and is not deleted at billing resets.'))]),

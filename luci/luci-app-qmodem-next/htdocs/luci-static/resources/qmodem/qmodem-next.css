@@ -382,7 +382,7 @@
 
 /* Theme text size and label alignment */
 .cbi-map .cbi-section > .table:last-child,
-.qmodem-overview-traffic > .table:last-child {
+.qmodem-overview-traffic-table {
 	margin-bottom: 0;
 }
 

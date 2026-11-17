@@ -12,7 +12,7 @@ document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
 	// versioned like the view scripts, so a package upgrade never serves stale CSS
-	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=theme-traffic-13'
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=native-panels-14'
 }));
 
 // Check if cbi-progressbar class exists
@@ -541,9 +541,6 @@ return view.extend({
 		// Create update time display
 		var updateTimeSection = E('fieldset', { 'class': 'cbi-section collapsible draggable', 'draggable': 'true' });
 		if (traffic) updateTimeSection.appendChild(E('legend', { 'class': 'panel-title' }, _('流量监控')));
-		var updateStatusRow = E('div', {
-			'class': 'qmodem-overview-status'
-		});
 		var loadingDiv = E('div', {
 			'class': 'spinning',
 			'style': 'display: none; padding: 5px;'
@@ -555,11 +552,13 @@ return view.extend({
 		var trafficInline = E('div', { 'class': 'qmodem-overview-traffic' });
 		var trafficWarning = E('div', { 'class': 'qmodem-overview-warning' });
 		container.appendChild(loadingDiv);
-		updateStatusRow.appendChild(trafficInline);
-		updateTimeSection.appendChild(updateStatusRow);
+		updateTimeSection.appendChild(trafficInline);
 		updateTimeSection.appendChild(trafficWarning);
-		var trafficRows = [], trafficNumbers = [], trafficModem = null;
-		function resetTrafficRows() { trafficRows = []; trafficNumbers = []; trafficModem = null; }
+		var trafficRows = [], trafficNumbers = [], trafficModem = null, trafficTable = null;
+		function resetTrafficRows() {
+			if (trafficTable) trafficTable.remove();
+			trafficTable = null; trafficRows = []; trafficNumbers = []; trafficModem = null;
+		}
 		function updateTraffic() {
             if(!traffic){dom.content(trafficInline,[]);dom.content(trafficWarning,[]);return Promise.resolve();}
 			var id = select.value;
@@ -577,6 +576,7 @@ return view.extend({
 				var remaining = threshold > 0 ? traffic.bytes(Math.max(0, threshold - traffic.cycleTotal(data))) : _('Not set');
 				var values = [(data.rx_rate * 8 / 1000000).toFixed(2), (data.tx_rate * 8 / 1000000).toFixed(2), traffic.bytes(todayRx + todayTx), traffic.bytes(todayRx), traffic.bytes(todayTx), remaining];
 				if (!trafficRows.length || trafficModem !== id) {
+					resetTrafficRows();
 					trafficNumbers = values.map(function(value) { return E('span', { 'class': 'qmodem-overview-number' }, value); });
 					function row(label, content) {
 						return E('tr', { 'class': 'tr' }, [
@@ -590,7 +590,9 @@ return view.extend({
 						row(_('本周期剩余流量'), [trafficNumbers[5]])
 					];
 					trafficModem = id;
-					dom.content(trafficInline, E('table', { 'class': 'table' }, [E('tbody', { 'style': 'width: 100%' }, trafficRows)]));
+					dom.content(trafficInline, []);
+					trafficTable = E('table', { 'class': 'table qmodem-overview-traffic-table' }, [E('tbody', { 'style': 'width: 100%' }, trafficRows)]);
+					updateTimeSection.insertBefore(trafficTable, trafficInline);
 				} else {
 					trafficNumbers.forEach(function(number, index) { number.textContent = values[index]; });
 				}
