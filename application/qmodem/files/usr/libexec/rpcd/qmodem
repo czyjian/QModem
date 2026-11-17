@@ -917,10 +917,15 @@ EOF
                 
                 case "$reboot_method" in
                     "hard")
-                        hard_reboot
+                        # AT replies / GPIO diagnostics must not precede the RPC JSON.
+                        hard_reboot >&2
                         ;;
                     "soft")
-                        soft_reboot
+                        soft_reboot >&2
+                        ;;
+                    *)
+                        echo "Unsupported reboot method" >&2
+                        exit 2
                         ;;
                 esac
                 
