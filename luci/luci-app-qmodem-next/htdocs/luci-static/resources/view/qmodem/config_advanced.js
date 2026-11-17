@@ -108,7 +108,7 @@ return view.extend({
 				handler: function() { return self.createRatPreferTab(modem); }
 			},
 			'IMEI': {
-				name: _('Set IMEI'),
+				name: _('IMEI Configuration'),
 				handler: function() { return self.createImeiTab(modem); }
 			},
 			'NeighborCell': {
@@ -211,7 +211,7 @@ return view.extend({
 	createDialModeTab: function(modem) {
 		var self = this;
 		var container = E('fieldset', {'class': 'cbi-section' });
-		var legend = E('legend', {}, _('Dial Mode Configuration'));
+		var legend = E('legend', {}, _('Dial Mode'));
 		container.appendChild(legend);
 
 		var description = E('div', { 'class': 'cbi-section-descr' }, 
@@ -352,7 +352,7 @@ return view.extend({
 	createRatPreferTab: function(modem) {
 		var self = this;
 		var container = E('fieldset', {'class': 'cbi-section' });
-		var legend = E('legend', {}, _('Network Preference Configuration'));
+		var legend = E('legend', {}, _('Network Preference'));
 		container.appendChild(legend);
 
 		var description = E('div', { 'class': 'cbi-section-descr' }, 
@@ -649,7 +649,7 @@ return view.extend({
 	createNeighborCellTab: function(modem) {
 		var self = this;
 		var container = E('fieldset', {'class': 'cbi-section' });
-		var legend = E('legend', {}, _('Neighbor Cell / Lock Cell'));
+		var legend = E('legend', {}, _('Neighbor Cell'));
 		container.appendChild(legend);
 
 		var description = E('div', { 'class': 'cbi-section-descr' }, 
@@ -1138,7 +1138,7 @@ return view.extend({
 	createLockBandTab: function(modem) {
 		var self = this;
 		var container = E('fieldset', {'class': 'cbi-section' });
-		var legend = E('legend', {}, _('Lock Band Configuration'));
+		var legend = E('legend', {}, _('Lock Band'));
 		container.appendChild(legend);
 
 		var description = E('div', { 'class': 'cbi-section-descr' }, 

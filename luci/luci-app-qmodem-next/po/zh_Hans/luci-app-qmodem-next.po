@@ -3053,3 +3053,9 @@ msgstr "正在识别 SIM 卡运营商…"
 
 msgid "Unable to refresh SIM information. The query page has been kept open; try again later."
 msgstr "SIM 卡信息刷新失败，已保留查询页面，请稍后重试。"
+
+msgid "Modem Probe"
+msgstr "模组探测"
+
+msgid "Cellular"
+msgstr "蜂窝"

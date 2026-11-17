@@ -95,7 +95,7 @@ return view.extend({
 		// ===========================================
 		// Modem Probe Settings
 		// ===========================================
-		s = m.section(sectionForm.NamedSection, 'main', 'main', _('Modem Probe Settings'));
+		s = m.section(sectionForm.NamedSection, 'main', 'main', _('Modem Probe'));
 
 		o = s.option(form.Flag, 'at_tool', _('Alternative AT Tools'));
 		o.description = _('If enabled, using alternative AT Tools');
@@ -346,6 +346,16 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'name', _('Model Name'));
+		o.textvalue = function(section_id) {
+			var name = uci.get('qmodem', section_id, 'name');
+			return name ? String(name).toUpperCase() : '-';
+		};
+		o.renderWidget = function() {
+			var node = form.Value.prototype.renderWidget.apply(this, arguments);
+			var input = node.matches('input') ? node : node.querySelector('input');
+			if (input) input.style.textTransform = 'uppercase';
+			return node;
+		};
 		o.placeholder = _('e.g.') + ' RG500Q';
 		o.rmempty = false;	o = s.option(form.Value, 'alias', _('Alias'));
 	o.placeholder = _('e.g.') + ' Modem1';

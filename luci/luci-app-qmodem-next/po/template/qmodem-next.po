@@ -3701,3 +3701,9 @@ msgstr ""
 
 msgid "The billing cycle resets at this local time on the monthly reset day. Historical records are preserved."
 msgstr ""
+
+msgid "Modem Probe"
+msgstr ""
+
+msgid "Cellular"
+msgstr ""

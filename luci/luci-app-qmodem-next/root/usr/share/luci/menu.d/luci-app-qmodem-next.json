@@ -1,6 +1,6 @@
 {
   "admin/modem": {
-    "title": "Mobile Network",
+    "title": "Cellular",
     "order": 25,
     "action": {
       "type": "firstchild"
@@ -27,7 +27,7 @@
     "firstchild_ineligible": true
   },
   "admin/modem/network_config": {
-    "title": "NetworkConfiguration",
+    "title": "Dial Configuration",
     "order": 2,
     "action": {
       "type": "view",
@@ -115,7 +115,7 @@
     "firstchild_ineligible": true
   },
   "admin/modem/settings": {
-    "title": "Plugin Settings",
+    "title": "Modem Probe",
     "order": 7,
     "action": {
       "type": "view",

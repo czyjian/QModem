@@ -12,7 +12,7 @@ document.head.appendChild(E('link', {
 	'rel': 'stylesheet',
 	'type': 'text/css',
 	// versioned like the view scripts, so a package upgrade never serves stale CSS
-	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=traffic-inline-12'
+	'href': L.resource('qmodem/qmodem-next.css') + (L.env.resource_version ? '?v=' + L.env.resource_version + '&' : '?') + 'layout=theme-traffic-13'
 }));
 
 // Check if cbi-progressbar class exists
@@ -219,8 +219,16 @@ return view.extend({
 	load: function() {
 		return Promise.all([
 			uci.load('qmodem'),
-            L.require('qmodem.traffic').then(function(module){traffic=module;}).catch(function(){traffic=null;})
-		]);
+			uci.load('luci').catch(function() { return null; })
+		]).then(function() {
+			var media = L.env.media || uci.get('luci', 'main', 'mediaurlbase') || '';
+			var shane = uci.get('luci', 'themes', 'Shadcn_Shane') || '/luci-static/shadcn-shane';
+			if (String(media).replace(/\/+$/, '') === String(shane).replace(/\/+$/, '')) {
+				traffic = null;
+				return;
+			}
+			return L.require('qmodem.traffic').then(function(module) { traffic = module; }).catch(function() { traffic = null; });
+		});
 	},
 
 	getModemList: function() {
