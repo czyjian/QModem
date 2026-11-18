@@ -300,6 +300,7 @@ return view.extend({
 			}
 
 			var modes = result.mode;
+			var disableModeBtn = result.disable_mode_btn === 1 || result.disable_mode_btn === '1' || result.disable_mode_btn === true;
 			var currentMode = null;
 			var availableModes = [];
 
@@ -328,7 +329,8 @@ return view.extend({
 					'name': 'mode_' + modem.id,
 					'value': mode,
 					'id': 'mode_' + modem.id + '_' + mode,
-					'checked': mode === currentMode ? 'checked' : null
+					'checked': mode === currentMode ? 'checked' : null,
+					'disabled': disableModeBtn ? 'disabled' : null
 				});
 				var label = E('label', {
 					'for': 'mode_' + modem.id + '_' + mode
@@ -340,7 +342,7 @@ return view.extend({
 			});
 
 			dom.content(modeSelectionField, radioContainer);
-			submitButton.disabled = false;
+			submitButton.disabled = disableModeBtn;
 
 		}).catch(function(e) {
 			currentModeValue.textContent = _('Error');

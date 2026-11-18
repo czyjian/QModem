@@ -56,12 +56,12 @@ set_imei(){
 get_mode(){
     local mode_num
     local mode
+    local data_interface=$(uci -q get qmodem.$config_section.data_interface)
     cfg=$(cmd_pciemode_query "$at_port" "$at_pre")
     config_type=`echo -e "$cfg" | grep -o '[0-9]'`
-    if [ "$config_type" = "1" ]; then
+    if [ "$config_type" = "1" ] || [ "$data_interface" = "pcie" ]; then
         mode_num="0"
-    json_add_int disable_mode_btn 1
-
+        json_add_int disable_mode_btn 1
     else
           ucfg=$(cmd_usbswitch_query "$at_port" "$at_pre")
           config_type=$(echo "$ucfg" | grep USBSWITCH: |cut -d':' -f2|xargs)
