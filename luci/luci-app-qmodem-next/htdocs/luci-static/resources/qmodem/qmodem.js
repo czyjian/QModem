@@ -570,18 +570,31 @@ return L.Class.extend({
 		});
 	},
 
+	// Keep saved devices, but prefer hardware currently found by the scanner.
+	getModemDevices: function(includeUnavailable) {
+		return uci.sections('qmodem', 'modem-device').filter(function(s) {
+			return includeUnavailable || (s.state !== 'disabled' && !!s.at_port);
+		}).sort(function(a, b) {
+			function rank(s) {
+				return s.state === 'enabled' && s.at_port ? 0 : s.state === 'disabled' || !s.at_port ? 2 : 1;
+			}
+			return rank(a) - rank(b);
+		});
+	},
+
 	// Get all modem sections
 	getModemSections: function() {
+		var self = this;
 		return uci.load('qmodem').then(function() {
 			var sections = [];
-			uci.sections('qmodem', 'modem-device', function(s) {
+			self.getModemDevices(false).forEach(function(s) {
 				sections.push({
 					id: s['.name'],
 					// 'name' is a display label; the raw (lowercase) model key stays in 'model'
 					name: formatModemName(s.name, s.alias, s['.name']),
 					model: s.name || '',
 					alias: realAlias(s.alias),
-					enabled: s.enabled !== '0'
+					enabled: s.state !== 'disabled' && !!s.at_port
 				});
 			});
 			return sections;

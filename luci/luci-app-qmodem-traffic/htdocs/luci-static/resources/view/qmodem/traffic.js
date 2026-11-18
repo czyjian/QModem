@@ -18,9 +18,9 @@ return view.extend({
 	render: function() {
 		// Refresh the navigation on the next load after installing the new page.
 		ui.menu.flushCache();
-		var modems = uci.sections('qmodem', 'modem-device');
+		var modems = qmodem.getModemDevices(true);
 		if (!modems.length) return E('p', {}, _('No modems configured.'));
-		var selector = E('select', {'class':'cbi-input-select',id:'modem_selector'}, modems.map(function(m) { return E('option', {value:m['.name']},qmodem.formatModemName(m.name,m.alias,m['.name'])); }));
+		var selector = E('select', {'class':'cbi-input-select',id:'modem_selector'}, modems.map(function(m) { return E('option', {value:m['.name']},qmodem.formatModemName(m.name,m.alias,m['.name']) + (m.state === 'disabled' || !m.at_port ? '（不可用）' : '')); }));
 		var query = trafficQuery.create(selector), unitBase=1024;
 		var unitNote=E('span');
 		function quotaValue(s){return String(Number(((s.config.threshold_bytes!=null?s.config.threshold_bytes:s.config.threshold_gb*1e9)/Math.pow(unitBase,3)).toFixed(3)));}

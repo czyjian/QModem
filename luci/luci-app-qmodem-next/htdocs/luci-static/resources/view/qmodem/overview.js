@@ -233,7 +233,7 @@ return view.extend({
 
 	getModemList: function() {
 		var modems = [];
-		var sections = uci.sections('qmodem', 'modem-device');
+		var sections = qmodem.getModemDevices(false);
 		
 		sections.forEach(function(section) {
 			if (section.state !== 'disabled' && section.at_port) {

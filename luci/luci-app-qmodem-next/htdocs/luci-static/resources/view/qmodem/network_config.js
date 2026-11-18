@@ -206,6 +206,7 @@ return view.extend({
 
 	// Dial Configuration Section (Per-Modem)
 	s = m.section(sectionForm.GridSection, 'modem-device', _('Dial Configuration'));
+	s.cfgsections = function() { return qmodem.getModemDevices(true).map(function(device) { return device['.name']; }); };
 	s.anonymous = false;
 	s.addremove = false;
 	s.modaltitle = L.bind(function(section_id) {
@@ -303,6 +304,7 @@ return view.extend({
 		o.modalonly = false;
 		o.editable = true;
 		o.cfgvalue = function(section_id) {
+			if (uci.get('qmodem', section_id, 'state') === 'disabled') return E('span', {}, _('模组不可用'));
 			var enable_dial = uci.get('qmodem', section_id, 'enable_dial');
 			if (enable_dial === '0') {
 				return E('div', {}, _('Dial disabled for this modem'));

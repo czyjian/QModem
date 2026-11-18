@@ -76,17 +76,11 @@ return L.Class.extend({
 	getModems: function() {
 		// Label modems like the other qmodem pages (upper-case model, alias)
 		return Promise.all([ callModemList(), qmodem.getModemSections() ]).then(function(results) {
-			var labels = {};
-			(results[1] || []).forEach(function(section) {
-				labels[section.id] = section.name;
-			});
-			return (results[0].modems || []).map(function(modem) {
-				return {
-					id: modem.modem_id,
-					name: labels[modem.modem_id] || qmodem.formatModemName(modem.name, '', modem.modem_id),
-					enabled: !!modem.enabled
-				};
-			});
+			var available = results[1] || [];
+			return available.map(function(section) {
+				var modem = (results[0].modems || []).find(function(m) { return m.modem_id === section.id; });
+				return modem ? { id: section.id, name: section.name, enabled: !!modem.enabled } : null;
+			}).filter(function(modem) { return modem !== null; });
 		});
 	},
 	getConfig: function(configSection) { return callConfigGet(configSection || 'modem_1'); },
