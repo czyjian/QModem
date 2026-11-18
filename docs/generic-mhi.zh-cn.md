@@ -56,3 +56,27 @@ cc -ffunction-sections -fdata-sections \
 该设备未提供原生 MBIM 数据通道，MBIM 验证限于拓扑回归和 SDK 编译，不代表完成 MBIM 硬件拨号验收。OpenWrt 23.05.5 IPK 不在本次验证范围。
 
 复测中还观察到 PCIe AER `CmpltTO` 和下游链路失活，MHI 通道随之消失。该故障在重新打开拨号通道的测试中重复出现，但触发原因尚未确定，需要继续定位。不能将上述短时连通性结果作为长期稳定性结论。
+
+
+## 2026-11-18 T99W640 PCIe/MBIM 验证与恢复
+
+在 ImmortalWrt / Linux 6.12.112 上，T99W640（PCI ID `105b:e118`，固件 `FDE2.F0.0.0.1.2.DF.001`）通过 `mhi-pci-generic`、`mhi_wwan_ctrl` 和 `mhi_wwan_mbim` 工作。QModem 识别型号后使用原生 MBIM session 0 拨号；正常流程重拨后取得 IPv4、IPv6，绑定数据接口的双栈公网 ping 均为 3/3。此次为短时连通性验证，不代表长期稳定性或其他固件版本均已验证。
+
+拨号程序保留 generic MHI 的 PCIe 硬件类型，避免共享设备发现路径将其重新标记为 USB。本次验证不需要专用 T99W640 QMI 驱动、QMAP 子接口或端点号探测。
+
+### 扫描不到 AT 口
+
+本机曾出现模组内部 `/dev/mhi_pipe_32` 在主机重连后变成 `root:root`，原厂以 `radio` 用户运行的 `/usr/bin/port-bridge` 无法重新打开该节点。诊断时应在模组内部核对节点权限及进程打开的文件，而非仅判断主机是否存在 AT 设备节点。
+
+现场修复在模组内部恢复原厂服务所需的节点所有者，并通过原厂 `/etc/init.d/port-bridged` 的附加 procd 实例监视节点重建：恢复 `mhi_pipe_32`、`mhi_ctrl`、`mhi_pipe_14`、`mhi_pipe_12` 的 `radio:radio` 所有者；AT 节点重建时由 procd 重启原厂桥接进程。原服务备份保存在模组的 `/data/qmodem-mhi-fix/port-bridged.before`。该修复属于模组内部持久配置，不随路由器插件编译或刷机自动安装，也不能直接套用于未经核对的其他型号或固件。未关闭 SELinux。
+
+### 曾做过 USB 模式实验时
+
+先核对原厂备份，不要仅凭 USB 实验文件仍存在判断服务正在运行。此次确认：
+
+- `/etc/rc.local` 与 `/data/port-bridge-usb/rc.local.orig` 一致。
+- `/etc/initscripts/start_pcie` 与 `/data/start_pcie.pre-usbcoexist-20260926` 一致。
+- `/data/debug_transport.conf` 为 `pcie`（NUL 结尾），`/data/adb.conf` 为 `pcie=true`（NUL 结尾），`/etc/usb/boot_hsusb_comp` 为 `none`。
+- USB 专用 `port-bridge-usb`、`mbimd-usb` 没有启动；运行的是原厂 `/usr/bin/port-bridge` 和 `/usr/bin/mbimd`。
+
+以上配置已恢复时，反复切换驱动后仍可能出现 MBIM OPEN 失败及模组日志 `Port mapper open failed with error 3`。本次在恢复原生驱动并完全断电约 30 秒后恢复；仅重启路由器虚拟机不能保证模组掉电。此现象不足以判定模组固件损坏，不应继续自动切换 USB composition、刷写固件或尝试未经验证的数据端点。

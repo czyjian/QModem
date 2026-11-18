@@ -408,6 +408,7 @@ int mhidevice_detect(char *qmichannel, char *usbnet_adapter, PROFILE_T *profile)
         snprintf(usbnet_adapter, sizeof(profile->usbnet_adapter), "%s", endpoint.netdev);
         profile->software_interface = endpoint.mbim ? SOFTWARE_MBIM : SOFTWARE_QMI;
         profile->generic_mhi = endpoint.mbim ? 2 : 1;
+        profile->hardware_interface = HARDWARE_PCIE;
         dbg_time("generic MHI %s: %s control %s", endpoint.mbim ? "MBIM" : "QMI", usbnet_adapter, qmichannel);
         return 1;
     }

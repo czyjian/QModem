@@ -732,7 +732,7 @@ static int quectel_CM(PROFILE_T *profile)
         strncpy(usbnet_adapter, profile->expect_adapter, sizeof(usbnet_adapter));
     
     if (qmidevice_detect(qmichannel, usbnet_adapter, sizeof(qmichannel), profile)) {
-    	profile->hardware_interface = HARDWARE_USB;
+        profile->hardware_interface = profile->generic_mhi ? HARDWARE_PCIE : HARDWARE_USB;
     }
     else if (mhidevice_detect(qmichannel, usbnet_adapter, profile)) {
         profile->hardware_interface = HARDWARE_PCIE;
