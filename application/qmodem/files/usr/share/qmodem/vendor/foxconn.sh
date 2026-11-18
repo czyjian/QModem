@@ -502,9 +502,9 @@ _get_voltage(){
 }
 
 _get_temperature(){
-    temperature=$(cmd_temp_query "$at_port" "$at_pre" | sed -n 's/.*TSENS: \([0-9]*\)C.*/\1/p' )
+    temperature=$(cmd_temp_query "$at_port" "$at_pre" | sed -n 's/.*TSENS:[[:space:]]*\([-0-9.]\+\)[[:space:]]*C.*/\1/p' | head -n 1)
     [ -n "$temperature" ] && {
-        add_plain_info_entry "temperature" "$temperature C" "Temperature" 
+        add_plain_info_entry "temperature" "${temperature}℃" "Temperature" 
     }
 }
 
