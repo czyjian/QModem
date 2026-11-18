@@ -85,6 +85,12 @@ cmd_cnum()
     at "$1" "AT+CNUM"
 }
 
+#read EF_MSISDN (6F40 = 28480) record 1 from SIM
+cmd_crsm_msisdn()
+{
+    at "$1" "AT+CRSM=178,28480,1,4,28"
+}
+
 #query IMSI
 cmd_cimi()
 {

@@ -224,6 +224,41 @@ get_lockband(){
     json_close_object
 }
 
+# Decode EF_MSISDN (3GPP TS 31.102 6F40) 28-byte record from AT+CRSM=178,28480,1,4,28.
+# The trailing 14 bytes (28 hex chars) are: BCD byte count, TON/NPI, 10-byte swapped BCD number, CCP2, Ext1.
+foxconn_decode_crsm_msisdn()
+{
+    printf '%s\n' "$1" | tr -d '\r' | awk -F'"' '
+        /^\+CRSM:[[:space:]]*(144|145),/ && NF >= 2 {
+            hex = toupper($2)
+            gsub(/[^0-9A-F]/, "", hex)
+            n = length(hex)
+            if (n < 28) next
+            tail = substr(hex, n - 27, 28)
+            bcd_len = substr(tail, 1, 2)
+            ton_npi = substr(tail, 3, 2)
+            bcd = substr(tail, 5, 20)
+            if (bcd_len == "FF" || bcd_len == "00" || ton_npi == "FF") next
+            num = ""
+            for (i = 1; i <= 20; i += 2) {
+                d1 = substr(bcd, i + 1, 1)
+                d2 = substr(bcd, i, 1)
+                if (d1 ~ /^[0-9]$/) num = num d1
+                else if (d1 == "F") break
+                else { num = ""; break }
+                if (d2 ~ /^[0-9]$/) num = num d2
+                else if (d2 == "F") break
+                else { num = ""; break }
+            }
+            if (length(num) >= 5) {
+                if (ton_npi == "91") num = "+" num
+                print num
+                exit
+            }
+        }
+    '
+}
+
 sim_info()
 {
     class="SIM Information"
@@ -243,11 +278,11 @@ sim_info()
         return
     fi
     
-    # Only T99W368 returns unreadable text operator names; force numeric COPS
-    # format just for that model so existing Foxconn models keep their current
+    # T99W368 and T99W640 return unreadable text operator names ("????"); force numeric COPS
+    # format just for those models so existing Foxconn models keep their current
     # behaviour.
     case "$name" in
-        "t99w368")
+        "t99w368"|"t99w640")
             cmd_cops_numeric "$at_port" > /dev/null 2>&1
             ;;
     esac
@@ -262,7 +297,11 @@ sim_info()
          isp="中国电信"
     fi
 
-    sim_number=$(cmd_cnum "$at_port" | awk -F'"' '{print $2}'|xargs)
+    cnum_res=$(cmd_cnum "$at_port" | tr -d '\r')
+    sim_number=$(printf '%s\n' "$cnum_res" | awk -F'"' '/^\+CNUM:/ { if ($4 != "") print $4; else print $2; exit }' | xargs)
+    if [ -z "$sim_number" ]; then
+        sim_number=$(foxconn_decode_crsm_msisdn "$(cmd_crsm_msisdn "$at_port")")
+    fi
 
     #IMSI（国际移动用户识别码）
     imsi=$(cmd_cimi "$at_port" | sed -n '2p' | sed 's/\r//g')

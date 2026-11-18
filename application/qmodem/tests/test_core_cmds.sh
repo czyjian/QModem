@@ -6,6 +6,7 @@ PACKAGE_DIR=$(CDPATH= cd "$(dirname "$0")/.." && pwd)
 QMODEM_DIR="$PACKAGE_DIR/files/usr/share/qmodem"
 GENERIC_FILE="$QMODEM_DIR/generic.sh"
 FIBOCOM_FILE="$QMODEM_DIR/vendor/fibocom.sh"
+FOXCONN_FILE="$QMODEM_DIR/vendor/foxconn.sh"
 observed=
 
 at()
@@ -18,6 +19,7 @@ at()
 . "$QMODEM_DIR/cmds/modem_util.sh"
 . "$QMODEM_DIR/cmds/modem_dial.sh"
 . "$QMODEM_DIR/cmds/fibocom.sh"
+. "$QMODEM_DIR/cmds/foxconn.sh"
 
 cmd_util_quimslot_query /dev/ttyUSB2
 [ "$observed_port" = /dev/ttyUSB2 ]
@@ -148,4 +150,13 @@ QMODEM_TESTCASE_MODEL=fm350-gl
 platform=qualcomm
 QMODEM_TESTCASE_MODEL=fm160-cn
 [ "$(fibocom_gtact_params 14 "$nr_bands")" = '14,,,5041,5078' ]
+
+cmd_crsm_msisdn /dev/wwan0at0
+[ "$observed_port" = /dev/wwan0at0 ]
+[ "$observed" = 'AT+CRSM=178,28480,1,4,28' ]
+
+eval "$(get_function foxconn_decode_crsm_msisdn "$FOXCONN_FILE")"
+[ "$(foxconn_decode_crsm_msisdn '+CRSM: 144,0,"FFFFFFFFFFFFFFFFFFFFFFFFFFFF0891685183077009F7FFFFFFFFFF"')" = '+8615387007907' ]
+[ "$(foxconn_decode_crsm_msisdn '+CRSM: 144,0,"FFFFFFFFFFFFFFFFFFFFFFFFFFFF07815183077009F7FFFFFFFFFFFF"')" = '15387007907' ]
+[ -z "$(foxconn_decode_crsm_msisdn '+CRSM: 144,0,"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"')" ]
 echo 'core cmds tests passed'
