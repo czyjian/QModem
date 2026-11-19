@@ -519,7 +519,41 @@ get_lockband_nr()
     json_close_object
 }
 
+# This T99W640 firmware expects a colon-separated replacement band list.
+set_lockband_t99w640() {
+    local rat current available selected enabled band reply bands
+    case "$band_class" in
+        UMTS) rat=WCDMA;;
+        LTE) rat=LTE;;
+        NR_SA) rat=NR5G_SA;;
+        NR_NSA) rat=NR5G_NSA;;
+        *) res="ERROR: Unsupported T99W640 band class"; return;;
+    esac
+    if ! printf '%s\n' "$lock_band" | grep -Eq '^[0-9]+(,[0-9]+)*$'; then
+        res="ERROR: Select at least one valid band"; return
+    fi
+    current=$(cmd_band_pref_query "$at_port" "$at_pre" | tr -d '\r')
+    available=$(printf '%s\n' "$current" | awk -F: -v rat="$rat" '$1 ~ "^[[:space:]]*" rat ",(Enable|Disable) Bands[[:space:]]*$" { print $2 }' | tr ', ' '  ')
+    for band in $(printf '%s' "$lock_band" | tr ',' ' '); do
+        case " $(echo $available) " in *" $band "*) ;; *) res="ERROR: Unsupported band $band"; return;; esac
+    done
+    bands=$(printf '%s' "$lock_band" | tr ',' ':')
+    reply=$(at "$at_port" "${at_pre}BAND_PREF=$rat,2,$bands")
+    if ! printf '%s\n' "$reply" | tr -d '\r' | grep -Eq '^[[:space:]]*OK[[:space:]]*$'; then
+        res="ERROR: Failed to apply bands
+$reply"; return
+    fi
+    current=$(cmd_band_pref_query "$at_port" "$at_pre" | tr -d '\r')
+    enabled=$(printf '%s\n' "$current" | awk -F: -v rat="$rat" '$1 ~ "^[[:space:]]*" rat ",Enable Bands[[:space:]]*$" { print $2 }' | tr ', ' '\n\n' | grep -E '^[0-9]+$' | sort -nu)
+    selected=$(printf '%s\n' "$lock_band" | tr ',' '\n' | sort -nu)
+    if [ "$enabled" != "$selected" ]; then
+        res="ERROR: Band configuration readback mismatch"; return
+    fi
+    res=OK
+}
+
 set_lockband_nr(){
+    if [ "$name" = "t99w640" ]; then set_lockband_t99w640; return; fi
     #lock_band=$(echo $lock_band | tr ',' ':')
     case "$band_class" in
         "UMTS") 
