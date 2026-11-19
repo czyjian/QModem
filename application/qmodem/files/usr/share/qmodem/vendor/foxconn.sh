@@ -259,6 +259,67 @@ foxconn_decode_crsm_msisdn()
     '
 }
 
+foxconn_get_sim_slot_value()
+{
+    cmd_switch_slot_query "$at_port" "$at_pre" | tr -d '\r' | awk '/ENABLE/ {
+        if (match($0, /SIM[0-9]+/)) {
+            print substr($0, RSTART + 3, RLENGTH - 3)
+            exit
+        }
+    }'
+}
+
+sim_switch_capabilities()
+{
+    case "$name" in
+        "t99w640")
+            json_add_string "supportSwitch" "1"
+            json_add_array "simSlots"
+            json_add_string "" "1"
+            json_add_string "" "2"
+            json_close_array
+            ;;
+        *)
+            json_add_string "supportSwitch" "0"
+            ;;
+    esac
+}
+
+get_sim_switch_capabilities()
+{
+    sim_switch_capabilities
+}
+
+get_sim_slot()
+{
+    local sim_slot
+    sim_slot=$(foxconn_get_sim_slot_value)
+    json_add_string "sim_slot" "$sim_slot"
+}
+
+set_sim_slot()
+{
+    local sim_slot_param="$1"
+    local mode response
+    if [ "$name" != "t99w640" ]; then
+        json_add_string "result" "SIM slot switch is not supported on this model"
+        return 1
+    fi
+    case "$sim_slot_param" in
+        1) mode="0" ;;
+        2) mode="1" ;;
+        *)
+            json_add_string "result" "Invalid SIM slot: $sim_slot_param"
+            return 1
+            ;;
+    esac
+    response=$(cmd_switch_slot_set "$at_port" "$at_pre" "$mode")
+    json_add_string "result" "$response"
+    printf '%s\n' "$response" | tr -d '\r' | grep -Eq '^[[:space:]]*OK[[:space:]]*$' || return 1
+    rm -f "/tmp/cache_sim_info_$config_section" "/tmp/cache_info_$config_section"
+    return 0
+}
+
 sim_info()
 {
     class="SIM Information"
@@ -266,7 +327,7 @@ sim_info()
     #IMEI（国际移动设备识别码）
     imei=$(cmd_ati "$at_port" | awk -F': ' '/^IMEI:/ {print $2}' | xargs)
     
-    sim_slot=$(cmd_switch_slot_query "$at_port" "$at_pre" | grep ENABLE | grep -o 'SIM[0-9]*' | sed 's/SIM//g')
+    sim_slot=$(foxconn_get_sim_slot_value)
 
     #SIM Status（SIM状态）
     sim_status=$(cmd_cpin_query "$at_port" | grep "+CPIN:")

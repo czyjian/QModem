@@ -61,6 +61,13 @@ cmd_switch_slot_query()
     at "$1" "${2}switch_slot?"
 }
 
+#set SIM slot (prefixed)
+#$3: 0 (SIM1) / 1 (SIM2)
+cmd_switch_slot_set()
+{
+    at "$1" "${2}SWITCH_SLOT=$3"
+}
+
 #query SIM status
 cmd_cpin_query()
 {

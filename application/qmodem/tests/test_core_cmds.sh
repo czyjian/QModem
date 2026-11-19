@@ -178,4 +178,19 @@ nr_snr:0.0dB
 
 OK'
 [ "$(foxconn_extract_scc_blocks nr "$multiline_debug")" = 'nr_scc1: nr_band:n78 nr_band_width:100.0MHz nr_channel:633984 nr_pci:570 nr_snr:0.0dB' ]
+
+cmd_switch_slot_set /dev/wwan0at0 "AT+" 0
+[ "$observed_port" = /dev/wwan0at0 ]
+[ "$observed" = 'AT+SWITCH_SLOT=0' ]
+cmd_switch_slot_set /dev/wwan0at0 "AT+" 1
+[ "$observed_port" = /dev/wwan0at0 ]
+[ "$observed" = 'AT+SWITCH_SLOT=1' ]
+
+eval "$(get_function foxconn_get_sim_slot_value "$FOXCONN_FILE")"
+at_port=/dev/wwan0at0
+at_pre='AT+'
+cmd_switch_slot_query() { printf 'AT+SWITCH_SLOT?\r\nSIM1 ENABLE\r\n\r\nOK\r\n'; }
+[ "$(foxconn_get_sim_slot_value)" = '1' ]
+cmd_switch_slot_query() { printf 'AT+SWITCH_SLOT?\r\nSIM2 ENABLE\r\n\r\nOK\r\n'; }
+[ "$(foxconn_get_sim_slot_value)" = '2' ]
 echo 'core cmds tests passed'
