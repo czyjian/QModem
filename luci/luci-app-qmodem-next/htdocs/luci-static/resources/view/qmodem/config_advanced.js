@@ -1356,6 +1356,11 @@ return view.extend({
 
 						qmodem.setLockBand(modem.id, params).then(function(result) {
 							var status = result && result.result && result.result.set_lockband;
+                            if (modem.model === 't99w640') {
+                                status = result && (result.result || result).set_lockband;
+                                if (typeof status !== 'string' || status.trim() !== 'OK')
+                                    throw new Error(status || _('Failed to apply lock band configuration'));
+                            }
 							if (typeof status === 'string' && /(^|[\r\n])\s*(?:ERROR\b|\+(?:CME|CMS) ERROR\b)/.test(status))
 								throw new Error(_('Failed to apply lock band configuration'));
 							if (result) {
