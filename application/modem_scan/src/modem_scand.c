@@ -1092,7 +1092,6 @@ static int add_modem(const char *slot, const char *slot_type)
 	struct scan_result res;
 	struct modem_profile profile;
 	char section[128], key[256], existing[64], fixed[16];
-	char orig_network[512] = "", orig_at[128] = "", orig_state[64] = "", orig_name[128] = "";
 	char net_join[512], default_alias[128] = "", default_metric[32] = "";
 	int existed;
 
@@ -1145,14 +1144,6 @@ static int add_modem(const char *slot, const char *slot_type)
 	snprintf(key, sizeof(key), "qmodem.%s", section);
 	existed = !uci_get(key, existing, sizeof(existing)) && existing[0];
 	if (existed) {
-		snprintf(key, sizeof(key), "qmodem.%s.network", section);
-		uci_get(key, orig_network, sizeof(orig_network));
-		snprintf(key, sizeof(key), "qmodem.%s.at_port", section);
-		uci_get(key, orig_at, sizeof(orig_at));
-		snprintf(key, sizeof(key), "qmodem.%s.state", section);
-		uci_get(key, orig_state, sizeof(orig_state));
-		snprintf(key, sizeof(key), "qmodem.%s.name", section);
-		uci_get(key, orig_name, sizeof(orig_name));
 		snprintf(key, sizeof(key), "qmodem.%s.modes", section); uci_del(key);
 		snprintf(key, sizeof(key), "qmodem.%s.valid_at_ports", section); uci_del(key);
 		snprintf(key, sizeof(key), "qmodem.%s.tty_devices", section); uci_del(key);
@@ -1232,9 +1223,8 @@ static int add_modem(const char *slot, const char *slot_type)
 		mkdir(rundir, 0755);
 	}
 	exec_post_init(section);
-	if (!existed || strcmp(orig_network, net_join) || strcmp(orig_at, res.preferred_at) ||
-	    strcmp(orig_state, "enabled") || strcmp(orig_name, profile.name))
-		reload_network();
+    /* A delayed boot scan must reconcile dialing even when saved fields match. */
+    reload_network();
 
 	log_msg(LOG_L_INFO, "added modem section=%s name=%s type=%s ports=%zu valid=%zu",
 		section, profile.name, slot_type, res.at_ports.len, res.valid_at_ports.len);
