@@ -531,16 +531,39 @@
                 "Get SIM Card Slot Status > AT^SWITCH_SLOT?": "AT^SWITCH_SLOT?"
             },
             {
-                "Set Current SIM to Slot 1 > at^switch_slot=0": "at^switch_slot=0"
+                "Set Current SIM to Slot 1 > AT^SWITCH_SLOT=0": "AT^SWITCH_SLOT=0"
             },
             {
-                "Set Current SIM to ESIM > at^switch_slot=1": "at^switch_slot=1"
+                "Set Current SIM to ESIM > AT^SWITCH_SLOT=1": "AT^SWITCH_SLOT=1"
             },
             {
                 "Query Network and Carrier Information > AT^DEBUG?": "AT^DEBUG?"
             },
             {
                 "Get Module Temperature > AT^TEMP?": "AT^TEMP?"
+            },
+            {
+                "Restart Module > AT+RESET": "AT+RESET"
+            }
+        ],
+        "t99w640": [
+            {
+                "SIM Card Status Report > AT+SIMSLOTURC=1": "AT+SIMSLOTURC=1"
+            },
+            {
+                "Get SIM Card Slot Status > AT+SWITCH_SLOT?": "AT+SWITCH_SLOT?"
+            },
+            {
+                "Set Current SIM to Slot 1 > AT+SWITCH_SLOT=0": "AT+SWITCH_SLOT=0"
+            },
+            {
+                "Set Current SIM to ESIM > AT+SWITCH_SLOT=1": "AT+SWITCH_SLOT=1"
+            },
+            {
+                "Query Network and Carrier Information > AT+DEBUG?": "AT+DEBUG?"
+            },
+            {
+                "Get Module Temperature > AT+TEMP?": "AT+TEMP?"
             },
             {
                 "Restart Module > AT+RESET": "AT+RESET"

@@ -123,8 +123,11 @@ get_at_cfg(){
     # Fallback to default file if language-specific file doesn't exist
     [ ! -f "$at_commands_file" ] && at_commands_file="/usr/share/qmodem/at_commands.json"
     
+    model_name=$(uci -q get qmodem.$config_section.name 2>/dev/null)
     general_cmd=$(jq -rc '.general[]|to_entries| .[] | @sh "key=\(.key) value=\(.value)"' "$at_commands_file")
-    platform_cmd=$(jq -rc ".${vendor}.${platform}[]|to_entries| .[] | @sh \"key=\(.key) value=\(.value)\"" "$at_commands_file")
+    platform_cmd=""
+    [ -n "$model_name" ] && platform_cmd=$(jq -rc --arg v "$vendor" --arg m "$model_name" '.[$v][$m][]? | to_entries | .[] | @sh "key=\(.key) value=\(.value)"' "$at_commands_file" 2>/dev/null)
+    [ -z "$platform_cmd" ] && platform_cmd=$(jq -rc ".${vendor}.${platform}[]|to_entries| .[] | @sh \"key=\(.key) value=\(.value)\"" "$at_commands_file")
     [ -z "$platform_cmd" ] && platform_cmd=$(jq -rc ".$vendor.general[]|to_entries| .[] | @sh \"key=\(.key) value=\(.value)\"" "$at_commands_file")
     cmds=$(echo -e "$general_cmd\n$platform_cmd")
     IFS=$'\n'
