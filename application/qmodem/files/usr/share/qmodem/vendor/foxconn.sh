@@ -266,7 +266,7 @@ sim_info()
     #IMEI（国际移动设备识别码）
     imei=$(cmd_ati "$at_port" | awk -F': ' '/^IMEI:/ {print $2}' | xargs)
     
-    sim_slot=$(cmd_switch_slot_query "$at_port" "$at_pre" | grep ENABLE|grep -o 'SIM[0-9]*')
+    sim_slot=$(cmd_switch_slot_query "$at_port" "$at_pre" | grep ENABLE | grep -o 'SIM[0-9]*' | sed 's/SIM//g')
 
     #SIM Status（SIM状态）
     sim_status=$(cmd_cpin_query "$at_port" | grep "+CPIN:")
@@ -458,41 +458,7 @@ get_lockband_nr()
     json_close_object
 }
 
-# This T99W640 firmware expects a colon-separated replacement band list.
-set_lockband_t99w640() {
-    local rat current available selected enabled band reply bands
-    case "$band_class" in
-        UMTS) rat=WCDMA;;
-        LTE) rat=LTE;;
-        NR_SA) rat=NR5G_SA;;
-        NR_NSA) rat=NR5G_NSA;;
-        *) res="ERROR: Unsupported T99W640 band class"; return;;
-    esac
-    if ! printf '%s\n' "$lock_band" | grep -Eq '^[0-9]+(,[0-9]+)*$'; then
-        res="ERROR: Select at least one valid band"; return
-    fi
-    current=$(cmd_band_pref_query "$at_port" "$at_pre" | tr -d '\r')
-    available=$(printf '%s\n' "$current" | awk -F: -v rat="$rat" '$1 ~ "^[[:space:]]*" rat ",(Enable|Disable) Bands[[:space:]]*$" { print $2 }' | tr ', ' '  ')
-    for band in $(printf '%s' "$lock_band" | tr ',' ' '); do
-        case " $(echo $available) " in *" $band "*) ;; *) res="ERROR: Unsupported band $band"; return;; esac
-    done
-    bands=$(printf '%s' "$lock_band" | tr ',' ':')
-    reply=$(at "$at_port" "${at_pre}BAND_PREF=$rat,2,$bands")
-    if ! printf '%s\n' "$reply" | tr -d '\r' | grep -Eq '^[[:space:]]*OK[[:space:]]*$'; then
-        res="ERROR: Failed to apply bands
-$reply"; return
-    fi
-    current=$(cmd_band_pref_query "$at_port" "$at_pre" | tr -d '\r')
-    enabled=$(printf '%s\n' "$current" | awk -F: -v rat="$rat" '$1 ~ "^[[:space:]]*" rat ",Enable Bands[[:space:]]*$" { print $2 }' | tr ', ' '\n\n' | grep -E '^[0-9]+$' | sort -nu)
-    selected=$(printf '%s\n' "$lock_band" | tr ',' '\n' | sort -nu)
-    if [ "$enabled" != "$selected" ]; then
-        res="ERROR: Band configuration readback mismatch"; return
-    fi
-    res=OK
-}
-
 set_lockband_nr(){
-    if [ "$name" = "t99w640" ]; then set_lockband_t99w640; return; fi
     #lock_band=$(echo $lock_band | tr ',' ':')
     case "$band_class" in
         "UMTS") 
@@ -618,98 +584,164 @@ process_signal_value() {
     fi
 }
 
+foxconn_format_bandwidth()
+{
+    printf '%s' "$1" | tr -d '\r ' | sed -E 's/\.0+MHz$/M/; s/MHz$/M/'
+}
+
+foxconn_format_band()
+{
+    printf '%s' "$1" | tr -d '\r ' | sed -E 's/^[nNbB]//'
+}
+
+foxconn_append_ca_value()
+{
+    local current="$1"
+    local next_val="$2"
+    [ -n "$next_val" ] || return
+    if [ -z "$current" ]; then
+        printf '%s' "$next_val"
+    else
+        printf '%s / %s' "$current" "$next_val"
+    fi
+}
+
+# Flatten each (nr|lte)_sccN block (whether single-line or multi-line) into one line per SCC.
+foxconn_extract_scc_blocks()
+{
+    local prefix="$1"
+    printf '%s\n' "$2" | awk -v pfx="$prefix" '
+        /^[[:space:]]*(nr|lte)_scc[0-9]*:/ {
+            if (block != "") { print block; block = "" }
+            line = $0
+            sub(/^[[:space:]]+/, "", line)
+            if (index(line, pfx "_scc") == 1) {
+                block = line
+                in_scc = 1
+            } else {
+                in_scc = 0
+            }
+            next
+        }
+        /^[[:space:]]*OK[[:space:]]*$/ {
+            if (block != "") { print block; block = "" }
+            in_scc = 0
+            next
+        }
+        in_scc && NF > 0 {
+            block = block " " $0
+        }
+        END {
+            if (block != "") print block
+        }
+    '
+}
+
 cell_info(){
     class="Cell Information"
-    response=$(cmd_debug_query "$at_port" "$at_pre")
-    network_mode=$(echo "$response"|awk -F'RAT:' '{print $2}'|xargs)
-    #add_plain_info_entry "network_mode" "$network_mode" "Network Mode"
+    response=$(cmd_debug_query "$at_port" "$at_pre" | tr -d '\r')
+    network_mode=$(printf '%s\n' "$response" | awk -F'RAT:' '/RAT:/ {print $2; exit}' | xargs)
+    pcc_section=$(printf '%s\n' "$response" | awk '/^(nr|lte)_scc[0-9]*:/ {exit} {print}')
 
-    case $network_mode in
+    case "$network_mode" in
     "LTE")
-        lte_mcc=$(echo "$response"|awk -F'mcc:' '{print $2}'|awk -F',' '{print $1}'|xargs)
-        lte_mnc=$(echo "$response"|awk -F'mnc:' '{print $2}'|xargs)
-        lte_earfcn=$(echo "$response"|awk -F'channel:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        lte_physical_cell_id=$(echo "$response"|awk -F'pci:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        lte_cell_id=$(echo "$response"|awk -F'lte_cell_id:' '{print $2}'|xargs)
-        lte_band=$(echo "$response"|awk -F'lte_band:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        lte_freq_band_ind=$(echo "$response"|awk -F'lte_band_width:' '{print $2}'|xargs)
-        lte_sinr=$(echo "$response"|awk -F'lte_snr:' '{print $2}'|awk '{print $1}'|xargs)
+        local ca_count=1 scc_line scc_pci="" scc_earfcn="" scc_band="" scc_dl_bandwidth=""
+        local scc_pci_new scc_earfcn_new scc_band_new scc_bw_new
+        lte_mcc=$(printf '%s\n' "$pcc_section" | awk -F'mcc:' '/mcc:/ {print $2; exit}' | awk -F',' '{print $1}' | xargs)
+        lte_mnc=$(printf '%s\n' "$pcc_section" | awk -F'mnc:' '/mnc:/ {print $2; exit}' | xargs)
+        lte_earfcn=$(printf '%s\n' "$pcc_section" | awk -F'channel:' '/channel:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        lte_physical_cell_id=$(printf '%s\n' "$pcc_section" | awk -F'pci:' '/pci:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        lte_cell_id=$(printf '%s\n' "$pcc_section" | awk -F'lte_cell_id:' '/lte_cell_id:/ {print $2; exit}' | xargs)
+        lte_band=$(foxconn_format_band "$(printf '%s\n' "$pcc_section" | awk -F'lte_band:' '/lte_band:/ {print $2; exit}' | awk -F'[, ]' '{print $1}' | xargs)")
+        lte_dl_bandwidth=$(foxconn_format_bandwidth "$(printf '%s\n' "$pcc_section" | awk -F'lte_band_width:' '/lte_band_width:/ {print $2; exit}' | awk '{print $1}' | xargs)")
+        lte_ul_bandwidth="$lte_dl_bandwidth"
+        lte_sinr=$(printf '%s\n' "$pcc_section" | awk -F'lte_snr:' '/lte_snr:/ {print $2; exit}' | awk '{print $1}' | xargs)
         lte_sinr=$(process_signal_value "$lte_sinr")
-        lte_rsrq=$(echo "$response"|awk -F'rsrq:' '{print $2}'|xargs)
+        lte_rsrp=$(printf '%s\n' "$pcc_section" | awk -F'rsrp:' '/rsrp:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        lte_rsrp=$(process_signal_value "$lte_rsrp")
+        lte_rsrq=$(printf '%s\n' "$pcc_section" | awk -F'rsrq:' '/rsrq:/ {print $2; exit}' | awk '{print $1}' | xargs)
         lte_rsrq=$(process_signal_value "$lte_rsrq")
-        lte_rssi=$(echo "$response"|awk -F'lte_rssi:' '{print $2}'|awk -F',' '{print $1}'|xargs)
+        lte_rssi=$(printf '%s\n' "$pcc_section" | awk -F'lte_rssi:' '/lte_rssi:/ {print $2; exit}' | awk -F',' '{print $1}' | xargs)
         lte_rssi=$(process_signal_value "$lte_rssi")
-        lte_tac=$(echo "$response"|awk -F'lte_tac:' '{print $2}'|xargs)
-        lte_tx_power=$(echo "$response"|awk -F'lte_tx_pwr:' '{print $2}'|xargs)
+        lte_tac=$(printf '%s\n' "$pcc_section" | awk -F'lte_tac:' '/lte_tac:/ {print $2; exit}' | xargs)
+        lte_tx_power=$(printf '%s\n' "$pcc_section" | awk -F'lte_tx_pwr:' '/lte_tx_pwr:/ {print $2; exit}' | xargs)
 
-        add_plain_info_entry "MCC" "$lte_mcc" "Mobile Country Code"
-        add_plain_info_entry "MNC" "$lte_mnc" "Mobile Network Code"
-        #add_plain_info_entry "Duplex Mode" "$lte_duplex_mode" "Duplex Mode"
-        add_plain_info_entry "Cell ID" "$lte_cell_id" "Cell ID"
-        add_plain_info_entry "Physical Cell ID" "$lte_physical_cell_id" "Physical Cell ID"
-        add_plain_info_entry "EARFCN" "$lte_earfcn" "E-UTRA Absolute Radio Frequency Channel Number"
-        add_plain_info_entry "Freq band indicator" "$lte_freq_band_ind" "Freq band indicator"
-        add_plain_info_entry "Band" "$lte_band" "Band"
-        #add_plain_info_entry "UL Bandwidth" "$lte_ul_bandwidth" "UL Bandwidth"
-        #add_plain_info_entry "DL Bandwidth" "$lte_dl_bandwidth" "DL Bandwidth"
-        add_plain_info_entry "TAC" "$lte_tac" "Tracking area code of cell served by neighbor Enb"
-        add_bar_info_entry "RSRQ" "$lte_rsrq" "Reference Signal Received Quality" -19.5 -3 dB
+        while IFS= read -r scc_line; do
+            [ -n "$scc_line" ] || continue
+            ca_count=$((ca_count + 1))
+            scc_band_new=$(foxconn_format_band "$(printf '%s\n' "$scc_line" | awk -F'lte_band:' '{print $2}' | awk -F'[, ]' '{print $1}' | xargs)")
+            scc_bw_new=$(foxconn_format_bandwidth "$(printf '%s\n' "$scc_line" | awk -F'lte_band_width:' '{print $2}' | awk '{print $1}' | xargs)")
+            scc_earfcn_new=$(printf '%s\n' "$scc_line" | awk -F'channel:' '{print $2}' | awk '{print $1}' | xargs)
+            scc_pci_new=$(printf '%s\n' "$scc_line" | awk -F'pci:' '{print $2}' | awk '{print $1}' | xargs)
+            scc_band=$(foxconn_append_ca_value "$scc_band" "$scc_band_new")
+            scc_dl_bandwidth=$(foxconn_append_ca_value "$scc_dl_bandwidth" "$scc_bw_new")
+            scc_earfcn=$(foxconn_append_ca_value "$scc_earfcn" "$scc_earfcn_new")
+            scc_pci=$(foxconn_append_ca_value "$scc_pci" "$scc_pci_new")
+        done <<EOF
+$(foxconn_extract_scc_blocks "lte" "$response")
+EOF
+
+        lte_display_mode="LTE Mode"
+        [ "$ca_count" -gt 1 ] && lte_display_mode="$lte_display_mode with $ca_count CA"
+        add_plain_info_entry "network_mode" "$lte_display_mode" "Network Mode"
+        extra_info="LTE"
+        set_4g_cell_info "$lte_mcc" "$lte_mnc" "$lte_tac" "$lte_cell_id" "$lte_earfcn" \
+            "$lte_physical_cell_id" "$lte_band" "$lte_ul_bandwidth" "$lte_dl_bandwidth" \
+            "$lte_rsrp" "$lte_rsrq" "$lte_sinr" "$lte_rssnr" "$lte_rxlev"
         add_bar_info_entry "RSSI" "$lte_rssi" "Received Signal Strength Indicator" -120 -20 dBm
-        add_bar_info_entry "SINR" "$lte_sinr" "Signal to Interference plus Noise Ratio Bandwidth" 0 30 dB
-        #add_plain_info_entry "RxLev" "$lte_rxlev" "Received Signal Level"
-        add_plain_info_entry "RSSNR" "$lte_rssnr" "Radio Signal Strength Noise Ratio"
-        #add_plain_info_entry "CQI" "$lte_cql" "Channel Quality Indicator"
         add_plain_info_entry "TX Power" "$lte_tx_power" "TX Power"
-        #add_plain_info_entry "Srxlev" "$lte_srxlev" "Serving Cell Receive Level"
-        ;;
-    "NR5G_SA")
-        has_ca=$(echo "$response" | grep -c "nr_scc1:")
-        nr_display_mode="$network_mode"
-        
-        nr_mcc=$(echo "$response"|awk -F'mcc:' '{print $2}'|awk -F',' '{print $1}'|xargs)
-        nr_mnc=$(echo "$response"|awk -F'mnc:' '{print $2}'|xargs)
-        nr_earfcn=$(echo "$response"|awk -F'channel:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        nr_physical_cell_id=$(echo "$response"|awk -F'pci:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        nr_cell_id=$(echo "$response"|awk -F'nr_cell_id:' '{print $2}'|xargs)
-        nr_band=$(echo "$response"|awk -F'nr_band:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        nr_band_width=$(echo "$response"|awk -F'nr_band_width:' '{print $2}'|awk -F' ' '{print $1}'|xargs)
-        nr_freq_band_ind=$(echo "$response"|awk -F'lte_band_width:' '{print $2}'|xargs)
-        nr_sinr=$(echo "$response"|awk -F'nr_snr:' '{print $2}'|awk '{print $1}'|xargs)
-        nr_sinr=$(process_signal_value "$nr_sinr")
-        nr_rsrq=$(echo "$response"|awk -F'rsrq:' '{print $2}'|xargs)
-        nr_rsrq=$(process_signal_value "$nr_rsrq")
-        nr_rsrp=$(echo "$response"|awk -F'rsrp:' '{print $2}'|awk '{print $1}'|xargs)
-        nr_rsrp=$(process_signal_value "$nr_rsrp")
-        nr_rssi=$(echo "$response"|awk -F'nr_rssi:' '{print $2}'|awk -F',' '{print $1}'|xargs)
-        nr_rssi=$(process_signal_value "$nr_rssi")
-        nr_tac=$(echo "$response"|awk -F'nr_tac:' '{print $2}'|xargs)
-        nr_tx_power=$(echo "$response"|awk -F'nr_tx_pwr:' '{print $2}'|xargs)
-
-        if [ "$has_ca" -gt 0 ]; then
-            nr_display_mode="NR5G_SA-CA"
-
-            scc1_band=$(echo "$response" | awk -F'nr_scc1:' '{print $2}' | awk -F'nr_band:' '{print $2}' | awk -F' ' '{print $1}' | xargs)
-            scc1_band_width=$(echo "$response" | awk -F'nr_scc1:' '{print $2}' | awk -F'nr_band_width:' '{print $2}' | awk -F' ' '{print $1}' | xargs)
-
-            nr_band="$nr_band $scc1_band"
-            nr_band_width="$nr_band_width $scc1_band_width"
+        if [ "$ca_count" -gt 1 ]; then
+            add_ca_info "4G" "$scc_earfcn" "$scc_pci" "$scc_band" "" "$scc_dl_bandwidth"
         fi
+        ;;
+    "NR5G_SA"|"NR5G-SA")
+        local ca_count=1 scc_line scc_pci="" scc_arfcn="" scc_band="" scc_dl_bandwidth="" scc_ul_bandwidth=""
+        local scc_pci_new scc_arfcn_new scc_band_new scc_bw_new
+        nr_mcc=$(printf '%s\n' "$pcc_section" | awk -F'mcc:' '/mcc:/ {print $2; exit}' | awk -F',' '{print $1}' | xargs)
+        nr_mnc=$(printf '%s\n' "$pcc_section" | awk -F'mnc:' '/mnc:/ {print $2; exit}' | xargs)
+        nr_arfcn=$(printf '%s\n' "$pcc_section" | awk -F'channel:' '/channel:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        nr_physical_cell_id=$(printf '%s\n' "$pcc_section" | awk -F'pci:' '/pci:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        nr_cell_id=$(printf '%s\n' "$pcc_section" | awk -F'nr_cell_id:' '/nr_cell_id:/ {print $2; exit}' | xargs)
+        nr_band=$(foxconn_format_band "$(printf '%s\n' "$pcc_section" | awk -F'nr_band:' '/nr_band:/ {print $2; exit}' | awk -F'[, ]' '{print $1}' | xargs)")
+        nr_dl_bandwidth=$(foxconn_format_bandwidth "$(printf '%s\n' "$pcc_section" | awk -F'nr_band_width:' '/nr_band_width:/ {print $2; exit}' | awk '{print $1}' | xargs)")
+        nr_ul_bandwidth="$nr_dl_bandwidth"
+        nr_sinr=$(printf '%s\n' "$pcc_section" | awk -F'nr_snr:' '/nr_snr:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        nr_sinr=$(process_signal_value "$nr_sinr")
+        nr_rsrq=$(printf '%s\n' "$pcc_section" | awk -F'rsrq:' '/rsrq:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        nr_rsrq=$(process_signal_value "$nr_rsrq")
+        nr_rsrp=$(printf '%s\n' "$pcc_section" | awk -F'rsrp:' '/rsrp:/ {print $2; exit}' | awk '{print $1}' | xargs)
+        nr_rsrp=$(process_signal_value "$nr_rsrp")
+        nr_rssi=$(printf '%s\n' "$pcc_section" | awk -F'nr_rssi:' '/nr_rssi:/ {print $2; exit}' | awk -F',' '{print $1}' | xargs)
+        nr_rssi=$(process_signal_value "$nr_rssi")
+        nr_tac=$(printf '%s\n' "$pcc_section" | awk -F'nr_tac:' '/nr_tac:/ {print $2; exit}' | xargs)
+        nr_tx_power=$(printf '%s\n' "$pcc_section" | awk -F'nr_tx_pwr:' '/nr_tx_pwr:/ {print $2; exit}' | xargs)
 
-        add_plain_info_entry "Network Mode" "$nr_display_mode" "Network Mode"
-        add_plain_info_entry "Band" "$nr_band" "Band"
-        add_plain_info_entry "DL Bandwidth" "$nr_band_width" "DL Bandwidth"
-        add_plain_info_entry "MCC" "$nr_mcc" "Mobile Country Code"
-        add_plain_info_entry "MNC" "$nr_mnc" "Mobile Network Code"
-        #add_plain_info_entry "Duplex Mode" "$lte_duplex_mode" "Duplex Mode"
-        add_plain_info_entry "Cell ID" "$nr_cell_id" "Cell ID"
-        add_plain_info_entry "Physical Cell ID" "$nr_physical_cell_id" "Physical Cell ID"
-        add_plain_info_entry "EARFCN" "$nr_earfcn" "E-UTRA Absolute Radio Frequency Channel Number"
-        add_plain_info_entry "Freq band indicator" "$nr_freq_band_ind" "Freq band indicator"
-        add_plain_info_entry "TAC" "$nr_tac" "Tracking area code of cell served by neighbor Enb"
-        add_bar_info_entry "RSRQ" "$nr_rsrq" "Reference Signal Received Quality" -19.5 -3 dB
-        add_bar_info_entry "RSRP" "$nr_rsrp" "Reference Signal Received Power" -140 -44 dBm
-        add_bar_info_entry "SINR" "$nr_sinr" "Signal to Interference plus Noise Ratio Bandwidth" 0 30 dB
+        while IFS= read -r scc_line; do
+            [ -n "$scc_line" ] || continue
+            ca_count=$((ca_count + 1))
+            scc_band_new=$(foxconn_format_band "$(printf '%s\n' "$scc_line" | awk -F'nr_band:' '{print $2}' | awk -F'[, ]' '{print $1}' | xargs)")
+            scc_bw_new=$(foxconn_format_bandwidth "$(printf '%s\n' "$scc_line" | awk -F'nr_band_width:' '{print $2}' | awk '{print $1}' | xargs)")
+            scc_arfcn_new=$(printf '%s\n' "$scc_line" | awk -F'channel:' '{print $2}' | awk '{print $1}' | xargs)
+            scc_pci_new=$(printf '%s\n' "$scc_line" | awk -F'pci:' '{print $2}' | awk '{print $1}' | xargs)
+            scc_band=$(foxconn_append_ca_value "$scc_band" "$scc_band_new")
+            scc_dl_bandwidth=$(foxconn_append_ca_value "$scc_dl_bandwidth" "$scc_bw_new")
+            scc_arfcn=$(foxconn_append_ca_value "$scc_arfcn" "$scc_arfcn_new")
+            scc_pci=$(foxconn_append_ca_value "$scc_pci" "$scc_pci_new")
+        done <<EOF
+$(foxconn_extract_scc_blocks "nr" "$response")
+EOF
+
+        nr_display_mode="NR5G-SA Mode"
+        [ "$ca_count" -gt 1 ] && nr_display_mode="$nr_display_mode with $ca_count CA"
+        add_plain_info_entry "network_mode" "$nr_display_mode" "Network Mode"
+        extra_info="NR5G-SA"
+        set_5g_cell_info "$nr_mcc" "$nr_mnc" "$nr_tac" "$nr_cell_id" "$nr_arfcn" \
+            "$nr_physical_cell_id" "$nr_band" "$nr_ul_bandwidth" "$nr_dl_bandwidth" \
+            "$nr_rsrp" "$nr_rsrq" "$nr_sinr" "" "$nr_rxlev"
         add_plain_info_entry "TX Power" "$nr_tx_power" "TX Power"
+        if [ "$ca_count" -gt 1 ]; then
+            add_ca_info "5G" "$scc_arfcn" "$scc_pci" "$scc_band" "$scc_ul_bandwidth" "$scc_dl_bandwidth"
+        fi
         ;;
     esac
 }

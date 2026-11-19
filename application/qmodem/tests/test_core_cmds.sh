@@ -159,4 +159,23 @@ eval "$(get_function foxconn_decode_crsm_msisdn "$FOXCONN_FILE")"
 [ "$(foxconn_decode_crsm_msisdn '+CRSM: 144,0,"FFFFFFFFFFFFFFFFFFFFFFFFFFFF0891685183077009F7FFFFFFFFFF"')" = '+8615387007907' ]
 [ "$(foxconn_decode_crsm_msisdn '+CRSM: 144,0,"FFFFFFFFFFFFFFFFFFFFFFFFFFFF07815183077009F7FFFFFFFFFFFF"')" = '15387007907' ]
 [ -z "$(foxconn_decode_crsm_msisdn '+CRSM: 144,0,"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"')" ]
+
+eval "$(get_function foxconn_format_bandwidth "$FOXCONN_FILE")"
+eval "$(get_function foxconn_format_band "$FOXCONN_FILE")"
+eval "$(get_function foxconn_extract_scc_blocks "$FOXCONN_FILE")"
+[ "$(foxconn_format_bandwidth '100.0MHz')" = '100M' ]
+[ "$(foxconn_format_bandwidth '1.4MHz')" = '1.4M' ]
+[ "$(foxconn_format_band 'n78')" = '78' ]
+[ "$(foxconn_format_band 'B3')" = '3' ]
+multiline_debug='RAT:NR5G_SA
+nr_band:n78
+nr_scc1:
+nr_band:n78
+nr_band_width:100.0MHz
+nr_channel:633984
+nr_pci:570
+nr_snr:0.0dB
+
+OK'
+[ "$(foxconn_extract_scc_blocks nr "$multiline_debug")" = 'nr_scc1: nr_band:n78 nr_band_width:100.0MHz nr_channel:633984 nr_pci:570 nr_snr:0.0dB' ]
 echo 'core cmds tests passed'
