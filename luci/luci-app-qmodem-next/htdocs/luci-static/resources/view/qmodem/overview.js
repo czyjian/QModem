@@ -426,6 +426,19 @@ return view.extend({
 				grouped[className].push(entry);
 			});
 
+			// Network Mode in merged Cell Information supersedes Network Type.
+			if (grouped['Network Information']) {
+				var hasNetworkMode = grouped['Network Information'].some(function(entry) {
+					return (entry.key === 'network_mode' || entry.key === 'Network Mode' || entry.full_name === 'Network Mode') &&
+						entry.value != null && String(entry.value).trim() !== '';
+				});
+				if (hasNetworkMode) {
+					grouped['Network Information'] = grouped['Network Information'].filter(function(entry) {
+						return entry.key !== 'Network Type' && entry.full_name !== 'Network Type';
+					});
+				}
+			}
+
 			// Clear loading animation if present
 			loadingElement.style.display = 'none';
 
