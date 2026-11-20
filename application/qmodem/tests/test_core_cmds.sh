@@ -193,4 +193,11 @@ cmd_switch_slot_query() { printf 'AT+SWITCH_SLOT?\r\nSIM1 ENABLE\r\n\r\nOK\r\n';
 [ "$(foxconn_get_sim_slot_value)" = '1' ]
 cmd_switch_slot_query() { printf 'AT+SWITCH_SLOT?\r\nSIM2 ENABLE\r\n\r\nOK\r\n'; }
 [ "$(foxconn_get_sim_slot_value)" = '2' ]
+eval "$(get_function quectel_parse_cnum "$QMODEM_DIR/vendor/quectel.sh")"
+[ "$(printf 'AT+CNUM\r\n\r\n+CNUM: ,"+8613800000000",145\r\nOK\r\n' | quectel_parse_cnum)" = '+8613800000000' ]
+[ "$(printf '+CNUM: "","13800000000",129\r\n' | quectel_parse_cnum)" = '13800000000' ]
+[ "$(printf '+CNUM: "My, SIM","+8613800000000",145\r\n' | quectel_parse_cnum)" = '+8613800000000' ]
+[ -z "$(printf 'AT+CNUM\r\nOK\r\n' | quectel_parse_cnum)" ]
+[ -z "$(printf '+CNUM: "","",129\r\n' | quectel_parse_cnum)" ]
+
 echo 'core cmds tests passed'

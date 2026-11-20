@@ -414,6 +414,21 @@ quectel_get_sim_slot_value()
 }
 
 #SIM卡信息
+quectel_parse_cnum()
+{
+    awk '/^[[:space:]]*\+CNUM:/ {
+        line = $0
+        sub(/^[^:]*:[[:space:]]*/, "", line)
+        if (line ~ /^"/)
+            sub(/^"[^"]*"[[:space:]]*,[[:space:]]*/, "", line)
+        else
+            sub(/^[^,]*,[[:space:]]*/, "", line)
+        sub(/,.*/, "", line)
+        gsub(/["[:space:]]/, "", line)
+        if (line ~ /^\+?[0-9]+$/) { print line; exit }
+    }'
+}
+
 sim_info()
 {
     m_debug  "Quectel sim info"
@@ -446,7 +461,7 @@ sim_info()
     # fi
 
     #SIM Number（SIM卡号码，手机号）
-	sim_number=$(cmd_cnum "$at_port" | sed -n '2p' | awk -F'"' '{print $4}')
+    sim_number=$(cmd_cnum "$at_port" | quectel_parse_cnum)
 
     #IMSI（国际移动用户识别码）
 	imsi=$(cmd_cimi "$at_port" | sed -n '2p' | sed 's/\r//g')
