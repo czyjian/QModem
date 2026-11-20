@@ -394,7 +394,7 @@ return view.extend({
 				var copyrightInfo = copyrightData.copyright;
 				var copyrightText = [];
 				for (var key in copyrightInfo) {
-					if (key === 'Maintainer')
+					if (key === 'Maintainer' || key === 'Author')
 						continue;
 					var value = copyrightInfo[key];
 					if (key === 'Vendor' && typeof value === 'string')
@@ -402,6 +402,7 @@ return view.extend({
 					copyrightText.push((key === 'Author' ? '原作者' : _(key)) + ': ' + value);
 				}
 				copyrightText.push('修改: czyjian <czyjian@gmail.com>');
+				copyrightText.push('微信: _zsy888_');
 				copyrightElement.textContent = copyrightText.join(' | ');
 				copyrightElement.style.display = '';
 			} else if (copyrightElement) {
