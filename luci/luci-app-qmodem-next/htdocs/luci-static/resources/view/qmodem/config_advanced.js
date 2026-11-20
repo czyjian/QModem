@@ -1332,7 +1332,7 @@ return view.extend({
 					var label = E('label', {
 						'for': 'band_' + modem.id + '_' + bandClass + '_' + band.band_id,
 						'style': 'margin-left: 5px; cursor: pointer;'
-					}, band.band_name);
+					}, self.formatBandName(band.band_name));
 					if (!modeState.enabled) label.style.opacity = '0.5';
 
 					bandWrapper.appendChild(checkbox);
@@ -1440,6 +1440,10 @@ return view.extend({
 		});
 	},
 
+	formatBandName: function(name) {
+		return String(name).replace(/^SA_NR_/, 'NR_SA_').replace(/^NSA_NR_/, 'NR_NSA_');
+	},
+
 	updateLockedDisplay: function(displayElement, lockedBands, availableBands) {
 		if (lockedBands.length === 0) {
 			displayElement.textContent = _('None (All bands unlocked)');
@@ -1454,11 +1458,11 @@ return view.extend({
 				return b.band_id.toString() === bandId.toString();
 			});
 			if (band) {
-				bandNames.push(band.band_name);
+				bandNames.push(this.formatBandName(band.band_name));
 			} else {
 				bandNames.push(bandId);
 			}
-		});
+		}, this);
 
 		displayElement.textContent = bandNames.join(', ');
 		displayElement.style.color = '#0066cc';
