@@ -1271,7 +1271,7 @@ return view.extend({
 					'style': 'margin-bottom: 20px;'
 				});
 
-				var bandHeader = E('legend', {}, bandClass);
+				var bandHeader = E('legend', {}, bandClass === 'NR' ? 'NR_SA' : bandClass);
 				bandSection.appendChild(bandHeader);
 
 				// Current locked bands display
