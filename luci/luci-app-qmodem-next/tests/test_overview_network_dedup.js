@@ -111,7 +111,7 @@ function getNetworkRows(tablesMap) {
 }
 
 (async () => {
-	// Case 1: Network Mode present -> omit redundant Network Type, keep Network Mode and rates.
+	// Case 1: Network Mode present -> omit redundant Network Type and modem rates.
 	{
 		const { view, domErrors } = createHarness(
 			[
@@ -135,10 +135,7 @@ function getNetworkRows(tablesMap) {
 			rows.find(r => r.label === 'Network Mode'),
 			{ label: 'Network Mode', value: 'NR5G-SA Mode with 2 CA' }
 		);
-		assert.deepEqual(
-			rows.find(r => r.label === 'Receive Rate'),
-			{ label: 'Receive Rate', value: '10 bps' }
-		);
+		assert.equal(rows.some(r => r.label === 'Receive Rate'), false);
 	}
 
 	// Case 2: No Network Mode (or empty value) -> keep Network Type as fallback.
@@ -161,7 +158,22 @@ function getNetworkRows(tablesMap) {
 		);
 	}
 
-	console.log('PASS: overview deduplicates Network Type when Network Mode is present and keeps fallback otherwise');
+	// Quality and AMBR fields sit between serving bandwidth and RSRP, before CA details.
+	{
+		const entry = (key, cls) => ({ key, value: '20', full_name: key, type: 'plain_text', class: cls });
+		const { view, domErrors } = createHarness(
+			['CQI UL', 'CQI DL', 'AMBR UL', 'AMBR DL', 'Rx Rate', 'Tx Rate'].map(k => entry(k, 'Network Information')),
+			['Band', 'UL Bandwidth', 'DL Bandwidth', 'RSRP', 'DL Bandwidth (CA)'].map(k => entry(k, 'Cell Information'))
+		);
+		const tablesMap = {};
+		view.updateModemInfo('2_3', tablesMap, E('div'), null, null, E('div'), null);
+		await new Promise(resolve => setImmediate(resolve));
+		assert.deepEqual(domErrors, []);
+		assert.deepEqual(getNetworkRows(tablesMap).map(r => r.label), [
+			'Band', 'UL Bandwidth', 'DL Bandwidth', 'CQI UL', 'CQI DL', 'AMBR UL', 'AMBR DL', 'RSRP', 'DL Bandwidth (CA)'
+		]);
+	}
+	console.log('PASS: overview network fields hide modem rates and place quality fields after bandwidth');
 })().catch(err => {
 	console.error(err);
 	process.exitCode = 1;

@@ -437,6 +437,26 @@ return view.extend({
 						return entry.key !== 'Network Type' && entry.full_name !== 'Network Type';
 					});
 				}
+				var qualityKeys = ['CQI UL', 'CQI DL', 'AMBR UL', 'AMBR DL'];
+				var qualityEntries = [];
+				var networkEntries = grouped['Network Information'].filter(function(entry) {
+					if (qualityKeys.indexOf(entry.key) !== -1) {
+						qualityEntries.push(entry);
+						return false;
+					}
+					return entry.key !== 'Rx Rate' && entry.key !== 'Tx Rate';
+				});
+				qualityEntries.sort(function(a, b) {
+					return qualityKeys.indexOf(a.key) - qualityKeys.indexOf(b.key);
+				});
+				var insertAt = networkEntries.findIndex(function(entry) { return entry.key === 'DL Bandwidth'; });
+				if (insertAt !== -1) insertAt++;
+				else {
+					insertAt = networkEntries.findIndex(function(entry) { return entry.key === 'RSRP'; });
+					if (insertAt === -1) insertAt = networkEntries.length;
+				}
+				networkEntries.splice.apply(networkEntries, [insertAt, 0].concat(qualityEntries));
+				grouped['Network Information'] = networkEntries;
 			}
 
 			// Clear loading animation if present
