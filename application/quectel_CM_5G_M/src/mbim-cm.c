@@ -1802,8 +1802,25 @@ static int mbim_device_caps_query(PROFILE_T *profile) {
             mbim_debug("DeviceId:     %s", tmp);
          }
          if (le32toh(pInfo->FirmwareInfoOffset) && le32toh(pInfo->FirmwareInfoSize)) {
+            size_t r = 0, w = 0;
+            int prev_space = 0;
             wchar2char((const char *)pInfo + le32toh(pInfo->FirmwareInfoOffset), le32toh(pInfo->FirmwareInfoSize), tmp, sizeof(tmp));
-            strncpy(profile->BaseBandVersion, tmp, sizeof(profile->BaseBandVersion));
+            for (r = 0; tmp[r] != '\0'; r++) {
+                if (tmp[r] == '\r' || tmp[r] == '\n') {
+                    if (w > 0 && !prev_space) {
+                        tmp[w++] = ' ';
+                        prev_space = 1;
+                    }
+                } else {
+                    prev_space = (tmp[r] == ' ' || tmp[r] == '\t');
+                    tmp[w++] = tmp[r];
+                }
+            }
+            while (w > 0 && (tmp[w - 1] == ' ' || tmp[w - 1] == '\t')) {
+                w--;
+            }
+            tmp[w] = '\0';
+            snprintf(profile->BaseBandVersion, sizeof(profile->BaseBandVersion), "%s", tmp);
             mbim_debug("FirmwareInfo: %s", tmp);
 #ifdef CONFIG_FOXCONN_FCC_AUTH
             // Check if this modem model needs FCC authentication

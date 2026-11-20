@@ -432,13 +432,13 @@ typedef enum
 #define dbg_time(fmt, args...) do { \
     fprintf(stdout, "[%15s-%04d: %s] " fmt "\n", __FILE__, __LINE__, get_time(), ##args); \
 	fflush(stdout);\
-    if (logfilefp) fprintf(logfilefp, "[%s-%04d: %s] " fmt "\n", __FILE__, __LINE__, get_time(), ##args); \
+    if (logfilefp) { fprintf(logfilefp, "[%s-%04d: %s] " fmt "\n", __FILE__, __LINE__, get_time(), ##args); fflush(logfilefp); } \
 } while(0)
 #else
 #define dbg_time(fmt, args...) do { \
     fprintf(stdout, "[%s] " fmt "\n", get_time(), ##args); \
 	fflush(stdout);\
-    if (logfilefp) fprintf(logfilefp, "[%s] " fmt "\n", get_time(), ##args); \
+    if (logfilefp) { fprintf(logfilefp, "[%s] " fmt "\n", get_time(), ##args); fflush(logfilefp); } \
 } while(0)
 #endif
 #endif
