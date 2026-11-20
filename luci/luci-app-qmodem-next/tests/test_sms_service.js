@@ -16,9 +16,14 @@ const source = fs.readFileSync(path.join(__dirname,
 
 function createService(listResults, syncResult) {
 	let listCalls = 0;
+	const deleteCalls = [];
 	const rpc = {
 		declare: function(spec) {
 			return function() {
+				if (spec.method === 'delete') {
+					deleteCalls.push(Array.from(arguments));
+					return Promise.resolve({ status: 'success', deleted: 1 });
+				}
 				if (spec.method === 'list')
 					return Promise.resolve(listResults[listCalls++]);
 				if (spec.method === 'sync')
@@ -29,7 +34,7 @@ function createService(listResults, syncResult) {
 	};
 	const L = { Class: { extend: function(service) { return service; } } };
 	const service = new Function('rpc', 'L', 'smsNumber', 'qmodem', 'phone', '_', source)(rpc, L, smsNumber, qmodem, phone, function(value) { return value; });
-	return { service: service, listCalls: function() { return listCalls; } };
+	return { service: service, listCalls: function() { return listCalls; }, deleteCalls: deleteCalls };
 }
 
 async function main() {
@@ -53,6 +58,23 @@ async function main() {
 	assert.strictEqual(synced.listCalls(), 2);
 	assert.strictEqual(result.total, 1);
 	assert.strictEqual(result.conversations[0].contact, '10086');
+	const db = createService([{ mode: 'database_poll', messages: [
+		{ id: 42, type: 'received', sender: '10086', content: 'test' }
+	] }]);
+	const dbList = await db.service.getSimSms('2_3');
+	assert.deepStrictEqual(dbList.messages[0].delete_ref, { id: 42 });
+	assert.strictEqual((await db.service.deleteSimSms('2_3', dbList.messages[0].delete_ref)).success, true);
+	assert.deepStrictEqual(db.deleteCalls, [['2_3', 42, undefined]]);
+	const direct = createService([{ mode: 'direct', msg: [
+		{ id: 999, index: 7, sender: '10086', content: 'test' }
+	] }]);
+	const simList = await direct.service.getSimSms('2_3');
+	assert.deepStrictEqual(simList.messages[0].delete_ref, { index: 7 });
+	await direct.service.deleteSimSms('2_3', simList.messages[0].delete_ref);
+	assert.deepStrictEqual(direct.deleteCalls, [['2_3', undefined, 7]]);
+	await assert.rejects(db.service.deleteSimSms('2_3', {}), /Invalid message index/);
+	await assert.rejects(db.service.deleteSimSms('2_3', { id: 42, index: 7 }), /Invalid message index/);
+	assert.strictEqual(db.deleteCalls.length, 1, 'invalid references must not send a deletion request');
 	console.log('PASS: SMS service propagates sync errors and renders refreshed messages');
 }
 

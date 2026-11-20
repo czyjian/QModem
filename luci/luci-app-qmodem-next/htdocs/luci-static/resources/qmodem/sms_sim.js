@@ -161,7 +161,8 @@ return baseclass.extend({
 			for (var i = 0; i < messages.length; i++) {
 				var msg = messages[i];
 				
-				var index = msg.index != null ? String(msg.index) : '-';
+				var reference = msg.delete_ref || {};
+				var index = reference.id != null ? String(reference.id) : reference.index != null ? String(reference.index) : '-';
 				var sender = msg.display_sender || smsService.formatPhoneNumber(msg.sender || '-');
 				var time = msg.timestamp ? smsService.formatTimestamp(msg.timestamp) : '-';
 				var content = smsService.truncateMessage(msg.content || msg.sms_text || '', 80);
@@ -178,7 +179,7 @@ return baseclass.extend({
 					'class': 'cbi-button cbi-button-remove',
 					'click': L.bind(function(idx) {
 						self.handleDeleteSimSms(configSection, idx, contentArea);
-					}, this, msg.index)
+					}, this, reference)
 				}, _('Delete'));
 
 				var row = E('tr', { 
@@ -249,13 +250,13 @@ return baseclass.extend({
 	handleDeleteSimSms: function(configSection, index, contentArea) {
 		var self = this;
 		
-		if (index == null) {
+		if (!index || (index.id == null && index.index == null)) {
 			ui.addNotification(null, E('p', _('Invalid message index')), 'error');
 			return;
 		}
 
 		ui.showModal(_('Confirm Delete'), [
-			E('p', _('Are you sure you want to delete this message from SIM card?')),
+			E('p', _('Are you sure you want to delete this message?')),
 			E('div', { 'class': 'right' }, [
 				E('button', {
 					'class': 'cbi-button cbi-button-neutral',
@@ -306,7 +307,7 @@ return baseclass.extend({
 		}
 
 		ui.showModal(_('Confirm Delete All'), [
-			E('p', _('Are you sure you want to delete ALL %d messages from SIM card? This action cannot be undone.').format(messages.length)),
+			E('p', _('Are you sure you want to delete ALL %d messages? This action cannot be undone.').format(messages.length)),
 			E('div', { 'class': 'right' }, [
 				E('button', {
 					'class': 'cbi-button cbi-button-neutral',
@@ -325,9 +326,7 @@ return baseclass.extend({
 						// Delete messages one by one
 						var deletePromises = [];
 						for (var i = 0; i < messages.length; i++) {
-							if (messages[i].index != null) {
-								deletePromises.push(smsService.deleteSimSms(configSection, messages[i].index));
-							}
+							deletePromises.push(smsService.deleteSimSms(configSection, messages[i].delete_ref));
 						}
 						
 						Promise.all(deletePromises).then(function(results) {

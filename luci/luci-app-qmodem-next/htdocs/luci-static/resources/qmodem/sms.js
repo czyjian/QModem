@@ -190,11 +190,19 @@ return L.Class.extend({
 			var result = results[1];
 			return { messages: (result.msg || result.received || result.messages || []).map(function(message) {
 				var contact = message.type === 'sent' ? message.recipient : message.sender;
-				return Object.assign({}, message, { display_sender: phone.identify(contact, results[0]).display });
+				var database = /^database_/.test(result.mode || '');
+				return Object.assign({}, message, {
+					display_sender: phone.identify(contact, results[0]).display,
+					delete_ref: database ? { id: message.id } : { index: message.index }
+				});
 			}) };
 		});
 	},
-	deleteSimSms: function(configSection, index) {
-		return callDelete(configSection || 'modem_1', index, index).then(function(result) { result.success = result.status === 'success'; return result; });
+	deleteSimSms: function(configSection, reference) {
+		if (!reference || typeof reference !== 'object' ||
+			(reference.id == null && reference.index == null) ||
+			(reference.id != null && reference.index != null))
+			return Promise.reject(new Error(_('Invalid message index')));
+		return callDelete(configSection || 'modem_1', reference.id, reference.index).then(function(result) { result.success = result.status === 'success'; return result; });
 	}
 });
