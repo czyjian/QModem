@@ -25,6 +25,15 @@ var callInitAction = rpc.declare({
 });
 
 return view.extend({
+	isModemDisabled: function(section_or_id) {
+		if (section_or_id && typeof section_or_id === 'object') {
+			if (section_or_id.state === 'disabled')
+				return true;
+			section_or_id = section_or_id['.name'];
+		}
+		return section_or_id ? uci.get('qmodem', section_or_id, 'state') === 'disabled' : false;
+	},
+
 	load: function() {
 		return Promise.all([
 			uci.load('qmodem'),
@@ -32,9 +41,11 @@ return view.extend({
 		]).then(L.bind(function(results) {
 			this.rcStatusData = results[1];
 			
-			// Load connection status for all modem devices
+			// Load connection status for available modem devices
 			var sections = uci.sections('qmodem', 'modem-device');
-			var statusPromises = sections.map(function(section) {
+			var statusPromises = sections.filter(L.bind(function(section) {
+				return !this.isModemDisabled(section);
+			}, this)).map(function(section) {
 				return qmodem.getConnectStatus(section['.name'])
 					.then(function(status) {
 						return { section_id: section['.name'], status: status };
@@ -221,11 +232,12 @@ return view.extend({
 	o.editable = true;
 	o.width = '60px';
 	o.cfgvalue = L.bind(function(section_id) {
-		var color = '#999'; // Gray (default/loading)
+		var color = '#999'; // Gray (default/loading/disabled)
 		var title = _('Loading...');
 		
-		// Use preloaded data if available
-		if (this.connectionStatusData && this.connectionStatusData[section_id]) {
+		if (this.isModemDisabled(section_id)) {
+			title = _('Disabled');
+		} else if (this.connectionStatusData && this.connectionStatusData[section_id]) {
 			var result = this.connectionStatusData[section_id];
 			if (result && result.connection_status !== undefined) {
 				var status = result.connection_status.toString().toLowerCase();
@@ -654,6 +666,9 @@ return view.extend({
 	},
 
 	updateDialControlsForSection: function(section_id) {
+		if (this.isModemDisabled(section_id))
+			return Promise.resolve();
+
 		return qmodem.getDialStatus(section_id).then(L.bind(function(result) {
 			if (result && result.running !== undefined) {
 				var isRunning = (result.running === 'true' || result.running === true);
@@ -667,6 +682,8 @@ return view.extend({
 	updateAllDialControls: function() {
 		var sections = uci.sections('qmodem', 'modem-device');
 		sections.forEach(L.bind(function(section) {
+			if (this.isModemDisabled(section))
+				return;
 			var enable_dial = uci.get('qmodem', section['.name'], 'enable_dial');
 			if (enable_dial !== '0') {
 				this.updateDialControlsForSection(section['.name']);
@@ -683,6 +700,19 @@ return view.extend({
 	updateStatusIndicator: function(section_id) {
 		var container = document.getElementById('status-indicator-' + section_id);
 		if (!container) return;
+
+		if (this.isModemDisabled(section_id)) {
+			while (container.firstChild) {
+				container.removeChild(container.firstChild);
+			}
+			container.appendChild(
+				E('span', {
+					'style': 'display: inline-block; width: 12px; height: 12px; vertical-align: middle; border-radius: 50%; background-color: #999;',
+					'title': _('Disabled')
+				})
+			);
+			return Promise.resolve();
+		}
 
 		return qmodem.getConnectStatus(section_id).then(L.bind(function(result) {
 			// Update cached data
@@ -733,6 +763,8 @@ return view.extend({
 	updateAllStatusIndicators: function() {
 		var sections = uci.sections('qmodem', 'modem-device');
 		sections.forEach(L.bind(function(section) {
+			if (this.isModemDisabled(section))
+				return;
 			this.updateStatusIndicator(section['.name']);
 		}, this));
 	},
