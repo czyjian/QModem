@@ -1770,7 +1770,7 @@ EOF
         add_plain_info_entry "Duplex Mode" "$lte_duplex_mode" "Duplex Mode"
         extra_info="LTE"
         set_4g_cell_info "$lte_mcc" "$lte_mnc" "$lte_tac" "$lte_cell_id" "$lte_earfcn" \
-            "$lte_physical_cell_id" "$lte_band" "$lte_ul_bandwidth" "$lte_dl_bandwidth" \
+            "$lte_physical_cell_id" "$lte_freq_band_ind" "$lte_ul_bandwidth" "$lte_dl_bandwidth" \
             "$lte_rsrp" "$lte_rsrq" "$lte_sinr" "$lte_rssnr" "$lte_rxlev"
         add_bar_info_entry "RSSI" "$lte_rssi" "Received Signal Strength Indicator" -120 -20 dBm
         add_plain_info_entry "CQI" "$lte_cql" "Channel Quality Indicator"
