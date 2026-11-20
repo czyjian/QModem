@@ -35,6 +35,7 @@ struct modem_config {
     char country_code[8];
     char default_country[3];
     int use_ubus;
+    int disabled;
     int auto_delete;
     int forwarding;
     int poll_interval;
@@ -226,6 +227,7 @@ static int load_config(const char *section_name, struct modem_config *cfg)
              option_string(uci, section, "sms_at_port",
              option_string(uci, section, "at_port", ""))));
     cfg->use_ubus = !strcmp(option_string(uci, section, "use_ubus", "1"), "1");
+    cfg->disabled = !strcmp(option_string(uci, section, "state", "enabled"), "disabled");
     snprintf(cfg->mode, sizeof(cfg->mode), "%s",
              option_string(uci, section, "sms_mode",
                            cfg->use_ubus ? "database_poll" : "direct"));
@@ -448,6 +450,10 @@ static int sync_modem(const char *section, const char *trigger, int *imported,
     app.last_sync_error[0] = '\0';
     if (load_config(section, &cfg) != 0) {
         snprintf(app.last_sync_error, sizeof(app.last_sync_error), "modem configuration unavailable");
+        return -1;
+    }
+    if (cfg.disabled) {
+        snprintf(app.last_sync_error, sizeof(app.last_sync_error), "modem is disabled");
         return -1;
     }
     if (!strcmp(cfg.mode, "direct")) {
@@ -1192,7 +1198,9 @@ static int modem_list_method(struct ubus_context *ctx, struct ubus_object *obj,
         blobmsg_add_string(&b, "mode", option_string(uci, section, "sms_mode",
                            use_ubus ? "database_poll" : "direct"));
         blobmsg_add_u8(&b, "use_ubus", use_ubus);
-        blobmsg_add_u8(&b, "enabled", strcmp(option_string(uci, section, "enabled", "1"), "0") != 0);
+        blobmsg_add_u8(&b, "enabled",
+                       strcmp(option_string(uci, section, "state", "enabled"), "disabled") != 0 &&
+                       strcmp(option_string(uci, section, "enabled", "1"), "0") != 0);
         snprintf(state_path, sizeof(state_path), "/var/run/qmodem/settings/%s.json", section->e.name);
         state = json_object_from_file(state_path);
         if (state && json_object_object_get_ex(state, "state", &state_value))
@@ -1334,6 +1342,9 @@ static void urc_event(struct ubus_context *ctx, struct ubus_event_handler *handl
     uci_foreach_element(&package->sections, element) {
         struct uci_section *section = uci_to_section(element);
         int imported, deleted, gap = 0;
+        if (strcmp(section->type, "modem-device") ||
+            !strcmp(option_string(uci, section, "state", "enabled"), "disabled"))
+            continue;
         if (!strcmp(option_string(uci, section, "override_at_port",
                 option_string(uci, section, "sms_at_port",
                 option_string(uci, section, "at_port", ""))),
@@ -1386,6 +1397,8 @@ static void scheduler_cb(struct uloop_timeout *timeout)
 
         if (strcmp(section->type, "modem-device") ||
             load_config(section->e.name, &cfg) != 0)
+            continue;
+        if (cfg.disabled)
             continue;
         if (!strcmp(cfg.mode, "database_urc")) {
             continue;

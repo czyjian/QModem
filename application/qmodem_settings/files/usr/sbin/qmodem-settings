@@ -103,10 +103,15 @@ request_sms_resync()
 
 apply_one()
 {
-	local section="$1" model mode use_ubus mem1 mem2 mem3 firmware setup prefix result status delay
+	local section="$1" model state mode use_ubus mem1 mem2 mem3 firmware setup prefix result status delay
 	local degraded= sms_resync=0
 	lease_token=
 	valid_id "$section" || return 1
+	config_get state "$section" state enabled
+	if [ "$state" = disabled ]; then
+		write_state "$section" disabled modem_disabled
+		return 0
+	fi
 	config_get model "$section" name
 	config_get at_port "$section" override_at_port
 	[ -n "$at_port" ] || config_get at_port "$section" sms_at_port
