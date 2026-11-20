@@ -3059,3 +3059,15 @@ msgstr "模组探测"
 
 msgid "Cellular"
 msgstr "蜂窝"
+
+msgid "Not enabled"
+msgstr "未开启"
+
+msgid "Not enabled; enable 4G first"
+msgstr "未启用，需开启4G"
+
+msgid "Unable to read network mode"
+msgstr "无法读取网络模式"
+
+msgid "Applied"
+msgstr "已应用"

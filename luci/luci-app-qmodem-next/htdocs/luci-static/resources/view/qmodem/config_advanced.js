@@ -412,8 +412,11 @@ return view.extend({
 						throw new Error(_('Failed to set network preference'));
 					if (result) {
 						ui.addNotification(null, E('p', _('Network preference set successfully')), 'success');
+						submitButton.textContent = _('Applied');
 						// Refresh the preference display
 						self.loadNetworkPrefer(modem, currentPrefValue, prefSelectionField, submitButton);
+						var bandContent = document.getElementById && document.getElementById('lockband_content_' + modem.id);
+						if (bandContent) self.loadLockBand(modem, bandContent);
 					} else {
 						ui.addNotification(null, E('p', _('Failed to set network preference')), 'error');
 						submitButton.disabled = false;
@@ -473,7 +476,11 @@ return view.extend({
 					'name': 'network_' + modem.id,
 					'value': network,
 					'id': 'network_' + modem.id + '_' + network,
-					'checked': networkPrefer[network] === '1' || networkPrefer[network] === 1 ? 'checked' : null
+					'checked': networkPrefer[network] === '1' || networkPrefer[network] === 1 ? 'checked' : null,
+					'change': function() {
+						submitButton.textContent = _('Apply');
+						submitButton.disabled = false;
+					}
 				});
 				var label = E('label', {
 					'for': 'network_' + modem.id + '_' + network,
@@ -486,7 +493,7 @@ return view.extend({
 			});
 
 			dom.content(prefSelectionField, checkboxContainer);
-			submitButton.disabled = false;
+			submitButton.disabled = submitButton.textContent === _('Applied');
 
 		}).catch(function(e) {
 			currentPrefValue.textContent = _('Error');
@@ -1158,10 +1165,29 @@ return view.extend({
 		return container;
 	},
 
+	getBandModeState: function(preference, bandClass) {
+		if (!preference || !Object.keys(preference).some(function(key) { return /^(3G|4G|5G)$/.test(key); }))
+			return { enabled: false, text: _('Unable to read network mode') };
+		function enabled(key) { return preference[key] === '1' || preference[key] === 1 || preference[key] === true; }
+		var type = bandClass.toUpperCase();
+		if (/NSA/.test(type)) {
+			if (enabled('5G') && !enabled('4G'))
+				return { enabled: false, text: _('Not enabled; enable 4G first') };
+			return { enabled: enabled('4G') && enabled('5G'), text: _('Not enabled') };
+		}
+		var key = /UMTS|WCDMA|3G/.test(type) ? '3G' : /LTE|4G/.test(type) ? '4G' : /NR|5G/.test(type) ? '5G' : null;
+		return { enabled: key == null || enabled(key), text: _('Not enabled') };
+	},
+
 	loadLockBand: function(modem, lockbandContent) {
 		var self = this;
 		
-		qmodem.getLockBand(modem.id).then(function(result) {
+		return Promise.all([
+			qmodem.getLockBand(modem.id),
+			qmodem.getNetworkPrefer(modem.id).catch(function() { return null; })
+		]).then(function(results) {
+			var result = results[0];
+			var preference = results[1] && results[1].network_prefer;
 			
 			if (!result) {
 				dom.content(lockbandContent, E('div', { 'class': 'alert-message warning' },
@@ -1227,6 +1253,11 @@ return view.extend({
 				if (!Array.isArray(lockedBands)) {
 					lockedBands = [];
 				}
+				lockedBands = lockedBands.map(String).filter(function(b) { return /^[1-9][0-9]*$/.test(b); });
+				var modeState = self.getBandModeState(preference, bandClass);
+				// Keep explicit locks; default an unrestricted/empty selection to all supported bands.
+				if (modeState.enabled && lockedBands.length === 0)
+					lockedBands = availableBands.map(function(b) { return String(b.band_id); });
 
 				// Initialize state for this band class
 				lockbandState[bandClass] = {
@@ -1254,6 +1285,10 @@ return view.extend({
 					'id': 'locked_' + modem.id + '_' + bandClass 
 				});
 				self.updateLockedDisplay(lockedDisplay, lockbandState[bandClass].locked, lockbandState[bandClass].available);
+				if (!modeState.enabled) {
+					lockedDisplay.textContent = modeState.text;
+					lockedDisplay.style.color = '#000';
+				}
 				currentField.appendChild(lockedDisplay);
 				currentSection.appendChild(currentField);
 				bandSection.appendChild(currentSection);
@@ -1278,7 +1313,8 @@ return view.extend({
 						'name': 'band_' + modem.id + '_' + bandClass,
 						'value': band.band_id,
 						'id': 'band_' + modem.id + '_' + bandClass + '_' + band.band_id,
-						'checked': lockbandState[bandClass].locked.includes(band.band_id.toString()) ? 'checked' : null,
+						'checked': modeState.enabled && lockbandState[bandClass].locked.includes(band.band_id.toString()) ? 'checked' : null,
+						'disabled': modeState.enabled ? null : 'disabled',
 						'change': function() {
 							if (this.checked) {
 								if (!lockbandState[bandClass].locked.includes(band.band_id.toString())) {
@@ -1297,6 +1333,7 @@ return view.extend({
 						'for': 'band_' + modem.id + '_' + bandClass + '_' + band.band_id,
 						'style': 'margin-left: 5px; cursor: pointer;'
 					}, band.band_name);
+					if (!modeState.enabled) label.style.opacity = '0.5';
 
 					bandWrapper.appendChild(checkbox);
 					bandWrapper.appendChild(label);
@@ -1316,6 +1353,7 @@ return view.extend({
 
 				// Select All button
 				var selectAllBtn = E('button', {
+					'disabled': modeState.enabled ? null : 'disabled',
 					'class': 'btn cbi-button',
 					'style': 'margin-right: 10px;',
 					'click': function() {
@@ -1342,6 +1380,7 @@ return view.extend({
 
 				// Apply button
 				var applyBtn = E('button', {
+					'disabled': modeState.enabled ? null : 'disabled',
 					'class': 'btn cbi-button-action',
 					'click': function() {
 						var params = {

@@ -11,6 +11,7 @@ const end = source.indexOf('}).catch(function(e)', start);
 assert(end > start);
 let refreshed = 0;
 const context = {
+    document: { getElementById() { return null; } },
     _: text => text,
     E: () => ({}),
     ui: { addNotification() {} },
@@ -22,6 +23,7 @@ assert.throws(() => callback({ result: { success: false, status: '+CME ERROR: 3'
 assert.strictEqual(refreshed, 0);
 callback({ result: { success: true, status: 'OK' } });
 assert.strictEqual(refreshed, 1);
+assert.strictEqual(context.submitButton.textContent, 'Applied');
 // Vendor responses without the new Fibocom flag remain compatible.
 callback({ result: { status: 'OK' } });
 assert.strictEqual(refreshed, 2);
