@@ -10,6 +10,10 @@ assert.equal(displayValue('ISP','China Telecom'),'中国电信');
 assert.equal(displayValue('ISP','China Unicom'),'中国联通');
 assert.equal(displayValue('ISP','China Mobile'),'中国移动');
 assert.equal(displayValue('name','Yes'),'Yes');
+assert.equal(displayValue('DL Bandwidth', '20'), '20 MHz');
+assert.equal(displayValue('UL Bandwidth', '100 / 20'), '100 / 20 MHz');
+assert.equal(displayValue('DL Bandwidth (CA)', '20M'), '20M');
+assert.equal(displayValue('Band', '3'), '3');
 assert.equal(displayValue('ISP','Unknown carrier'),'Unknown carrier');
 function E(tag,attrs,children){return {tag,attrs,children:children||[],appendChild(child){this.children.push(child);}};}
 const source=fs.readFileSync(root+'view/status/include/11_modem.js','utf8');

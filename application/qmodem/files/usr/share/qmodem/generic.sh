@@ -266,7 +266,7 @@ set_4g_cell_info() {
     add_plain_info_entry "DL Bandwidth" "$dl_bw" "DL Bandwidth"
     add_bar_info_entry "RSRP" "$rsrp" "Reference Signal Received Power" -140 -44 dBm
     add_bar_info_entry "RSRQ" "$rsrq" "Reference Signal Received Quality" -19.5 -3 dB
-    add_bar_info_entry "SINR" "$sinr" "Signal to Interference plus Noise Ratio" 0 30 dB
+    add_bar_info_entry "SINR" "$sinr" "Signal to Interference plus Noise Ratio" -20 30 dB
     add_plain_info_entry "RSSNR" "$rssnr" "Radio Signal Strength Noise Ratio"
     add_bar_info_entry "RxLev" "$rxlev" "Received Signal Level" -120 -25 dBm
     

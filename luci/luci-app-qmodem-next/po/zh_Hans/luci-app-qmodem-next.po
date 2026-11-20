@@ -3071,3 +3071,9 @@ msgstr "无法读取网络模式"
 
 msgid "Applied"
 msgstr "已应用"
+
+msgid "Serving Cell ID"
+msgstr "小区标识（Cell ID）"
+
+msgid "Radio Frequency Band"
+msgstr "频段"

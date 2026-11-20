@@ -353,6 +353,8 @@ function renderSmsTabs(chatNode) {
 // Localize display values only; RPC data remains unchanged for other consumers.
 function displayValue(key, value) {
 	var text=String(value == null ? '' : value).trim(), normalized=text.toLowerCase();
+	if (/^(?:UL|DL) Bandwidth(?: \(CA\))?$/.test(key) && /^\d+(?:\.\d+)?(?:\s*[\/+]\s*\d+(?:\.\d+)?)*$/.test(text))
+		return text + ' MHz';
 	if (key === 'connect_status') {
 		if (normalized === 'yes') return _('已连接');
 		if (normalized === 'no') return _('未连接');

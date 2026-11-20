@@ -40,6 +40,8 @@ var progressbar_className = hasCssClass('.cbi-progressbar') ? 'cbi-progressbar' 
 // Translate a modem field name, preferring the "qmodem" context: generic words
 // such as "Band" are translated differently by other catalogs (luci-base)
 function trField(name) {
+	if (name === 'Cell ID') return _('Serving Cell ID');
+	if (name === 'Band') return _('Radio Frequency Band');
 	var translated = _(name, 'qmodem');
 	return (translated !== name) ? translated : _(name);
 }
@@ -84,7 +86,7 @@ LuciTable.prototype = {
 				
 				// Translate full_name and extra_info
 				var translatedName = key === 'ISP' ? _('运营商') : trField(full_name);
-				var displayName = extra_info ? translatedName + ' (' + extra_info + ')' : translatedName;
+				var displayName = extra_info && extra_info !== 'LTE' ? translatedName + ' (' + extra_info + ')' : translatedName;
 				
 				this.rows[index].left.textContent = displayName;
 				this.rows[index].right.textContent = qmodem.displayValue(key,value);
@@ -112,7 +114,7 @@ LuciTable.prototype = {
 				
 				// Translate full_name and extra_info
 				var translatedName = trField(full_name);
-				var displayName = extra_info ? translatedName + ' (' + extra_info + ')' : translatedName;
+				var displayName = extra_info && extra_info !== 'LTE' ? translatedName + ' (' + extra_info + ')' : translatedName;
 				
 				this.rows[index].left.textContent = displayName;
 				

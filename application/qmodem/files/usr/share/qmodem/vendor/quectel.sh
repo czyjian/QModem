@@ -1571,6 +1571,25 @@ get_slot()
 }
 
 #小区信息
+quectel_lte_metric()
+{
+    local metric="$1" value="$2"
+    if [ "$(uci -q get qmodem.$config_section.name)" != "rg520n-eu" ]; then
+        printf '%s' "$value"
+        return
+    fi
+    # RG520N QENG: LTE SINR = 2 * raw - 20; tx_power is in 0.1 dBm.
+    printf '%s\n' "$value" | awk -v metric="$metric" '
+        /^-?[0-9]+([.][0-9]+)?$/ {
+            if (metric == "sinr") printf "%g", 2 * $0 - 20
+            else if (metric == "tx_power") printf "%g dBm", $0 / 10
+            else printf "%s", $0
+            next
+        }
+        { printf "%s", $0 }
+    '
+}
+
 cell_info()
 {
     m_debug  "Quectel cell info"
@@ -1599,9 +1618,9 @@ cell_info()
         endc_lte_rsrp=$(echo "$lte" | awk -F',' '{print $12}')
         endc_lte_rsrq=$(echo "$lte" | awk -F',' '{print $13}')
         endc_lte_rssi=$(echo "$lte" | awk -F',' '{print $14}')
-        endc_lte_sinr=$(echo "$lte" | awk -F',' '{print $15}')
+        endc_lte_sinr=$(quectel_lte_metric sinr "$(echo "$lte" | awk -F',' '{print $15}')")
         endc_lte_cql=$(echo "$lte" | awk -F',' '{print $16}')
-        endc_lte_tx_power=$(echo "$lte" | awk -F',' '{print $17}')
+        endc_lte_tx_power=$(quectel_lte_metric tx_power "$(echo "$lte" | awk -F',' '{print $17}')")
         endc_lte_srxlev=$(echo "$lte" | awk -F',' '{print $18}' | sed 's/\r//g')
         #NR5G-NSA
         endc_nr_mcc=$(echo "$nr5g_nsa" | awk -F',' '{print $2}')
@@ -1703,9 +1722,9 @@ EOF
                 lte_rsrp=$(echo "$response" | awk -F',' '{print $14}')
                 lte_rsrq=$(echo "$response" | awk -F',' '{print $15}')
                 lte_rssi=$(echo "$response" | awk -F',' '{print $16}')
-                lte_sinr=$(echo "$response" | awk -F',' '{print $17}')
+                lte_sinr=$(quectel_lte_metric sinr "$(echo "$response" | awk -F',' '{print $17}')")
                 lte_cql=$(echo "$response" | awk -F',' '{print $18}')
-                lte_tx_power=$(echo "$response" | awk -F',' '{print $19}')
+                lte_tx_power=$(quectel_lte_metric tx_power "$(echo "$response" | awk -F',' '{print $19}')")
                 lte_srxlev=$(echo "$response" | awk -F',' '{print $20}' | sed 's/\r//g')
             ;;
             "WCDMA")

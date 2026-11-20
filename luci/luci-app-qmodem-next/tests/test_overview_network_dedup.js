@@ -170,7 +170,7 @@ function getNetworkRows(tablesMap) {
 		await new Promise(resolve => setImmediate(resolve));
 		assert.deepEqual(domErrors, []);
 		assert.deepEqual(getNetworkRows(tablesMap).map(r => r.label), [
-			'Band', 'UL Bandwidth', 'DL Bandwidth', 'CQI UL', 'CQI DL', 'AMBR UL', 'AMBR DL', 'RSRP', 'DL Bandwidth (CA)'
+			'Radio Frequency Band', 'UL Bandwidth', 'DL Bandwidth', 'CQI UL', 'CQI DL', 'AMBR UL', 'AMBR DL', 'RSRP', 'DL Bandwidth (CA)'
 		]);
 	}
 	console.log('PASS: overview network fields hide modem rates and place quality fields after bandwidth');
