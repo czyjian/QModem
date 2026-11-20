@@ -3073,7 +3073,7 @@ msgid "Applied"
 msgstr "已应用"
 
 msgid "Serving Cell ID"
-msgstr "小区标识（Cell ID）"
+msgstr "小区标识"
 
 msgid "Radio Frequency Band"
 msgstr "频段"

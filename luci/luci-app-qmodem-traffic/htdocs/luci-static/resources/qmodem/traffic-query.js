@@ -51,7 +51,7 @@ return L.Class.extend({
 		]);
 		var details=E('button',{type:'button','class':'cbi-button',click:function(){window.open(detailTarget,'_blank','noopener,noreferrer');}},_('在新窗口打开'));
 		var refresh=E('button',{type:'button','class':'cbi-button',click:function(){update(true);}},_('刷新'));
-		var logout=E('button',{type:'button','class':'cbi-button',title:_('清除当前 SIM 的共享登录，其他浏览器也需要重新登录。'),click:function(){
+		var logout=E('button',{type:'button','class':'cbi-button',title:_('退出当前号码的登录。'),click:function(){
 			if(loggingOut)return;
 			var id=selector.value, request=++generation;loggingOut=true;logout.disabled=true;
 			fetch(L.url('admin/modem/unicom_api/'+(currentCarrier==='mobile' ? 'mobile' : currentCarrier==='telecom' ? 'telecom_test' : 'shared'))+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:currentCarrier==='telecom' ? 'shared_logout' : 'logout',config_section:id})}).then(function(response){return response.json().then(function(result){if(!response.ok || !result.ok)throw new Error(result.msg || _('登出失败'));return result;});}).then(function(){

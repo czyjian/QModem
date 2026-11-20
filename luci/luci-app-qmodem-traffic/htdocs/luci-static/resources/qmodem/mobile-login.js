@@ -44,7 +44,7 @@ return L.Class.extend({
   }},_('登录'));
   function close(){if(closed)return;closed=true;if(observer)observer.disconnect();forget();sms.close();phone.value='';window.removeEventListener('hashchange',close);window.removeEventListener('pagehide',close);ui.hideModal();}
   function field(label,input){return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title'},label),E('div',{'class':'cbi-value-field'},input)]);}
-  var root=E('div',{},[E('p',{},_('中国移动短信登录。图片验证由用户手动完成，登录会话保存在路由器，供其他已登录 LuCI 的浏览器共享。')),field(_('移动手机号'),phone),field(_('官方图片验证'),[image,get]),field(_('图片验证码'),captcha),field(_('短信验证码'),[code,send]),sms.node,note,E('div',{'class':'right'},[E('button',{type:'button','class':'cbi-button',click:close},_('取消')),' ',login])]);
+  var root=E('div',{},[field(_('移动手机号'),phone),field(_('官方图片验证'),[image,get]),field(_('图片验证码'),captcha),field(_('短信验证码'),[code,send]),sms.node,note,E('div',{'class':'right'},[E('button',{type:'button','class':'cbi-button',click:close},_('取消')),' ',login])]);
   ui.showModal(_('中国移动登录'),[root]);controls();
   window.addEventListener('hashchange',close);window.addEventListener('pagehide',close);
   if(window.MutationObserver){observer=new window.MutationObserver(function(){if(!closed && (!document.body.classList.contains('modal-overlay-active') || !root.isConnected))close();});observer.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});}

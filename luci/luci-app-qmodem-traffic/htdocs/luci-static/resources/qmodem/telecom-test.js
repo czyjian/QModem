@@ -93,7 +93,6 @@ return L.Class.extend({
   var close=E('button',{type:'button','class':'cbi-button',click:leave},_('关闭'));
   var switchMode=E('button',{type:'button','class':'cbi-button',click:function(){if(pending)return;leave();open(section,onLogin,{forceLogin:true,smsOnly:!smsOnly});}},smsOnly ? _('改用服务密码登录') : _('改用短信验证码登录'));
   var root=E('div',{},[
-   E('p',{},smsOnly ? _('完成滑块验证并获取短信验证码后登录，无需服务密码。') : _('先点击“短信授权 DeviceId”，手动完成官方验证和短信授权，再用服务密码登录查询。密码不保存；查询会话保存在路由器，供已登录 LuCI 的浏览器共享，登出时清除。')),
    field(_('电信手机号'),phone),field(smsOnly ? _('官方验证') : _('设备授权'),authorize),field(_('短信验证码'),smsOnly ? code : [code,bind])
   ].concat(smsOnly ? [] : [field(_('短信授权 DeviceId'),device),field(_('服务密码'),password)]).concat([
    sms.node,
