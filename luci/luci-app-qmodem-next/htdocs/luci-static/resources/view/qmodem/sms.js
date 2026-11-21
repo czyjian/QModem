@@ -592,7 +592,7 @@ return qmodem.withSmsTabs(view.extend({
 		]);
 
 		// Show modal first
-		ui.showModal(_('New Conversation'), [
+		var dialog = ui.showModal(_('New Conversation'), [
 			modalContent,
 			E('div', { 'class': 'right' }, [
 				E('button', {
@@ -656,7 +656,16 @@ return qmodem.withSmsTabs(view.extend({
 					}
 				}, _('Send'))
 			])
-		]);
+		], 'cbi-modal', 'qmodem-new-conversation-modal');
+
+		if (dialog && typeof dialog.getBoundingClientRect === 'function') {
+			var bounds = dialog.getBoundingClientRect();
+			if (bounds && bounds.width > 0) {
+				var width = Math.min(bounds.width * 1.6, document.documentElement.clientWidth - 32);
+				dialog.appendChild(E('style', {},
+					'.modal.qmodem-new-conversation-modal { box-sizing: border-box; width: ' + width + 'px !important; max-width: calc(100vw - 2rem) !important; }'));
+			}
+		}
 
 		// Add character counter
 		var textarea = document.getElementById('new-conversation-message');
