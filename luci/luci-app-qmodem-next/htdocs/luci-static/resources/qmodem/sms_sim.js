@@ -145,7 +145,7 @@ return baseclass.extend({
 			var table = E('table', { 'class': 'table cbi-section-table' });
 			var thead = E('thead', {}, [
 				E('tr', { 'class': 'tr cbi-section-table-titles' }, [
-					E('th', { 'class': 'th', 'style': 'width: 5%' }, _('Index')),
+					E('th', { 'class': 'th', 'style': 'width: 5%' }, _('Row Number')),
 					E('th', { 'class': 'th', 'style': 'width: 15%' }, _('Sender')),
 					E('th', { 'class': 'th', 'style': 'width: 15%' }, _('Time')),
 					E('th', { 'class': 'th', 'style': 'width: 50%' }, _('Content')),
@@ -162,7 +162,7 @@ return baseclass.extend({
 				var msg = messages[i];
 				
 				var reference = msg.delete_ref || {};
-				var index = reference.id != null ? String(reference.id) : reference.index != null ? String(reference.index) : '-';
+				var index = String(i + 1);
 				var sender = msg.display_sender || smsService.formatPhoneNumber(msg.sender || '-');
 				var time = msg.timestamp ? smsService.formatTimestamp(msg.timestamp) : '-';
 				var content = smsService.truncateMessage(msg.content || msg.sms_text || '', 80);
