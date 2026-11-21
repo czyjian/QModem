@@ -164,7 +164,7 @@ return baseclass.extend({
 			[_('Recording since'), formatDate(s.since)]
 		];
 		var content = [];
-		if (s.carrier_name) rows.unshift([_('当前运营商'),s.carrier_name]);
+		if (s.carrier_name) rows.unshift([_('当前运营商'),s.carrier_name],[_('当前SIM卡号码'),s.sim_number || _('未获取')]);
 		if (s.exceeded) content.push(E('div', {'class':'alert-message warning'}, _('Traffic usage has reached the configured threshold.') + ' ' + bytes(cycleTotal(s)) + ' / ' + quotaText));
 		if (s.stale) content.push(E('p', {'class':'alert-message warning'}, _('Traffic samples are stale. Check the monitoring service.')));
 		content.push(E('table', {'class':'table'}, rows.map(function(row) { return E('tr', {'class':'tr'}, [E('td', {'class':'td',width:'33%'},row[0]), E('td', {'class':'td'},row[1])]); })));

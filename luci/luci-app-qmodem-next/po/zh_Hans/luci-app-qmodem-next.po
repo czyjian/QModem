@@ -1380,7 +1380,7 @@ msgstr "短信AT端口"
 # Source: view/qmodem/sms_conversation.js:62
 # Source: view/qmodem/sms_conversation.js
 msgid "SMS Conversation"
-msgstr "短信对话"
+msgstr "短信会话"
 
 # Source: view/qmodem/sms.js:132
 msgid "SMS Database Path"
@@ -2533,7 +2533,7 @@ msgstr "SIM卡短信管理"
 
 # Source: view/qmodem/sms_sim.js
 msgid "SIM Card SMS"
-msgstr "SIM卡短信"
+msgstr "短信列表"
 
 # Source: view/qmodem/sms_sim.js
 msgid "View and delete SMS messages stored on SIM card. These are raw messages before being processed into conversations."
@@ -3086,3 +3086,15 @@ msgstr "确定删除这条短信吗？"
 
 msgid "Are you sure you want to delete ALL %d messages? This action cannot be undone."
 msgstr "确定删除全部 %d 条短信吗？此操作无法撤销。"
+
+msgid "Sent SMS List"
+msgstr "发送"
+
+msgid "Received SMS List"
+msgstr "接收"
+
+msgid "Recipient"
+msgstr "收件人"
+
+msgid "Sent"
+msgstr "已发送"

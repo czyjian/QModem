@@ -189,9 +189,11 @@ return L.Class.extend({
 		return Promise.all([this.getNumberContext(modem), listRaw(modem)]).then(function(results) {
 			var result = results[1];
 			return { messages: (result.msg || result.received || result.messages || []).map(function(message) {
-				var contact = message.type === 'sent' ? message.recipient : message.sender;
+				var sent = message.type === 'sent' || message.direction === 'sent';
+				var contact = sent ? message.recipient : message.sender;
 				var database = /^database_/.test(result.mode || '');
 				return Object.assign({}, message, {
+					type: sent ? 'sent' : 'received',
 					display_sender: phone.identify(contact, results[0]).display,
 					delete_ref: database ? { id: message.id } : { index: message.index }
 				});

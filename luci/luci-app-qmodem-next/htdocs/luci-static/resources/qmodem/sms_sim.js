@@ -124,127 +124,53 @@ return baseclass.extend({
 
 	renderSimSmsList: function(contentArea, messages, configSection) {
 		var self = this;
-
-		// Clear content
+		messages = messages || [];
 		dom.content(contentArea, null);
-
-		// Create messages container
-		var messagesDiv = E('div', { 'class': 'sms-sim-messages' });
-
-		if (!messages || messages.length === 0) {
-			messagesDiv.appendChild(E('div', { 'class': 'alert-message info' }, 
-				_('No messages found on SIM card')));
-		} else {
-			// Create messages list
-			var listFieldset = E('fieldset', { 'class': 'cbi-section' });
-			var listLegend = E('legend', {}, _('SMS Messages on SIM Card'));
-		
-			listFieldset.appendChild(listLegend);
-
-			// Create table
-			var table = E('table', { 'class': 'table cbi-section-table' });
-			var thead = E('thead', {}, [
-				E('tr', { 'class': 'tr cbi-section-table-titles' }, [
-					E('th', { 'class': 'th', 'style': 'width: 5%' }, _('Row Number')),
-					E('th', { 'class': 'th', 'style': 'width: 15%' }, _('Sender')),
-					E('th', { 'class': 'th', 'style': 'width: 15%' }, _('Time')),
-					E('th', { 'class': 'th', 'style': 'width: 50%' }, _('Content')),
-					E('th', { 'class': 'th', 'style': 'width: 10%' }, _('Type')),
-					E('th', { 'class': 'th', 'style': 'width: 5%' }, _('Actions'))
-				])
+		var container = E('div', { 'class': 'sms-sim-messages' });
+		function group(sent) {
+			var items = messages.filter(function(message) { return (message.type === 'sent') === sent; });
+			var section = E('fieldset', { 'class': 'cbi-section' }, [
+				E('legend', {}, (sent ? _('Sent SMS List') : _('Received SMS List')) + ' (' + items.length + ')')
 			]);
-			table.appendChild(thead);
-
-			var tbody = E('tbody', {});
-
-			// Add message rows
-			for (var i = 0; i < messages.length; i++) {
-				var msg = messages[i];
-				
-				var reference = msg.delete_ref || {};
-				var index = String(i + 1);
-				var sender = msg.display_sender || smsService.formatPhoneNumber(msg.sender || '-');
-				var time = msg.timestamp ? smsService.formatTimestamp(msg.timestamp) : '-';
-				var content = smsService.truncateMessage(msg.content || msg.sms_text || '', 80);
-				
-				// Determine message type
-				var type = '';
-				if (msg.reference && msg.total > 1) {
-					type = _('Part') + ' ' + (msg.part || '?') + '/' + (msg.total || '?');
-				} else {
-					type = _('Single');
-				}
-				
-				var deleteBtn = E('button', {
+			if (!items.length) section.appendChild(E('div', { 'class': 'cbi-section-descr' }, _('No messages found')));
+			else {
+				var rows = [E('tr', { 'class': 'tr cbi-section-table-titles' }, [
+					_('Row Number'), sent ? _('Recipient') : _('Sender'), _('Time'), _('Content'), sent ? _('Status') : _('Type'), _('Actions')
+				].map(function(label) { return E('th', { 'class': 'th' }, label); }))];
+				items.forEach(function(message, index) {
+					var contact = message.display_sender || smsService.formatPhoneNumber((sent ? message.recipient : message.sender) || '-');
+					var kind = sent ? (message.success === false || message.is_success === false ? _('Failed') : _('Sent')) :
+						(message.reference && message.total > 1 ? _('Part') + ' ' + (message.part || '?') + '/' + message.total : _('Single'));
+					rows.push(E('tr', { 'class': 'tr cbi-section-table-row' }, [
+						E('td', { 'class': 'td' }, String(index + 1)),
+						E('td', { 'class': 'td' }, contact),
+						E('td', { 'class': 'td' }, message.timestamp ? smsService.formatTimestamp(message.timestamp) : '-'),
+						E('td', { 'class': 'td', 'style': 'word-break:break-word;' }, message.content || message.sms_text || ''),
+						E('td', { 'class': 'td' }, kind),
+						E('td', { 'class': 'td' }, E('button', { 'class': 'cbi-button cbi-button-remove',
+							click: function() { self.handleDeleteSimSms(configSection, message.delete_ref, contentArea); }
+						}, _('Delete')))
+					]));
+				});
+				section.appendChild(E('table', { 'class': 'table cbi-section-table' }, [E('tbody', {}, rows)]));
+				section.appendChild(E('div', { 'class': 'cbi-page-actions' }, E('button', {
 					'class': 'cbi-button cbi-button-remove',
-					'click': L.bind(function(idx) {
-						self.handleDeleteSimSms(configSection, idx, contentArea);
-					}, this, reference)
-				}, _('Delete'));
-
-				var row = E('tr', { 
-					'class': 'tr cbi-section-table-row'
-				}, [
-					E('td', { 'class': 'td' }, index),
-					E('td', { 'class': 'td' }, sender),
-					E('td', { 'class': 'td' }, time),
-					E('td', { 'class': 'td', 'style': 'word-break: break-word;' }, content),
-					E('td', { 'class': 'td' }, type),
-					E('td', { 'class': 'td' }, deleteBtn)
-				]);
-
-				tbody.appendChild(row);
+					click: function() { self.handleDeleteAllSimSms(configSection, items, contentArea); }
+				}, _('Delete All'))));
 			}
-
-			table.appendChild(tbody);
-			listFieldset.appendChild(table);
-			messagesDiv.appendChild(listFieldset);
+			return section;
 		}
-
-		// Add summary info
-		var summaryFieldset = E('fieldset', { 'class': 'cbi-section' });
-		summaryFieldset.appendChild(E('legend', {}, _('Summary')));
-		
-		var summaryTable = E('table', { 'class': 'table' });
-		var summaryBody = E('tbody', {}, [
-			E('tr', { 'class': 'tr' }, [
-				E('td', { 'class': 'td', 'width': '33%' }, _('Total Messages')),
-				E('td', { 'class': 'td' }, String(messages.length))
-			])
-		]);
-		
-		summaryTable.appendChild(summaryBody);
-		summaryFieldset.appendChild(summaryTable);
-		messagesDiv.appendChild(summaryFieldset);
-
-		// Add action buttons
-		var buttonDiv = E('div', { 'class': 'cbi-page-actions' });
-		
-		var refreshBtn = E('button', {
+		container.appendChild(group(false));
+		container.appendChild(group(true));
+		container.appendChild(E('div', { 'class': 'cbi-page-actions' }, E('button', {
 			'class': 'cbi-button cbi-button-action',
-			'click': L.bind(function(ev) {
-				ev.preventDefault();
+			click: function() {
 				var loading = E('div', { 'class': 'spinning' }, _('Loading...'));
 				dom.content(contentArea, loading);
-				this.loadSimSmsList(contentArea, loading, configSection);
-			}, this)
-		}, _('Refresh'));
-		
-		var deleteAllBtn = E('button', {
-			'class': 'cbi-button cbi-button-remove',
-			'click': L.bind(function(ev) {
-				ev.preventDefault();
-				this.handleDeleteAllSimSms(configSection, messages, contentArea);
-			}, this)
-		}, _('Delete All'));
-		
-		buttonDiv.appendChild(refreshBtn);
-		if (messages.length > 0) {
-			buttonDiv.appendChild(deleteAllBtn);
-		}
-		messagesDiv.appendChild(buttonDiv);
-
-		contentArea.appendChild(messagesDiv);
+				self.loadSimSmsList(contentArea, loading, configSection);
+			}
+		}, _('Refresh'))));
+		contentArea.appendChild(container);
 	},
 
 	handleDeleteSimSms: function(configSection, index, contentArea) {

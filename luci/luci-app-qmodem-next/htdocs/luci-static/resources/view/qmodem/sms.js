@@ -95,6 +95,24 @@ return qmodem.withSmsTabs(view.extend({
 		selectorRow.appendChild(labelCell);
 		selectorRow.appendChild(selectCell);
 		selectorBody.appendChild(selectorRow);
+		var simNumber = E('td', { 'class': 'td' }, _('未获取'));
+		selectorBody.appendChild(E('tr', { 'class': 'tr' }, [
+			E('td', { 'class': 'td', 'width': '33%' }, _('当前SIM卡号码')), simNumber
+		]));
+		var numberRequest = 0, numberModem = '';
+		function updateSimNumber() {
+			var id = select.value, request = ++numberRequest;
+			if (numberModem !== id) simNumber.textContent = _('未获取');
+			numberModem = id;
+			return qmodem.getSimInfo(id).then(function(result) {
+				if (request !== numberRequest || select.value !== id) return;
+				var entry = ((result || {}).modem_info || []).find(function(item) { return item.key === 'SIM Number'; });
+				simNumber.textContent = entry && String(entry.value || '').trim() || _('未获取');
+			}).catch(function() {
+				if (request === numberRequest && select.value === id) simNumber.textContent = _('未获取');
+			});
+		}
+		updateSimNumber();
 
 		// Timezone offset setting for received messages
 		var timezoneReceivedRow = E('tr', { 'class': 'tr' });
@@ -295,6 +313,7 @@ return qmodem.withSmsTabs(view.extend({
 
 	// Selector change handler
 	select.addEventListener('change', function() {
+		updateSimNumber();
 		// Load UCI config for selected modem
 		self.loadBackendConfig(select.value, smsModeSelect, pollIntervalInput, smsAutoDeleteCheckbox, smsCountrySelect);
 		
@@ -341,6 +360,7 @@ return qmodem.withSmsTabs(view.extend({
 
 	// Start polling for new messages
 	poll.add(function() {
+		updateSimNumber();
 		self.pollSmsList(contentArea, select.value);
 	}, 10);		return container;
 	},

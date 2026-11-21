@@ -75,6 +75,8 @@ return view.extend({
 				if (selector.value !== id) return;
 				if (s.error) throw new Error(s.error);
 				s.carrier_name=sim.carrier==='unicom' ? _('中国联通') : sim.carrier==='mobile' ? _('中国移动') : sim.carrier==='telecom' ? _('中国电信') : _('未识别');
+				var numberEntry = ((results[1] || {}).modem_info || []).find(function(entry) { return entry.key === 'SIM Number'; });
+				s.sim_number = numberEntry && String(numberEntry.value || '').trim() || _('未获取');
 				s.unit_base=unitBase;state=s;dom.content(unitNote,_('流量统一按 1024 进制显示，1 GB = 1,024 MB = 1,073,741,824 字节；流量阈值与手动校准使用相同口径。'));
 				var renderedSummary = traffic.summary(s);
 				var summaryContent = renderedSummary.tagName === 'DIV' ? Array.from(renderedSummary.childNodes) : [renderedSummary];

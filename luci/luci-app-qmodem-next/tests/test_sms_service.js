@@ -59,9 +59,13 @@ async function main() {
 	assert.strictEqual(result.total, 1);
 	assert.strictEqual(result.conversations[0].contact, '10086');
 	const db = createService([{ mode: 'database_poll', messages: [
-		{ id: 42, type: 'received', sender: '10086', content: 'test' }
+		{ id: 42, type: 'received', sender: '10086', content: 'test' },
+		{ id: 43, type: 'sent', recipient: '10086', content: 'outgoing' },
+		{ id: 44, direction: 'sent', recipient: '10086', content: 'outgoing' }
 	] }]);
 	const dbList = await db.service.getSimSms('2_3');
+	assert.strictEqual(dbList.messages.length, 3, 'message list preserves both directions for separate sections');
+	assert.deepStrictEqual(dbList.messages.map(m => m.type), ['received', 'sent', 'sent']);
 	assert.deepStrictEqual(dbList.messages[0].delete_ref, { id: 42 });
 	assert.strictEqual((await db.service.deleteSimSms('2_3', dbList.messages[0].delete_ref)).success, true);
 	assert.deepStrictEqual(db.deleteCalls, [['2_3', 42, undefined]]);
