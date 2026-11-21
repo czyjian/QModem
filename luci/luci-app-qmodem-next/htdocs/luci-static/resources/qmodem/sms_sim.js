@@ -126,6 +126,8 @@ return baseclass.extend({
 		var self = this;
 		messages = messages || [];
 		dom.content(contentArea, null);
+		var activeTab = self.activeListTab === 'sent' ? 'sent' : 'received';
+		self.activeListTab = activeTab;
 		var container = E('div', { 'class': 'sms-sim-messages' });
 		function group(sent) {
 			var items = messages.filter(function(message) { return (message.type === 'sent') === sent; });
@@ -158,10 +160,42 @@ return baseclass.extend({
 					click: function() { self.handleDeleteAllSimSms(configSection, items, contentArea); }
 				}, _('Delete All'))));
 			}
-			return section;
+			return { items: items, section: section };
 		}
-		container.appendChild(group(false));
-		container.appendChild(group(true));
+		var receivedGroup = group(false);
+		var sentGroup = group(true);
+		var tabs = [
+			{ name: 'received', title: _('Received SMS List') + ' (' + receivedGroup.items.length + ')', panel: receivedGroup.section },
+			{ name: 'sent', title: _('Sent SMS List') + ' (' + sentGroup.items.length + ')', panel: sentGroup.section }
+		];
+		var tabMenu = E('ul', { 'class': 'cbi-tabmenu', 'style': 'margin-bottom: 1em;' });
+		var tabItems = {};
+		function showTab(name) {
+			self.activeListTab = name;
+			tabs.forEach(function(tab) {
+				var isActive = tab.name === name;
+				tabItems[tab.name].className = isActive ? 'cbi-tab' : 'cbi-tab-disabled';
+				tab.panel.style.display = isActive ? '' : 'none';
+			});
+		}
+		tabs.forEach(function(tab) {
+			var li = E('li', {
+				'class': tab.name === activeTab ? 'cbi-tab' : 'cbi-tab-disabled',
+				'data-tab': tab.name
+			}, E('a', {
+				'href': '#' + tab.name,
+				'click': function(ev) {
+					if (ev && ev.preventDefault) ev.preventDefault();
+					showTab(tab.name);
+				}
+			}, tab.title));
+			tabItems[tab.name] = li;
+			tabMenu.appendChild(li);
+			tab.panel.style.display = tab.name === activeTab ? '' : 'none';
+		});
+		container.appendChild(tabMenu);
+		container.appendChild(receivedGroup.section);
+		container.appendChild(sentGroup.section);
 		container.appendChild(E('div', { 'class': 'cbi-page-actions' }, E('button', {
 			'class': 'cbi-button cbi-button-action',
 			click: function() {
