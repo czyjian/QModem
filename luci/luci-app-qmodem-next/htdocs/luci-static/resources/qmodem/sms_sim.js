@@ -154,7 +154,15 @@ return baseclass.extend({
 						}, _('Delete')))
 					]));
 				});
-				section.appendChild(E('table', { 'class': 'table cbi-section-table' }, [E('tbody', {}, rows)]));
+				section.appendChild(E('table', {
+					'class': 'table cbi-section-table',
+					'style': 'width:100%;table-layout:fixed;overflow-wrap:anywhere;'
+				}, [
+					E('colgroup', {}, [8, 27, 18, 25, 10, 12].map(function(width) {
+						return E('col', { 'style': 'width:' + width + '%;' });
+					})),
+					E('tbody', {}, rows)
+				]));
 				section.appendChild(E('div', { 'class': 'cbi-page-actions' }, E('button', {
 					'class': 'cbi-button cbi-button-remove',
 					click: function() { self.handleDeleteAllSimSms(configSection, items, contentArea); }

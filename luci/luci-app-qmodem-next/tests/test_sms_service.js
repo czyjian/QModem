@@ -14,7 +14,7 @@ const smsNumber = new Function('L', fs.readFileSync(path.join(__dirname,
 const source = fs.readFileSync(path.join(__dirname,
 	'../htdocs/luci-static/resources/qmodem/sms.js'), 'utf8');
 
-function createService(listResults, syncResult) {
+function createService(listResults, syncResult, DateClass = Date) {
 	let listCalls = 0;
 	const deleteCalls = [];
 	const rpc = {
@@ -33,11 +33,14 @@ function createService(listResults, syncResult) {
 		}
 	};
 	const L = { Class: { extend: function(service) { return service; } } };
-	const service = new Function('rpc', 'L', 'smsNumber', 'qmodem', 'phone', '_', source)(rpc, L, smsNumber, qmodem, phone, function(value) { return value; });
+	const service = new Function('rpc', 'L', 'smsNumber', 'qmodem', 'phone', '_', 'Date', source)(rpc, L, smsNumber, qmodem, phone, function(value) { return value; }, DateClass);
 	return { service: service, listCalls: function() { return listCalls; }, deleteCalls: deleteCalls };
 }
 
 async function main() {
+	const formatter = createService([]).service;
+	assert.strictEqual(formatter.formatTimestamp(new Date(2026, 10, 21, 17, 27, 36).getTime() / 1000), '11/21 17:27');
+	assert.strictEqual(formatter.formatTimestamp(new Date(2026, 10, 23, 7, 9, 6).getTime() / 1000), '11/23 07:09');
 	const failed = createService([
 		{ mode: 'database_poll', messages: [] }
 	], { status: 'error', error: 'database mode requires use_ubus' });
