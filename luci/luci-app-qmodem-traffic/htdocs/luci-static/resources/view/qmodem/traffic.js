@@ -82,7 +82,7 @@ return view.extend({
 				s.carrier_name=sim.carrier==='unicom' ? _('中国联通') : sim.carrier==='mobile' ? _('中国移动') : sim.carrier==='telecom' ? _('中国电信') : _('未识别');
 				var numberEntry = ((results[1] || {}).modem_info || []).find(function(entry) { return entry.key === 'SIM Number'; });
 				s.sim_number = numberEntry && String(numberEntry.value || '').trim() || _('未获取');
-				s.unit_base=unitBase;state=s;dom.content(unitNote,_('流量统一按 1024 进制显示，1 GB = 1,024 MB = 1,073,741,824 字节；流量阈值与手动校准使用相同口径。'));
+				s.unit_base=unitBase;state=s;dom.content(unitNote,_('流量统一按 1024 进制显示，1 GB = 1,024 MB = 1,073,741,824 字节。'));
 				var renderedSummary = traffic.summary(s);
 				var summaryContent = renderedSummary.tagName === 'DIV' ? Array.from(renderedSummary.childNodes) : [renderedSummary];
 				dom.content(summary,[E('legend',{},_('Traffic Monitor')),loginNotice].concat(summaryContent,[note(_('Counts upload and download on IPv4 and IPv6 devices, counting shared devices only once. Router counters may differ from carrier billing.'))]));
@@ -159,7 +159,7 @@ return view.extend({
 					row(_('Monthly reset day'),day,true,_('If the selected reset day does not exist in a month, the last day of that month is used.')),
 					row(_('Reset time'),time,true,_('The billing cycle resets at this local time on the monthly reset day. Historical records are preserved.')),
 					row(_('Cycle threshold (GB)'),threshold,true,_('本周期已用流量达到此值时提醒，设为 0 时不提醒。')),
-					row(_('Current-cycle usage (GB)'),correction,true,_('Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved.')),
+					row(_('Current-cycle usage (GB)'),correction,true,_('填写运营商显示的当前已用总流量，后续新增流量将在此基础上继续累计。校准仅在本周期内生效，并纳入阈值提醒。')),
 					row('',E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;'},[correctButton,clearButton]),true)
 				])]),
 				note(unitNote),
@@ -174,7 +174,7 @@ return view.extend({
 					row(_('自动校准可用状态'),autoAvailable,true),
 					row(_('上次校准'),autoLast,true)
 				])]),
-				note(_('使用查询接口的本月已用流量和套餐总量，1 MB = 1,048,576 字节。本地账期需设为每月 1 日 00:00；登录失效、SIM 不匹配、套餐总量不明确或数据不可用时跳过校准。')),
+				note(_('登录失效、SIM 不匹配、套餐总量不明确或数据不可用时跳过校准。')),
 				E('div',{style:'display:flex;justify-content:flex-end;gap:8px;'},[calibrateNow,autoSave])
 			])
 		]);

@@ -2975,7 +2975,7 @@ msgid "Current-cycle usage (GB)"
 msgstr "本周期已用流量（GB）"
 
 msgid "Enter the total usage currently reported by your carrier. New traffic continues accumulating from this value. The adjustment applies only to this billing cycle and affects threshold alerts; measured upload/download and historical charts are preserved."
-msgstr "填写运营商显示的当前已用总流量，后续新增流量将在此基础上继续累计。校准仅在本周期内生效，并纳入阈值提醒；实测上传、下载及历史趋势保持不变。"
+msgstr "填写运营商显示的当前已用总流量，后续新增流量将在此基础上继续累计。校准仅在本周期内生效，并纳入阈值提醒。"
 
 msgid "Usage notes"
 msgstr "使用说明"
