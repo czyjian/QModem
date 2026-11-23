@@ -53,6 +53,24 @@ return baseclass.extend({
 		selectorRow.appendChild(labelCell);
 		selectorRow.appendChild(selectCell);
 		selectorBody.appendChild(selectorRow);
+		var simNumber = E('td', { 'class': 'td' }, _('未获取'));
+		selectorBody.appendChild(E('tr', { 'class': 'tr' }, [
+			E('td', { 'class': 'td', 'width': '33%' }, _('当前SIM卡号码')), simNumber
+		]));
+		var numberRequest = 0, numberModem = '';
+		function updateSimNumber() {
+			var id = select.value, request = ++numberRequest;
+			if (numberModem !== id) simNumber.textContent = _('未获取');
+			numberModem = id;
+			return qmodem.getSimInfo(id).then(function(result) {
+				if (request !== numberRequest || select.value !== id) return;
+				var entry = ((result || {}).modem_info || []).find(function(item) { return item.key === 'SIM Number'; });
+				simNumber.textContent = entry && String(entry.value || '').trim() || _('未获取');
+			}).catch(function() {
+				if (request === numberRequest && select.value === id) simNumber.textContent = _('未获取');
+			});
+		}
+		updateSimNumber();
 		selectorTable.appendChild(selectorBody);
 		selectorSection.appendChild(selectorTable);
 		container.appendChild(selectorSection);
@@ -71,6 +89,7 @@ return baseclass.extend({
 
 		// Selector change handler
 		select.addEventListener('change', function() {
+			updateSimNumber();
 			var loading = E('div', { 'class': 'spinning' }, _('Loading...'));
 			dom.content(contentArea, loading);
 			self.loadSimSmsList(contentArea, loading, select.value);
@@ -78,6 +97,7 @@ return baseclass.extend({
 
 		// Start polling for updates
 		poll.add(function() {
+			updateSimNumber();
 			self.pollSimSmsList(contentArea, select.value);
 		}, 10);
 
