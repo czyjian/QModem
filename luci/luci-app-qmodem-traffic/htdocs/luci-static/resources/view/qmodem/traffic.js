@@ -66,6 +66,11 @@ return view.extend({
 			return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title','for':label ? id : null},label),E('div',{'class':'cbi-value-field'},control)]);
 		}
 		function section(label,children) { return E('fieldset',{'class':'cbi-section'},[E('legend',{},label)].concat(children)); }
+		function loadingNode() { return E('div',{'class':'spinning'},_('正在加载中…')); }
+		function showLoading() {
+			dom.content(summary,[E('legend',{},_('Traffic Monitor')),loadingNode()]);
+			[live,daily,monthly].forEach(function(node){ dom.content(node,loadingNode()); });
+		}
 		function update() {
 			if(pending) return Promise.resolve();
 			pending=true;
@@ -139,8 +144,8 @@ return view.extend({
 			var id=selector.value,parts=autoTime.value.split(':');autoSave.disabled=true;
 			traffic.configureCalibration(id,autoEnabled.checked,Number(parts[0]),Number(parts[1]),autoSwitch.checked).then(function(result){if(!result.success)throw new Error(result.error || _('自动校准设置保存失败'));if(selector.value===id){autoLoaded='';autoGeneration++;return autoStatus();}}).catch(function(error){ui.addNotification(null,E('p',{},error.message),'error');}).finally(function(){autoSave.disabled=false;});
 		}},_('Save'));
-		selector.addEventListener('change',function(){selected='';autoLoaded='';autoGeneration++;dom.content(loginNotice,[]);dom.content(autoLogin,_('正在检查登录状态…'));dom.content(autoAvailable,[]);dom.content(autoLast,'—');update();autoStatus();query.change();});month.addEventListener('change',histories);
-		update(); poll.add(update,1);
+		selector.addEventListener('change',function(){selected='';autoLoaded='';autoGeneration++;dom.content(loginNotice,[]);dom.content(autoLogin,_('正在检查登录状态…'));dom.content(autoAvailable,[]);dom.content(autoLast,'—');showLoading();update();autoStatus();query.change();});month.addEventListener('change',histories);
+		showLoading(); update(); poll.add(update,1);
 		poll.add(query.update, 15);
 		poll.add(autoStatus,30);
 		var monitorPanel = E('div', {}, [
