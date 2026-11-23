@@ -286,31 +286,25 @@ return view.extend({
 		});
 	},
 
+	markConversationRead: function(messagesArea, configSection, messages) {
+		if (messagesArea.isConnected === false || document.hidden) return Promise.resolve();
+		var ids = [];
+		(messages || []).forEach(function(msg) {
+			if (msg.type !== 'received' || msg.is_read) return;
+			ids = ids.concat(msg.part_ids && msg.part_ids.length ? msg.part_ids : [msg.id]);
+		});
+		ids = Array.from(new Set(ids.filter(function(id) { return id != null; })));
+		return ids.length ? smsService.markRead(configSection, ids) : Promise.resolve();
+	},
+
 	loadConversation: function(messagesArea, loadingDiv, configSection, contact) {
 		var self = this;
 
-		smsService.getConversation(configSection, contact).then(function(result) {
+		return smsService.getConversation(configSection, contact).then(function(result) {
 			if (self.replyModem !== configSection) return;
 			if (!result.error) {
 				self.replyRecipient = result.contact || self.replyRecipient || contact;
 				self.replyAddress.update();
-			}
-			// Auto-mark all received messages as read
-			if (result.messages && result.messages.length > 0) {
-				var unreadIds = [];
-				result.messages.forEach(function(msg) {
-					if (msg.type === 'received' && msg.is_read === false) {
-						if (msg.part_ids && msg.part_ids.length > 0) {
-							// For multipart messages, mark all parts as read
-							unreadIds = unreadIds.concat(msg.part_ids);
-						} else {
-							unreadIds.push(msg.id);
-						}
-					}
-				});
-				if (unreadIds.length > 0) {
-					smsService.markRead(configSection, unreadIds);
-				}
 			}
 
 			// Adjust timestamps if UTC offset is enabled (based on message type)
@@ -346,6 +340,7 @@ return view.extend({
 
 			// Render messages
 			self.renderMessages(messagesArea, result.messages || [], configSection);
+			return self.markConversationRead(messagesArea, configSection, result.messages);
 		}).catch(function(err) {
 			if (loadingDiv && loadingDiv.parentNode) {
 				dom.content(messagesArea, null);
@@ -358,7 +353,7 @@ return view.extend({
 	pollConversation: function(messagesArea, configSection, contact) {
 		var self = this;
 		
-		smsService.getConversation(configSection, contact).then(function(result) {
+		return smsService.getConversation(configSection, contact).then(function(result) {
 			if (self.replyModem !== configSection) return;
 			if (!result.error && result.messages) {
 				self.replyRecipient = result.contact || self.replyRecipient || contact;
@@ -383,6 +378,7 @@ return view.extend({
 					}
 				}
 				self.renderMessages(messagesArea, result.messages, configSection);
+				return self.markConversationRead(messagesArea, configSection, result.messages);
 			}
 		}).catch(function(err) {
 			console.error('Poll error:', err);

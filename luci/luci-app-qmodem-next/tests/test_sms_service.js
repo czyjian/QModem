@@ -41,6 +41,7 @@ async function main() {
 	const formatter = createService([]).service;
 	assert.strictEqual(formatter.formatTimestamp(new Date(2026, 10, 21, 17, 27, 36).getTime() / 1000), '11/21 17:27');
 	assert.strictEqual(formatter.formatTimestamp(new Date(2026, 10, 23, 7, 9, 6).getTime() / 1000), '11/23 07:09');
+	assert.strictEqual(formatter.formatTimestamp(new Date(2026, 10, 23, 7, 9, 6).getTime() / 1000, true), '11/23 07:09:06');
 	const failed = createService([
 		{ mode: 'database_poll', messages: [] }
 	], { status: 'error', error: 'database mode requires use_ubus' });

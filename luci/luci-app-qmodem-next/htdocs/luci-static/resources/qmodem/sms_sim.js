@@ -146,7 +146,7 @@ return baseclass.extend({
 					rows.push(E('tr', { 'class': 'tr cbi-section-table-row' }, [
 						E('td', { 'class': 'td' }, String(index + 1)),
 						E('td', { 'class': 'td' }, contact),
-						E('td', { 'class': 'td' }, message.timestamp ? smsService.formatTimestamp(message.timestamp) : '-'),
+						E('td', { 'class': 'td' }, message.timestamp ? smsService.formatTimestamp(message.timestamp, true) : '-'),
 						E('td', { 'class': 'td', 'style': 'word-break:break-word;' }, message.content || message.sms_text || ''),
 						E('td', { 'class': 'td' }, kind),
 						E('td', { 'class': 'td' }, E('button', { 'class': 'cbi-button cbi-button-remove',

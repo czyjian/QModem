@@ -166,11 +166,12 @@ return L.Class.extend({
 		var modem = configSection || 'modem_1';
 		return this.getReceivedHistory(modem).then(function(result) { return deleteMany(modem, result.messages.map(function(message) { return message.id; })); });
 	},
-	formatTimestamp: function(timestamp) {
+	formatTimestamp: function(timestamp, includeSeconds) {
 		var date = new Date(timestamp * 1000);
 		return String(date.getMonth() + 1).padStart(2, '0') + '/' +
 			String(date.getDate()).padStart(2, '0') + ' ' + String(date.getHours()).padStart(2, '0') + ':' +
-			String(date.getMinutes()).padStart(2, '0');
+			String(date.getMinutes()).padStart(2, '0') +
+			(includeSeconds ? ':' + String(date.getSeconds()).padStart(2, '0') : '');
 	},
 	formatPhoneNumber: function(number) {
 		if (!number) return '';
