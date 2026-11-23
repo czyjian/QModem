@@ -4,6 +4,11 @@ English | [简体中文](README.zh-cn.md)
 
 [![OpenWrt SDK build](https://github.com/FUjr/modem_feeds/actions/workflows/main.yml/badge.svg)](https://github.com/FUjr/modem_feeds/actions/workflows/main.yml)
 
+> [!NOTE]
+> This fork is modified from upstream [FUjr/QModem](https://github.com/FUjr/QModem).
+>
+> For the best LuCI UI experience (including the custom CPE dashboard, SMS preview/quick-reply, and traffic monitoring views), it is recommended to use it with [czyjian/luci-theme-shadcn](https://github.com/czyjian/luci-theme-shadcn).
+
 QModem is a cellular modem management and dialing stack for OpenWrt and ImmortalWrt. It discovers USB and PCIe modems, manages AT and data interfaces, and provides dialing, status, SMS, and vendor-specific controls through LuCI.
 
 It is intended for custom 4G/5G routers, embedded gateways, and multi-modem devices. It is not a desktop ModemManager replacement and cannot compensate for kernel drivers missing from the target firmware.

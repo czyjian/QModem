@@ -4,6 +4,11 @@
 
 [![OpenWrt SDK build](https://github.com/FUjr/modem_feeds/actions/workflows/main.yml/badge.svg)](https://github.com/FUjr/modem_feeds/actions/workflows/main.yml)
 
+> [!NOTE]
+> 本仓库基于上游 [FUjr/QModem](https://github.com/FUjr/QModem) 修改维护。
+>
+> 推荐配合本账号仓库下的 [czyjian/luci-theme-shadcn](https://github.com/czyjian/luci-theme-shadcn) 主题使用（包含配套定制的 CPE 面板、短信预览与快速回复、流量统计入口等界面优化）。
+
 QModem 是面向 OpenWrt 和 ImmortalWrt 的蜂窝模组管理与拨号组件。它负责发现 USB、PCIe 模组，管理 AT 端口和数据接口，并通过 LuCI 提供拨号、状态监控、短信和厂商高级功能。
 
 QModem 适合自制 4G/5G 路由器、工业网关和多模组设备。它不是通用桌面 ModemManager，也不能替代目标固件缺失的内核驱动。
