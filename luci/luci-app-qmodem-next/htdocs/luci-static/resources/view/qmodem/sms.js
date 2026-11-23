@@ -31,11 +31,11 @@ return qmodem.withSmsTabs(view.extend({
 		localStorage.setItem(key, enabled ? 'true' : 'false');
 	},
 
-	adjustTimestampForUtcOffset: function(timestamp, type) {
+	adjustTimestampForUtcOffset: function(timestamp, type, isUtc) {
 		// If UTC offset is enabled for this message type, adjust the timestamp
 		// PDU time is in local time (UTC+8), but parsed as UTC+0
 		// So we need to subtract 8 hours to get the correct UTC time
-		if (this.getUtcOffsetSetting(type)) {
+		if (!isUtc && this.getUtcOffsetSetting(type)) {
 			// Subtract 8 hours (28800 seconds)
 			return timestamp - 28800;
 		}
@@ -375,7 +375,7 @@ return qmodem.withSmsTabs(view.extend({
 					if (conv.messages && conv.messages.length > 0) {
 						conv.messages.forEach(function(msg) {
 							if (msg.timestamp && msg.type) {
-								msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type);
+								msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type, msg.timestamp_is_utc);
 							}
 						});
 						// Re-sort messages by timestamp
@@ -419,7 +419,7 @@ return qmodem.withSmsTabs(view.extend({
 						if (conv.messages && conv.messages.length > 0) {
 							conv.messages.forEach(function(msg) {
 								if (msg.timestamp && msg.type) {
-									msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type);
+									msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type, msg.timestamp_is_utc);
 								}
 							});
 							// Re-sort messages by timestamp

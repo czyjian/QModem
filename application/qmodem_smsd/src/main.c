@@ -762,8 +762,8 @@ static int list_method(struct ubus_context *ctx, struct ubus_object *obj,
         free(output);
     } else {
         const char *query =
-            "SELECT id,direction,sender,recipient,timestamp,content,complete,revision,is_read,send_success,conversation_contact "
-            "FROM messages WHERE modem_id=? ORDER BY timestamp DESC,id DESC LIMIT ? OFFSET ?";
+            "SELECT id,direction,sender,recipient,timestamp,content,complete,revision,is_read,send_success,conversation_contact,created_at "
+            "FROM messages WHERE modem_id=? ORDER BY CASE WHEN direction='received' THEN created_at ELSE timestamp END DESC,id DESC LIMIT ? OFFSET ?";
         if (prepare_database_mode(&cfg) != 0) {
             blob_buf_free(&b);
             reply_error(ctx, req, "legacy SMS database migration failed");
@@ -784,6 +784,8 @@ static int list_method(struct ubus_context *ctx, struct ubus_object *obj,
             if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
                 blobmsg_add_string(&b, "recipient", (const char *)sqlite3_column_text(stmt, 3));
             blobmsg_add_u64(&b, "timestamp", sqlite3_column_int64(stmt, 4));
+            if (!strcmp((const char *)sqlite3_column_text(stmt, 1), "received"))
+                blobmsg_add_u64(&b, "received_at", sqlite3_column_int64(stmt, 11));
             blobmsg_add_string(&b, "content", (const char *)sqlite3_column_text(stmt, 5));
             blobmsg_add_u8(&b, "complete", sqlite3_column_int(stmt, 6));
             blobmsg_add_u32(&b, "revision", sqlite3_column_int(stmt, 7));
@@ -823,7 +825,7 @@ static int get_method(struct ubus_context *ctx, struct ubus_object *obj,
         return UBUS_STATUS_INVALID_ARGUMENT;
     section = blobmsg_get_string(tb[ARG_MODEM]);
     if (sqlite3_prepare_v2(app.db.sql,
-            "SELECT id,direction,sender,recipient,timestamp,content,complete,revision,is_read,send_success,conversation_contact "
+            "SELECT id,direction,sender,recipient,timestamp,content,complete,revision,is_read,send_success,conversation_contact,created_at "
             "FROM messages WHERE id=? AND modem_id=?", -1, &stmt, NULL) != SQLITE_OK)
         goto error;
     sqlite3_bind_int64(stmt, 1, id);
@@ -840,6 +842,8 @@ static int get_method(struct ubus_context *ctx, struct ubus_object *obj,
     if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
         blobmsg_add_string(&b, "recipient", (const char *)sqlite3_column_text(stmt, 3));
     blobmsg_add_u64(&b, "timestamp", sqlite3_column_int64(stmt, 4));
+    if (!strcmp((const char *)sqlite3_column_text(stmt, 1), "received"))
+        blobmsg_add_u64(&b, "received_at", sqlite3_column_int64(stmt, 11));
     blobmsg_add_string(&b, "content", (const char *)sqlite3_column_text(stmt, 5));
     blobmsg_add_u8(&b, "complete", sqlite3_column_int(stmt, 6));
     blobmsg_add_u32(&b, "revision", sqlite3_column_int(stmt, 7));

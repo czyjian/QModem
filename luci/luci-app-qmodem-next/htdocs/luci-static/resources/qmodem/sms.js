@@ -20,6 +20,10 @@ function messagesFrom(result) {
 	return (result.messages || result.msg || result.received || []).map(function(message) {
 		message = Object.assign({}, message);
 		if (!message.type) message.type = 'received';
+		if (message.type === 'received' && message.received_at) {
+			message.timestamp = message.received_at;
+			message.timestamp_is_utc = true;
+		}
 		if (message.is_read == null) message.is_read = false;
 		if (message.success != null && message.is_success == null) message.is_success = message.success;
 		return message;
@@ -194,6 +198,8 @@ return L.Class.extend({
 				var database = /^database_/.test(result.mode || '');
 				return Object.assign({}, message, {
 					type: sent ? 'sent' : 'received',
+					timestamp: !sent && message.received_at ? message.received_at : message.timestamp,
+					timestamp_is_utc: !sent && !!message.received_at,
 					display_sender: phone.identify(contact, results[0]).display,
 					delete_ref: database ? { id: message.id } : { index: message.index }
 				});

@@ -30,11 +30,11 @@ return view.extend({
 		localStorage.setItem(key, enabled ? 'true' : 'false');
 	},
 
-	adjustTimestampForUtcOffset: function(timestamp, type) {
+	adjustTimestampForUtcOffset: function(timestamp, type, isUtc) {
 		// If UTC offset is enabled for this message type, adjust the timestamp
 		// PDU time is in local time (UTC+8), but parsed as UTC+0
 		// So we need to subtract 8 hours to get the correct UTC time
-		if (this.getUtcOffsetSetting(type)) {
+		if (!isUtc && this.getUtcOffsetSetting(type)) {
 			// Subtract 8 hours (28800 seconds)
 			return timestamp - 28800;
 		}
@@ -319,7 +319,7 @@ return view.extend({
 				result.messages.forEach(function(msg) {
 					if (msg.timestamp && msg.type) {
 						var originalTimestamp = msg.timestamp;
-						msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type);
+						msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type, msg.timestamp_is_utc);
 						if (originalTimestamp !== msg.timestamp) {
 							needsReSort = true;
 						}
@@ -369,7 +369,7 @@ return view.extend({
 					result.messages.forEach(function(msg) {
 						if (msg.timestamp && msg.type) {
 							var originalTimestamp = msg.timestamp;
-							msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type);
+							msg.timestamp = self.adjustTimestampForUtcOffset(msg.timestamp, msg.type, msg.timestamp_is_utc);
 							if (originalTimestamp !== msg.timestamp) {
 								needsReSort = true;
 							}
@@ -391,6 +391,11 @@ return view.extend({
 
 	renderMessages: function(messagesArea, messages, configSection) {
 		var self = this;
+		// Always order by the final display time, including initial load and polling.
+		messages = (messages || []).slice().sort(function(a, b) {
+			return (Number(a.timestamp) || 0) - (Number(b.timestamp) || 0) ||
+				(Number(a.id) || 0) - (Number(b.id) || 0);
+		});
 
 		// Clear content
 		dom.content(messagesArea, null);
