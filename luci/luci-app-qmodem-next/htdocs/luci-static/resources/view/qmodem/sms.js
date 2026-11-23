@@ -114,6 +114,10 @@ return qmodem.withSmsTabs(view.extend({
 		}
 		updateSimNumber();
 
+		var settingsBody = E('tbody', {});
+		var settingsSection = E('fieldset', { 'class': 'cbi-section' },
+			E('table', { 'class': 'table' }, settingsBody));
+
 		// Timezone offset setting for received messages
 		var timezoneReceivedRow = E('tr', { 'class': 'tr' });
 		var timezoneReceivedLabel = E('td', { 'class': 'td', 'width': '33%' }, 
@@ -131,7 +135,7 @@ return qmodem.withSmsTabs(view.extend({
 		timezoneReceivedCell.appendChild(checkboxLine(timezoneReceivedCheckbox, _('Adjust received messages for local timezone (UTC+8)')));
 		timezoneReceivedRow.appendChild(timezoneReceivedLabel);
 		timezoneReceivedRow.appendChild(timezoneReceivedCell);
-		selectorBody.appendChild(timezoneReceivedRow);
+		settingsBody.appendChild(timezoneReceivedRow);
 
 		// Timezone offset setting for sent messages
 		var timezoneSentRow = E('tr', { 'class': 'tr' });
@@ -153,7 +157,7 @@ return qmodem.withSmsTabs(view.extend({
 		));
 		timezoneSentRow.appendChild(timezoneSentLabel);
 		timezoneSentRow.appendChild(timezoneSentCell);
-		selectorBody.appendChild(timezoneSentRow);
+		settingsBody.appendChild(timezoneSentRow);
 
 	var smsCountrySelect = E('select', { 'class': 'cbi-input-select', 'id': 'sms_default_country' }, [
 		E('option', { 'value': '' }, _('Automatic (SIM home country)'))
@@ -164,7 +168,7 @@ return qmodem.withSmsTabs(view.extend({
 		smsCountrySelect.appendChild(E('option', { 'value': country },
 			(countryNames ? countryNames.of(country) : country) + ' (+' + smsService.getCountryCallingCode(country) + ')'));
 	});
-	selectorBody.appendChild(E('tr', { 'class': 'tr' }, [
+	settingsBody.appendChild(E('tr', { 'class': 'tr' }, [
 		E('td', { 'class': 'td', 'width': '33%' }, _('Default country for SMS numbers')),
 		E('td', { 'class': 'td' }, helpField(smsCountrySelect, _('Used for local phone numbers. For other countries, enter +country code.')))
 	]));
@@ -180,7 +184,7 @@ return qmodem.withSmsTabs(view.extend({
 	smsModeCell.appendChild(smsModeSelect);
 	smsModeRow.appendChild(smsModeLabel);
 	smsModeRow.appendChild(smsModeCell);
-	selectorBody.appendChild(smsModeRow);
+	settingsBody.appendChild(smsModeRow);
 
 	var pollIntervalRow = E('tr', { 'class': 'tr' });
 	var pollIntervalLabel = E('td', { 'class': 'td', 'width': '33%' }, _('Poll Interval (seconds)'));
@@ -192,7 +196,7 @@ return qmodem.withSmsTabs(view.extend({
 	pollIntervalCell.appendChild(pollIntervalInput);
 	pollIntervalRow.appendChild(pollIntervalLabel);
 	pollIntervalRow.appendChild(pollIntervalCell);
-	selectorBody.appendChild(pollIntervalRow);
+	settingsBody.appendChild(pollIntervalRow);
 
 	// SMS auto delete from SIM setting
 	var smsAutoDeleteRow = E('tr', { 'class': 'tr' });
@@ -208,7 +212,7 @@ return qmodem.withSmsTabs(view.extend({
 	smsAutoDeleteCell.appendChild(checkboxLine(smsAutoDeleteCheckbox, _('Automatically delete SMS from SIM card after reading')));
 	smsAutoDeleteRow.appendChild(smsAutoDeleteLabel);
 	smsAutoDeleteRow.appendChild(smsAutoDeleteCell);
-	selectorBody.appendChild(smsAutoDeleteRow);
+	settingsBody.appendChild(smsAutoDeleteRow);
 
 	selectorTable.appendChild(selectorBody);
 	selectorSection.appendChild(selectorTable);
@@ -292,7 +296,16 @@ return qmodem.withSmsTabs(view.extend({
 	
 	storageTable.appendChild(storageBody);
 	storageSection.appendChild(storageTable);
-	container.appendChild(storageSection);
+	self.showConversationSettings = function() {
+		ui.showModal(_('Conversation Settings'), [
+			settingsSection,
+			storageSection,
+			E('div', { 'class': 'right' }, E('button', {
+				'type': 'button', 'class': 'cbi-button cbi-button-neutral',
+				'click': function() { ui.hideModal(); }
+			}, _('Close')))
+		]);
+	};
 	
 		// Main content area
 		var contentArea = E('div', { 'id': 'sms-list-content' });
@@ -537,6 +550,13 @@ return qmodem.withSmsTabs(view.extend({
 		
 		buttonDiv.appendChild(newConversationBtn);
 		buttonDiv.appendChild(refreshBtn);
+		buttonDiv.appendChild(E('button', {
+			'type': 'button', 'class': 'cbi-button cbi-button-action',
+			'click': function(ev) {
+				ev.preventDefault();
+				self.showConversationSettings();
+			}
+		}, _('Conversation Settings')));
 		conversationsDiv.appendChild(buttonDiv);
 
 		contentArea.appendChild(conversationsDiv);

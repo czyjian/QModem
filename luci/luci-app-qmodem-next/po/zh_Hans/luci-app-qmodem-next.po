@@ -3098,3 +3098,6 @@ msgstr "收件人"
 
 msgid "Sent"
 msgstr "已发送"
+
+msgid "Conversation Settings"
+msgstr "会话设置"
