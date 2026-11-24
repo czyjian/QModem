@@ -2857,6 +2857,9 @@ msgstr "模组管理"
 msgid "Traffic Monitor"
 msgstr "流量监控"
 
+msgid "Traffic Statistics"
+msgstr "流量统计"
+
 msgid "Recording since"
 msgstr "统计起始时间"
 

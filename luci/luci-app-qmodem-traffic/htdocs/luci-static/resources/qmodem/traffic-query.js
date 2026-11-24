@@ -42,7 +42,7 @@ return L.Class.extend({
 				E('td',{'class':'td left',width:'33%'},_('当前SIM卡运营商')),carrierValue
 			])])])
 		]);
-		var status=E('div',{'class':'cbi-value-description'}), summary=E('fieldset',{'class':'cbi-section'}), login=E('button',{type:'button','class':'cbi-button',click:function(){
+		var status=E('div',{'class':'cbi-value-description'}), summary=E('fieldset',{'class':'cbi-section',style:'display:none;'}), login=E('button',{type:'button','class':'cbi-button',click:function(){
 			if(loginDialog)loginDialog.close();
 			loginDialog=(currentCarrier==='mobile' ? mobileLogin : currentCarrier==='telecom' ? telecomTest : carrierLogin).open(selector.value,function(){loginDialog=null;update(true);});
 		}},_('登录'));
@@ -63,10 +63,14 @@ return L.Class.extend({
 			rendered=false;
 			dom.content(node,[carrierRow,actions,E('p',{'class':kind ? 'alert-message '+kind : ''},text)]);
 		}
+		function setSummary(items) {
+			dom.content(summary, items || []);
+			summary.style.display = (items && items.length) ? '' : 'none';
+		}
 		function prepare(id) {
 			detailTarget=currentCarrier==='mobile' ? 'https://wx.10086.cn/website/spa/main/newHome' : currentCarrier==='telecom' ? 'https://www.189.cn/web/' : 'https://www.10010.com/e5/index.html';
 			status.className='cbi-value-description';
-			dom.content(summary,[]); dom.content(status,_('正在读取登录状态…'));
+			setSummary([]); dom.content(status,_('正在读取登录状态…'));
 			login.style.display=''; refresh.disabled=true;
 			dom.content(node,[carrierRow,actions,statusBox,summary]); rendered=true;
 		}
@@ -74,10 +78,10 @@ return L.Class.extend({
 			if (data.ok === false) {
 				if(data.code === 'TOKEN_EXPIRED' || data.code === 'BLACKLIST') {
 					status.className='cbi-value-description';
-					login.style.display=''; dom.content(summary,[]);
+					login.style.display=''; setSummary([]);
 					dom.content(status,_('尚未登录或登录已过期，请登录后查询。')); return;
 				}
-				if(data.logged_in){login.style.display='none';dom.content(status,data.msg || _('查询暂不可用'));if(!summary.firstChild)dom.content(summary,[logout]);return;}
+				if(data.logged_in){login.style.display='none';dom.content(status,data.msg || _('查询暂不可用'));if(!summary.firstChild)setSummary([logout]);return;}
                 throw new Error(data.msg || _('流量查询失败'));
 			}
 			login.style.display='none';
@@ -94,7 +98,7 @@ return L.Class.extend({
 			if(data.qci)networkRows.push(E('tr',{'class':'tr'},[E('td',{'class':'td'},'QCI'),E('td',{'class':'td',colspan:2},data.qci)]));
 			if(networkRows.length)networkRows.unshift(E('tr',{'class':'tr'},[E('th',{'class':'th'},_('网络信息')),E('th',{'class':'th',colspan:2},_('当前值'))]));
 			function columns(){return E('colgroup',{},[E('col',{style:'width:50%;'}),E('col',{style:'width:25%;'}),E('col',{style:'width:25%;'})]);}
-			dom.content(summary,[E('table',{'class':'table',style:'table-layout:fixed;margin-bottom:12px;'+(networkRows.length ? '' : 'display:none;')},[columns(),E('tbody',{},networkRows)]),E('table',{'class':'table',style:'table-layout:fixed;margin-bottom:0;'},[columns(),E('tbody',{},rows)]),E('div',{style:'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;'},[
+			setSummary([E('table',{'class':'table',style:'table-layout:fixed;margin-bottom:12px;'+(networkRows.length ? '' : 'display:none;')},[columns(),E('tbody',{},networkRows)]),E('table',{'class':'table',style:'table-layout:fixed;margin-bottom:0;'},[columns(),E('tbody',{},rows)]),E('div',{style:'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;'},[
 				logout,E('span',{'class':'cbi-value-description',style:'margin-left:auto;text-align:right;'},_('更新时间')+': '+new Date(data.updated_at*1000).toLocaleString())
 			])]);
 		}

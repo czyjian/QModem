@@ -1,6 +1,6 @@
 {
   "admin/modem/traffic": {
-    "title": "Traffic Monitor",
+    "title": "Traffic Statistics",
     "order": 4,
     "action": {
       "type": "view",
