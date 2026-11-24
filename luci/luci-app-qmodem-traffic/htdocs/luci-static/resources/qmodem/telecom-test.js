@@ -1,6 +1,7 @@
 'use strict';
 'require ui';
 'require dom';
+'require qmodem.qmodem as qmodem';
 'require qmodem.telecom-sms as telecomSms';
 return L.Class.extend({
  open:function open(section,onLogin,options){
@@ -9,7 +10,7 @@ return L.Class.extend({
   var phone=E('input',{type:'tel',maxlength:11,'class':'cbi-input-text',autocomplete:'off'});
   var password=E('input',{type:'password',maxlength:6,'class':'cbi-input-text',autocomplete:'off'});
   var device=E('input',{type:'text',maxlength:256,'class':'cbi-input-text',autocomplete:'off'});
-  var status=E('div',{'class':'cbi-value-description'});
+  var status=E('div',{'class':'qmodem-login-status',role:'status','aria-live':'polite'});
   var code=E('input',{type:'text',maxlength:6,inputmode:'numeric',autocomplete:'one-time-code','class':'cbi-input-text',disabled:true});
   var sms=telecomSms.create(section,function(error){cleanup();ui.hideModal();ui.addNotification(null,E('p',{},error.message));});
   function restore(){verifying=false;if(!closed)ui.showModal(_('中国电信登录'),[root]);}
@@ -96,9 +97,13 @@ return L.Class.extend({
    field(_('电信手机号'),phone),field(smsOnly ? _('官方验证') : _('设备授权'),authorize),field(_('短信验证码'),smsOnly ? code : [code,bind])
   ].concat(smsOnly ? [] : [field(_('短信授权 DeviceId'),device),field(_('服务密码'),password)]).concat([
    sms.node,
-   E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;'},[login,refresh,switchMode]),status,
-   E('div',{'class':'right'},close)
+   status,
+   E('div',{'class':'qmodem-login-footer'},[
+    E('div',{'class':'qmodem-login-footer-group'},[switchMode,refresh]),
+    E('div',{'class':'qmodem-login-footer-group'},[close,login])
+   ])
   ]));restore();
+  qmodem.getSimInfo(section).then(function(info){var f={};((info&&info.modem_info)||[]).forEach(function(it){f[it.key]=String(it.value||'').trim();});var num=(f['SIM Number']||'').replace(/^\+?86/,'');if(!closed && !phone.value && /^1\d{10}$/.test(num))phone.value=num;}).catch(function(){});
   phone.addEventListener('input',function(){if(!pending){dropAuth();device.value='';}});
   if(window.MutationObserver){observer=new window.MutationObserver(function(){if(!closed && (!document.body.classList.contains('modal-overlay-active') || (!root.isConnected && !verifying)))cleanup();});observer.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});}
   if(!options || !options.forceLogin){

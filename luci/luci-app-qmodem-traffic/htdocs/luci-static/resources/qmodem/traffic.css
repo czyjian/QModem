@@ -24,3 +24,48 @@
 	border: 1px solid var(--border, GrayText); font: inherit;
 }
 .qmodem-chart-tooltip[hidden] { display: none; }
+
+.qmodem-login-status {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 12px 0 0;
+	padding: 8px 12px;
+	border-radius: 8px;
+	border: 1px solid color-mix(in oklch, var(--primary, #3b82f6) 28%, transparent);
+	background: color-mix(in oklch, var(--primary, #3b82f6) 10%, transparent);
+	color: var(--primary, #2563eb);
+	font-weight: 500;
+	line-height: 1.45;
+}
+.qmodem-login-status:empty { display: none; }
+.qmodem-login-status::before {
+	content: 'i';
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 999px;
+	border: 1.5px solid currentColor;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+}
+.qmodem-login-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 14px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border, rgba(128, 128, 128, .2));
+}
+.qmodem-login-footer-group {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+}

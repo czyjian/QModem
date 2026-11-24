@@ -49,24 +49,24 @@ return L.Class.extend({
 		var phone=E('input',{type:'tel','class':'cbi-input-text',autocomplete:'tel',maxlength:11,placeholder:_('11 位手机号')});
 		var code=E('input',{type:'text','class':'cbi-input-text',inputmode:'numeric',autocomplete:'one-time-code',maxlength:8});
 		var password=E('input',{type:'password','class':'cbi-input-text',autocomplete:'current-password',maxlength:20});
-		var mode=E('select',{'class':'cbi-input-select'},[E('option',{value:'sms'},_('短信验证码登录')),E('option',{value:'password'},_('密码登录'))]);
-		var note=E('div',{'class':'cbi-value-description',role:'status','aria-live':'polite'});
+		var loginMode='sms';
+		var note=E('div',{'class':'qmodem-login-status',role:'status','aria-live':'polite'});
 		var smsArea=E('div'),smsState=E('p',{'class':'cbi-value-description'},_('发送验证码后，在此显示本次操作之后收到的运营商短信。'));
 		function field(label,input) {return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title'},label),E('div',{'class':'cbi-value-field'},input)]);}
 		function say(text){dom.content(note,text || '');}
 		function stopSms(){if(smsTimer)window.clearTimeout(smsTimer);smsTimer=null;smsAfter=null;}
-		function controls(){send.disabled=busy || remaining>0 || mode.value!=='sms';submit.disabled=busy;mode.disabled=busy;phone.disabled=busy;code.disabled=busy;password.disabled=busy;}
+		function controls(){send.disabled=busy || remaining>0 || loginMode!=='sms';submit.disabled=busy;switchMode.disabled=busy;phone.disabled=busy;code.disabled=busy;password.disabled=busy;}
 		var send=E('button',{type:'button','class':'cbi-button',click:function(){perform('send');}},_('发送验证码'));
-		var submit=E('button',{type:'button','class':'cbi-button cbi-button-apply',click:function(){perform(mode.value==='password' ? 'password' : 'login');}},_('登录'));
+		var submit=E('button',{type:'button','class':'cbi-button cbi-button-apply',click:function(){perform(loginMode==='password' ? 'password' : 'login');}},_('登录'));
 		var cancel=E('button',{type:'button','class':'cbi-button',click:function(){close(true);}},_('取消'));
+		var switchMode=E('button',{type:'button','class':'cbi-button',click:function(){loginMode=loginMode==='sms' ? 'password' : 'sms';stopSms();dom.content(smsArea,[]);password.value='';code.value='';setMode();}},_('改用密码登录'));
 		var codeField=field(_('短信验证码'),E('div',{style:'display:flex;gap:8px;flex-wrap:wrap;'},[code,send]));
 		var passwordField=field(_('联通 App 登录密码'),password);
 		var smsSection=E('fieldset',{'class':'cbi-section'},[E('legend',{},_('本次验证码短信')),smsState,smsArea]);
-		var body=E('div',{},[field(_('登录方式'),mode),field(_('手机号'),phone),codeField,passwordField,field('',note),smsSection]);
-		var footer=E('div',{'class':'right'},[cancel,' ',submit]);
-		function showLogin(){if(alive)ui.showModal(_('运营商登录'),[body,footer]);}
-		function setMode(){passwordField.style.display=mode.value==='password' ? '' : 'none';codeField.style.display=mode.value==='sms' ? '' : 'none';smsSection.style.display=mode.value==='sms' ? '' : 'none';controls();}
-		mode.addEventListener('change',function(){stopSms();dom.content(smsArea,[]);password.value='';code.value='';setMode();});
+		var body=E('div',{},[field(_('手机号'),phone),codeField,passwordField,smsSection,note]);
+		var footer=E('div',{'class':'qmodem-login-footer'},[E('div',{'class':'qmodem-login-footer-group'},[switchMode]),E('div',{'class':'qmodem-login-footer-group'},[cancel,submit])]);
+		function showLogin(){if(alive)ui.showModal(_('中国联通登录'),[body,footer]);}
+		function setMode(){passwordField.style.display=loginMode==='password' ? '' : 'none';codeField.style.display=loginMode==='sms' ? '' : 'none';smsSection.style.display=loginMode==='sms' ? '' : 'none';switchMode.textContent=loginMode==='password' ? _('改用验证码登录') : _('改用密码登录');controls();}
 		phone.addEventListener('input',function(){if(phone.value.trim()!==smsPhone){stopSms();dom.content(smsArea,[]);dom.content(smsState,_('手机号已改变，请重新发送验证码。'));}});
 		function close(hide){
 			if(!alive)return;alive=false;generation++;stopSms();if(cooldownTimer)window.clearInterval(cooldownTimer);
@@ -159,7 +159,7 @@ return L.Class.extend({
 			}catch(e){if(alive && request===generation && e.name!=='AbortError')say(e.message || _('登录请求失败'));}
 			finally{if(alive && request===generation){busy=false;controller=null;if(action==='password')password.value='';controls();}}
 		}
-		mode.value='sms';setMode();showLogin();
+		loginMode='sms';setMode();showLogin();
 		ensureSim().then(function(sim){if(alive && !phone.value && /^1\d{10}$/.test(sim.phone))phone.value=sim.phone;}).catch(function(e){if(alive)say(e.message);});
 		window.addEventListener('pagehide',pageExit);
 		if(window.MutationObserver){observer=new window.MutationObserver(function(){if(alive && (!document.body.classList.contains('modal-overlay-active') || (!body.isConnected && !(verifyFrame && verifyFrame.isConnected))))close(false);});observer.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});}

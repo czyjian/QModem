@@ -10,7 +10,7 @@
 
 document.head.appendChild(E('link', {
 	'rel':'stylesheet',
-	'href':L.resource('qmodem/traffic.css') + (L.env.resource_version ? '?v='+L.env.resource_version+'&' : '?') + 'layout=native-panels-5'
+	'href':L.resource('qmodem/traffic.css') + (L.env.resource_version ? '?v='+L.env.resource_version+'&' : '?') + 'layout=native-panels-6'
 }));
 
 return view.extend({

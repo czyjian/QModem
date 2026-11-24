@@ -1,6 +1,7 @@
 'use strict';
 'require ui';
 'require dom';
+'require qmodem.qmodem as qmodem';
 'require qmodem.telecom-sms as smsMonitor';
 return L.Class.extend({
  open:function(section,onSuccess){
@@ -9,7 +10,7 @@ return L.Class.extend({
   var captcha=E('input',{type:'text',maxlength:12,'class':'cbi-input-text',autocomplete:'off','aria-label':_('图片验证码')});
   var code=E('input',{type:'text',maxlength:6,inputmode:'numeric','class':'cbi-input-text',autocomplete:'one-time-code','aria-label':_('短信验证码')});
   var image=E('img',{alt:_('中国移动官方图片验证码'),style:'display:none;max-width:180px;max-height:80px;cursor:pointer;'});
-  var note=E('p',{'class':'cbi-value-description',role:'status','aria-live':'polite'});
+  var note=E('p',{'class':'qmodem-login-status',role:'status','aria-live':'polite'});
   function request(data){return fetch(L.url('admin/modem/unicom_api/mobile')+'/',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({config_section:section},data))}).then(function(response){return response.json().then(function(value){if(!response.ok || !value.ok){var error=new Error(value.msg || _('移动请求未完成'));error.canRetry=value.can_retry===true;error.retryAfter=Number(value.retry_after) || 0;throw error;}return value;});});}
   function controls(){if(closed)return;var remaining=Math.max(0,Math.ceil((retryUntil-Date.now())/1000));phone.disabled=busy || !!session;captcha.disabled=busy || !session || sent;get.disabled=busy;send.disabled=busy || !session || sent || sendBlocked || remaining>0;login.disabled=busy || !sent;code.disabled=busy || !sent;dom.content(send,remaining>0 ? remaining+_(' 秒后可重试') : _('发送验证码'));if(!remaining && retryTimer){window.clearInterval(retryTimer);retryTimer=null;}}
   function forget(){if(retryTimer)window.clearInterval(retryTimer);retryTimer=null;retryUntil=0;sendBlocked=false;sms.reset();if(session)request({action:'cancel',session_id:session}).catch(function(){});session='';sent=false;code.value='';captcha.value='';image.style.display='none';controls();}
@@ -44,8 +45,9 @@ return L.Class.extend({
   }},_('登录'));
   function close(){if(closed)return;closed=true;if(observer)observer.disconnect();forget();sms.close();phone.value='';window.removeEventListener('hashchange',close);window.removeEventListener('pagehide',close);ui.hideModal();}
   function field(label,input){return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title'},label),E('div',{'class':'cbi-value-field'},input)]);}
-  var root=E('div',{},[field(_('移动手机号'),phone),field(_('官方图片验证'),[image,get]),field(_('图片验证码'),captcha),field(_('短信验证码'),[code,send]),sms.node,note,E('div',{'class':'right'},[E('button',{type:'button','class':'cbi-button',click:close},_('取消')),' ',login])]);
+  var root=E('div',{},[field(_('移动手机号'),phone),field(_('官方图片验证'),[image,get]),field(_('图片验证码'),captcha),field(_('短信验证码'),[code,send]),sms.node,note,E('div',{'class':'qmodem-login-footer'},[E('div',{'class':'qmodem-login-footer-group'},[]),E('div',{'class':'qmodem-login-footer-group'},[E('button',{type:'button','class':'cbi-button',click:close},_('取消')),login])])]);
   ui.showModal(_('中国移动登录'),[root]);controls();
+  qmodem.getSimInfo(section).then(function(info){var f={};((info&&info.modem_info)||[]).forEach(function(it){f[it.key]=String(it.value||'').trim();});var num=(f['SIM Number']||'').replace(/^\+?86/,'');if(!closed && !phone.value && /^1\d{10}$/.test(num))phone.value=num;}).catch(function(){});
   window.addEventListener('hashchange',close);window.addEventListener('pagehide',close);
   if(window.MutationObserver){observer=new window.MutationObserver(function(){if(!closed && (!document.body.classList.contains('modal-overlay-active') || !root.isConnected))close();});observer.observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});}
   return {close:close};
