@@ -1,0 +1,120 @@
+#!/bin/sh
+# Read-only software inventory and explicit GitHub source check. Never installs.
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+case "$1" in
+list) echo '{"status":{},"check":{}}'; exit 0;;
+call) case "$2" in status|check) :;; *) exit 1;; esac;;
+*) exit 1;;
+esac
+read -r input
+package_version() {
+ if [ -r /lib/apk/db/installed ]; then
+  awk -v name="$1" 'BEGIN{RS="";FS="\n"} {p="";v="";for(i=1;i<=NF;i++){if($i=="P:"name)p=name;if(substr($i,1,2)=="V:")v=substr($i,3)}if(p!=""){print v;exit}}' /lib/apk/db/installed
+ elif command -v opkg >/dev/null 2>&1; then opkg status "$1" 2>/dev/null | sed -n 's/^Version: //p' | head -1; fi
+}
+local_component() {
+ name="$1"; package="$2"; manifest="$3"; version=$(package_version "$package")
+ if [ -z "$version" ] && [ "$name" = theme ]; then package=luci-theme-shadcn; version=$(package_version "$package"); fi
+ if [ -s "$manifest" ] && jq -e '.schema==1 and (.files|type=="object")' "$manifest" >/dev/null 2>&1; then
+  manifest_json=$(cat "$manifest")
+  mismatches=$(jq -r '.files|to_entries[]|[.key,.value]|@tsv' "$manifest" | while IFS="$(printf '\t')" read -r path digest; do
+   # Hash only known software paths, never arbitrary configuration or user data.
+   case "$path" in /usr/share/qmodem/*|/usr/libexec/rpcd/qmodem*|/www/luci-static/*) :;; *) continue;; esac
+   case "$path" in *..*) continue;; esac
+   actual=$(sha256sum "$path" 2>/dev/null); actual=${actual%% *}
+   [ "$actual" = "$digest" ] || printf '%s\n' "$path"
+  done | jq -Rsc 'split("\n")|map(select(length>0))')
+ else manifest_json='{}'; mismatches='[]'; fi
+ jq -cn --arg name "$name" --arg package "$package" --arg version "$version" --argjson manifest "$manifest_json" --argjson changed "$mismatches" \
+  '{name:$name,package:$package,version:$version,revision:($manifest.revision//""),modified:($manifest.modified//false),build_id:($manifest.build_id//""),integrity:(if ($manifest.files//{}|length)==0 then "untracked" elif ($changed|length)>0 then "changed" else "matched" end),changed_files:$changed}'
+}
+# Legacy packages predate build receipts. Reproduce version.mk's path-scoped
+# autorelease, including its most recent bump marker, at the pinned GitHub SHA.
+# Do not invent a Git revision or infer freshness from the base version alone.
+legacy_package_version() {
+ repo="$1"; sha="$2"
+ version_mk=$(curl -fsS --connect-timeout 1 --max-time 2 "https://raw.githubusercontent.com/$repo/$sha/version.mk" 2>/dev/null) || return 1
+ base=$(printf '%s\n' "$version_mk" | sed -n 's/^QMODEM_VERSION:=[[:space:]]*//p' | head -1 | tr -d '\r')
+ printf '%s' "$base" | grep -Eq '^[0-9][A-Za-z0-9._+-]*$' || return 1
+ # Fail closed if the repository changes the release algorithm.
+ printf '%s\n' "$version_mk" | grep -q 'QMODEM_RELEASE:=$(QMODEM_AUTORELEASE)' || return 1
+ offset=0; page=1
+ while [ "$page" -le 5 ]; do
+  history=$(curl -fsS --connect-timeout 1 --max-time 2 -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$repo/commits?sha=$sha&path=application/qmodem&per_page=100&page=$page" 2>/dev/null) || return 1
+  length=$(printf '%s' "$history" | jq -er 'if type=="array" then length else error("invalid history") end' 2>/dev/null) || return 1
+  if [ "$length" -eq 0 ]; then
+   [ "$offset" -gt 0 ] || return 1
+   printf '%s-r%s\n' "$base" "$offset"; return 0
+  fi
+  bump=$(printf '%s' "$history" | jq -r '.[].commit.message|split("\n")[0]' | grep -n -m 1 -e ': [uU]pdate to ' -e ': [bB]ump to ' | cut -d: -f1)
+  if [ -n "$bump" ]; then printf '%s-r%s\n' "$base" "$((offset+bump))"; return 0; fi
+  offset=$((offset+length))
+  if [ "$length" -lt 100 ]; then printf '%s-r%s\n' "$base" "$offset"; return 0; fi
+  page=$((page+1))
+ done
+ return 1
+}
+compare_package_versions() {
+ installed="$1"; available="$2"
+ if command -v apk >/dev/null 2>&1; then
+  order=$(apk version -t "$installed" "$available" 2>/dev/null) || return 1
+  case "$order" in '<') echo ahead;; '=') echo identical;; '>') echo behind;; *) return 1;; esac
+ elif command -v opkg >/dev/null 2>&1; then
+  if opkg compare-versions "$installed" lt "$available"; then echo ahead
+  elif opkg compare-versions "$installed" eq "$available"; then echo identical
+  elif opkg compare-versions "$installed" gt "$available"; then echo behind
+  else return 1; fi
+ else return 1; fi
+}
+remote_component() {
+ component="$1"; repo="$2"; local_json="$3"; revision=$(printf '%s' "$local_json" | jq -r '.revision')
+ # Fixed HTTPS origins only, bounded timeout, certificate validation enabled.
+ head=$(curl -fsS --connect-timeout 1 --max-time 2 -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$repo/commits/main" 2>/dev/null) || head='{}'
+ latest=$(printf '%s' "$head" | jq -r '.sha//""' 2>/dev/null)
+ if ! printf '%s' "$latest" | grep -Eq '^[0-9a-f]{40}$'; then
+  jq -cn --arg name "$component" '{name:$name,state:"failed"}'; return
+ fi
+ latest=$(printf '%s' "$head" | jq -r '.sha'); relation=unrecorded; available=''
+ if [ "$revision" = "$latest" ]; then relation=identical
+ elif printf '%s' "$revision" | grep -Eq '^[0-9a-f]{40}$'; then
+  comparison=$(curl -fsS --connect-timeout 1 --max-time 2 -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$repo/compare/$revision...$latest" 2>/dev/null) || comparison='{}'
+  relation=$(printf '%s' "$comparison" | jq -r '.status//"failed"')
+ elif [ "$component" = qmodem ]; then
+  available=$(legacy_package_version "$repo" "$latest") || available=''
+  installed=$(printf '%s' "$local_json" | jq -r '.version')
+  if [ -n "$available" ] && [ -n "$installed" ]; then
+   relation=$(compare_package_versions "$installed" "$available") || relation=failed
+  else relation=failed; fi
+ fi
+ jq -cn --arg name "$component" --arg relation "$relation" --arg available "$available" --argjson head "$head" '{name:$name,state:$relation,available_version:$available,revision:$head.sha,date:$head.commit.committer.date,url:$head.html_url}'
+}
+# Single shared snapshot; no network traffic on page load or periodic dashboard refresh.
+q=$(local_component qmodem qmodem /usr/share/qmodem/versions/qmodem.json)
+theme_manifest=/usr/share/luci-theme-shadcn-shane/build.json
+[ -s "$theme_manifest" ] || theme_manifest=/usr/share/luci-theme-shadcn/build.json
+t=$(local_component theme luci-theme-shadcn-shane "$theme_manifest")
+ui_version=$(package_version luci-app-qmodem-next)
+sms_version=$(package_version qmodem-smsd)
+sms=$(ubus -t 3 call qmodem.sms status 2>/dev/null) || sms='{}'
+remote='null'
+if [ "$2" = check ]; then
+ exec 9>/var/run/qmodem-update.lock
+ if flock -n 9; then
+  now=$(date +%s); cached=$(jq -r 'if .schema==2 then .checked_at//0 else 0 end' /tmp/qmodem-update-check.json 2>/dev/null); cached=${cached:-0}
+  if [ "$now" -ge "$cached" ] && [ $((now-cached)) -lt 300 ]; then remote=$(cat /tmp/qmodem-update-check.json)
+  else
+   qresult=/var/run/qmodem-update-q.$$; tresult=/var/run/qmodem-update-t.$$
+   trap 'rm -f "$qresult" "$tresult"' EXIT
+   remote_component qmodem czyjian/QModem "$q" >"$qresult" & qpid=$!
+   remote_component theme czyjian/luci-theme-shadcn "$t" >"$tresult" & tpid=$!
+   wait "$qpid"; wait "$tpid"
+   qr=$(cat "$qresult"); tr=$(cat "$tresult")
+   remote=$(jq -cn --argjson q "$qr" --argjson t "$tr" --argjson time "$now" '{schema:2,checked_at:$time,components:[$q,$t]}')
+   if printf '%s' "$remote" | jq -e 'all(.components[]; .state!="failed")' >/dev/null 2>&1; then
+    printf '%s\n' "$remote" >/tmp/qmodem-update-check.json.tmp && mv /tmp/qmodem-update-check.json.tmp /tmp/qmodem-update-check.json
+   fi
+  fi
+ else remote='{"busy":true}'; fi
+elif [ -s /tmp/qmodem-update-check.json ]; then remote=$(cat /tmp/qmodem-update-check.json); fi
+jq -cn --argjson q "$q" --argjson t "$t" --arg ui "$ui_version" --arg smsv "$sms_version" --argjson sms "$sms" --argjson remote "$remote" \
+ '{components:[$q,$t],ui_version:$ui,sms_version:$smsv,sms_api:($sms.api_version//0),sms_ready:($sms.status=="ready"),remote:$remote}'

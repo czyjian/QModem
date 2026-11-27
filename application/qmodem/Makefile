@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)
 		+ubus-at-daemon +qmodem-settings +tom_modem +terminfo +sms-tool_q \
 		+modem_scan \
 		+odhcp6c +qmodem-rm500u-ndppd \
-		+jq +flock +bc\
+		+jq +flock +bc +curl +ca-bundle +coreutils-sha256sum\
 		+coreutils +coreutils-stat +xxd \
 		+PACKAGE_qmodem_INCLUDE_SEAL:qmodem-seal \
 		+usbutils \
@@ -146,9 +146,11 @@ endef
 
 define Package/$(PKG_NAME)/install
 		$(CP) ./files/* $(1)/
+		$(INSTALL_BIN) ./files/usr/libexec/rpcd/qmodem.update $(1)/usr/libexec/rpcd/
 		$(INSTALL_BIN) ./files/lib/netifd/proto/qmodem_rm500u6.sh $(1)/lib/netifd/proto/
 		$(INSTALL_BIN) ./files/usr/share/qmodem/rm500u*.sh $(1)/usr/share/qmodem/
 		$(INSTALL_BIN) ./files/usr/share/qmodem/rm500u_dhcpv6.script $(1)/usr/share/qmodem/
+		python3 ../../scripts/gen-update-manifest.py $(1) qmodem '$(PKG_VERSION)-r$(PKG_RELEASE)'
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

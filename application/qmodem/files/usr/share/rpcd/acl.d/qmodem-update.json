@@ -1,0 +1,1 @@
+{"qmodem-update":{"description":"Read software update status","read":{"ubus":{"qmodem.update":["status","check"]}}}}
