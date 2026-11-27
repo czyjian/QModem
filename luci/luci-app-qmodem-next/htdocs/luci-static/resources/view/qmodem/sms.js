@@ -4,6 +4,7 @@
 'require ui';
 'require dom';
 'require qmodem.sms as smsService';
+'require qmodem.sms-health as smsHealth';
 'require qmodem.sms-counter as smsCounter';
 'require qmodem.sms-address as smsAddress';
 'require qmodem.qmodem as qmodem';
@@ -550,6 +551,7 @@ return qmodem.withSmsTabs(view.extend({
 		
 		buttonDiv.appendChild(newConversationBtn);
 		buttonDiv.appendChild(refreshBtn);
+		buttonDiv.appendChild(E('button', { type: 'button', 'class': 'cbi-button cbi-button-action', click: function() { smsHealth.show(configSection); } }, _('短信健康检查')));
 		buttonDiv.appendChild(E('button', {
 			'type': 'button', 'class': 'cbi-button cbi-button-action',
 			'click': function(ev) {
