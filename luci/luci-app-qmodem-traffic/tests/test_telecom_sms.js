@@ -2,7 +2,8 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),path=require('n
 const folder=path.join(__dirname,'../htdocs/luci-static/resources/qmodem/');
 const E=(tag,attrs={},children)=>({tag,attrs,children,style:{},focus(){},select(){}});
 const L={Class:{extend:x=>x}},dom={content:(node,children)=>node.children=children};
-const helper=new Function('L','rpc','_',fs.readFileSync(folder+'carrier-login.js','utf8'))(L,{declare:()=>()=>{}},x=>x);
+const tips=new Function('L','E',fs.readFileSync(path.join(__dirname,'../../luci-app-qmodem-next/htdocs/luci-static/resources/qmodem/tips.js'),'utf8'))(L,E);
+const helper=new Function('tips','L','rpc','_',fs.readFileSync(folder+'carrier-login.js','utf8'))(tips,L,{declare:()=>()=>{}},x=>x);
 const old={id:1,sender:'106598731',type:'received',timestamp:9999,content:'中国电信 验证码111111'};
 const fresh={id:2,sender:'106598731',type:'received',timestamp:1001,content:'中国电信 验证码222222'};
 const other={id:3,sender:'106999',type:'received',timestamp:1001,content:'其他公司 验证码333333'};
@@ -10,7 +11,7 @@ let all=[old],timer=null,changes=0,imsi='460031234567890';
 const rpc={declare:spec=>async()=>spec.object==='system'?{localtime:1000}:spec.method==='sync'?{status:'success'}:{messages:all}};
 const qmodem={getSimInfo:async()=>({modem_info:[{key:'SIM Status',value:'ready'},{key:'IMSI',value:imsi}]})};
 const window={setTimeout:fn=>{timer=fn;return 1;},clearTimeout:()=>{timer=null;}};
-const api=new Function('L','E','_','rpc','dom','qmodem','carrierLogin','window',fs.readFileSync(folder+'telecom-sms.js','utf8'))(L,E,x=>x,rpc,dom,qmodem,helper,window);
+const api=new Function('tips','L','E','_','rpc','dom','qmodem','carrierLogin','window',fs.readFileSync(folder+'telecom-sms.js','utf8'))(tips,L,E,x=>x,rpc,dom,qmodem,helper,window);
 const flush=async()=>{for(let i=0;i<12;i++)await new Promise(r=>setImmediate(r));};
 (async()=>{
  const watcher=api.create('2_1',()=>changes++);

@@ -1,4 +1,5 @@
 'use strict';
+'require qmodem.tips as tips';
 'require view';
 'require ui';
 'require dom';
@@ -554,10 +555,7 @@ return view.extend({
 			}
 		});
 
-		var hint = E('div', { 
-			'class': 'cbi-value-description',
-			'style': 'margin-top: 5px;'
-		}, _('Enter exactly 15 digits'));
+		var hint = tips.description(_('Enter exactly 15 digits'));
 		
 		newImeiField.appendChild(imeiInput);
 		newImeiField.appendChild(hint);
@@ -718,10 +716,7 @@ return view.extend({
 		var settingsHeader = E('legend', {}, _('Lock Cell Settings'));
 		settingsSection.appendChild(settingsHeader);
 
-		var settingsDesc = E('div', { 
-			'class': 'cbi-value-description',
-			'style': 'margin-bottom: 15px;'
-		}, _('Configure cell lock parameters. You can manually enter values or use the "Copy" button from scanned cells.'));
+		var settingsDesc = tips.description(_('Configure cell lock parameters. You can manually enter values or use the "Copy" button from scanned cells.'), { style: 'margin-bottom:15px;' });
 		settingsSection.appendChild(settingsDesc);
 
 		// RAT Selection

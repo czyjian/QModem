@@ -1,4 +1,5 @@
 'use strict';
+'require qmodem.tips as tips';
 'require baseclass';
 'require form';
 'require qmodem.form-sections as sectionForm';
@@ -164,8 +165,7 @@ return baseclass.extend({
 						'value': api_config.webhook_url || '',
 						'placeholder': 'https://example.com/webhook'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('Supports placeholders: {SENDER}, {CONTENT}, {TIME}'))
+					tips.description(_('Supports placeholders: {SENDER}, {CONTENT}, {TIME}'))
 				])
 			]));
 
@@ -188,8 +188,7 @@ return baseclass.extend({
 						'value': api_config.format || '',
 						'placeholder': '{"sender":"{SENDER}","time":"{TIME}","content":"{CONTENT}"}'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('Custom format using placeholders: {SENDER}, {CONTENT}, {TIME}'))
+					tips.description(_('Custom format using placeholders: {SENDER}, {CONTENT}, {TIME}'))
 				])
 			]));
 
@@ -202,8 +201,7 @@ return baseclass.extend({
 						'value': api_config.headers || '',
 						'placeholder': 'Authorization: Bearer token'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('HTTP headers, one per line'))
+					tips.description(_('HTTP headers, one per line'))
 				])
 			]));
 		}
@@ -218,8 +216,7 @@ return baseclass.extend({
 						'value': api_config.token || '',
 						'placeholder': 'SCT123456TCxyz...'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('ServerChan API token from https://sctapi.ftqq.com'))
+					tips.description(_('ServerChan API token from https://sctapi.ftqq.com'))
 				])
 			]));
 
@@ -232,8 +229,7 @@ return baseclass.extend({
 						'value': api_config.channel || '',
 						'placeholder': '9|66'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('Message channel, use | to separate multiple channels'))
+					tips.description(_('Message channel, use | to separate multiple channels'))
 				])
 			]));
 
@@ -256,8 +252,7 @@ return baseclass.extend({
 						'value': api_config.openid || '',
 						'placeholder': 'openid1,openid2'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('OpenID for message forwarding, use comma to separate multiple IDs'))
+					tips.description(_('OpenID for message forwarding, use comma to separate multiple IDs'))
 				])
 			]));
 		}
@@ -272,8 +267,7 @@ return baseclass.extend({
 						'value': api_config.pushkey || '',
 						'placeholder': 'PDU123456T...'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('PushDeer Push Key from http://pushdeer.com'))
+					tips.description(_('PushDeer Push Key from http://pushdeer.com'))
 				])
 			]));
 
@@ -286,8 +280,7 @@ return baseclass.extend({
 						'value': api_config.server || '',
 						'placeholder': 'https://api2.pushdeer.com'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('Custom PushDeer API endpoint, leave empty to use default'))
+					tips.description(_('Custom PushDeer API endpoint, leave empty to use default'))
 				])
 			]));
 		}
@@ -302,8 +295,7 @@ return baseclass.extend({
 						'value': api_config.webhook_url || '',
 						'placeholder': 'https://open.feishu.cn/open-apis/bot/v2/hook/xxxxx'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('Feishu webhook URL from your bot configuration'))
+					tips.description(_('Feishu webhook URL from your bot configuration'))
 				])
 			]));
 		}
@@ -318,8 +310,7 @@ return baseclass.extend({
 						'value': api_config.script_path || '',
 						'placeholder': '/usr/share/sms_forwarder/sms_forward_custom.sh'
 					}),
-					E('div', { 'class': 'cbi-value-description' }, 
-						_('Path to custom forwarding script. Script receives SMS_SENDER, SMS_TIME, SMS_CONTENT environment variables'))
+					tips.description(_('Path to custom forwarding script. Script receives SMS_SENDER, SMS_TIME, SMS_CONTENT environment variables'))
 				])
 			]));
 		}

@@ -1,4 +1,5 @@
 'use strict';
+'require qmodem.tips as tips';
 'require view';
 'require poll';
 'require ui';
@@ -50,20 +51,7 @@ return qmodem.withSmsTabs(view.extend({
 	render: function(modems) {
 		var self = this;
 		var container = E('div', { 'class': 'cbi-map' });
-		function checkboxLine(checkbox, text) {
-			checkbox.style.margin = '0';
-			checkbox.style.flexShrink = '0';
-			return E('label', { 'for': checkbox.id, style: 'display:inline-flex;align-items:center;gap:8px;margin:0;padding:0;' }, [checkbox, E('span', {}, text)]);
-		}
-		function helpField(control, text) {
-			control.style.flexShrink = '0';
-			return E('div', { 'class': 'cbi-value', style: 'display:block;margin:0;padding:0;' }, [
-				E('div', { 'class': 'cbi-value-field', style: 'margin:0;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;' }, [
-					control,
-					E('div', { 'class': 'cbi-value-description', style: 'margin-top:0;flex:1 1 260px;' }, text)
-				])
-			]);
-		}
+		var checkboxLine = tips.checkboxLine, helpField = tips.helpField;
 
 
 		// Filter enabled modems
@@ -298,14 +286,21 @@ return qmodem.withSmsTabs(view.extend({
 	storageTable.appendChild(storageBody);
 	storageSection.appendChild(storageTable);
 	self.showConversationSettings = function() {
-		ui.showModal(_('Conversation Settings'), [
+		var dialog = ui.showModal(_('Conversation Settings'), [
 			settingsSection,
 			storageSection,
 			E('div', { 'class': 'right' }, E('button', {
 				'type': 'button', 'class': 'cbi-button cbi-button-neutral',
 				'click': function() { ui.hideModal(); }
 			}, _('Close')))
-		]);
+		], 'cbi-modal', 'qmodem-conversation-settings-modal');
+		if (dialog && typeof dialog.getBoundingClientRect === 'function') {
+			var bounds = dialog.getBoundingClientRect();
+			if (bounds.width > 0) {
+				var width = Math.min(bounds.width * 1.5, document.documentElement.clientWidth - 32);
+				dialog.appendChild(E('style', {}, '.modal.qmodem-conversation-settings-modal { box-sizing: border-box; width: ' + width + 'px !important; max-width: calc(100vw - 2rem) !important; }'));
+			}
+		}
 	};
 	
 		// Main content area

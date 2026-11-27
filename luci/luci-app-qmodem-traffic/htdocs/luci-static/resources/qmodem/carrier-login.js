@@ -1,4 +1,5 @@
 'use strict';
+'require qmodem.tips as tips';
 'require ui';
 'require dom';
 'require rpc';
@@ -51,7 +52,7 @@ return L.Class.extend({
 		var password=E('input',{type:'password','class':'cbi-input-text',autocomplete:'current-password',maxlength:20});
 		var loginMode='sms';
 		var note=E('div',{'class':'qmodem-login-status',role:'status','aria-live':'polite'});
-		var smsArea=E('div'),smsState=E('p',{'class':'cbi-value-description'},_('发送验证码后，在此显示本次操作之后收到的运营商短信。'));
+		var smsArea=E('div'),smsState=tips.description(_('发送验证码后，在此显示本次操作之后收到的运营商短信。'));
 		function field(label,input) {return E('div',{'class':'cbi-value'},[E('label',{'class':'cbi-value-title'},label),E('div',{'class':'cbi-value-field'},input)]);}
 		function say(text){dom.content(note,text || '');}
 		function stopSms(){if(smsTimer)window.clearTimeout(smsTimer);smsTimer=null;smsAfter=null;}
@@ -117,7 +118,7 @@ return L.Class.extend({
 				function finish(error,token){if(settled)return;settled=true;window.clearTimeout(timer);window.removeEventListener('message',receive);verifyCancel=null;verifyFrame=null;showLogin();if(error)reject(error);else resolve(token);}
 				function receive(event){if(!alive || event.origin!==VERIFY_ORIGIN || event.source!==frame.contentWindow)return;var data=event.data;if(!data || typeof data!=='object')return;if(data.code==='myLoad')context();else if(data.code==='0001')finish(new Error(_('已取消运营商身份验证')));else if(data.code==='0000' && typeof data.resultToken==='string' && /^[\x21-\x7e]{1,4096}$/.test(data.resultToken))finish(null,data.resultToken);}
 				frame.addEventListener('load',context);window.addEventListener('message',receive);verifyCancel=function(error){finish(error);};
-				ui.showModal(_('运营商官方身份验证'),[E('p',{'class':'cbi-value-description'},_('请完成验证后返回登录。')),frame,E('div',{'class':'right'},E('button',{type:'button','class':'cbi-button',click:function(){finish(new Error(_('已取消运营商身份验证')));}},_('取消验证')))]);
+				ui.showModal(_('运营商官方身份验证'),[tips.description(_('请完成验证后返回登录。')),frame,E('div',{'class':'right'},E('button',{type:'button','class':'cbi-button',click:function(){finish(new Error(_('已取消运营商身份验证')));}},_('取消验证')))]);
 				timer=window.setTimeout(function(){finish(new Error(_('身份验证已超时，请重试。')));},300000);
 			});
 		}

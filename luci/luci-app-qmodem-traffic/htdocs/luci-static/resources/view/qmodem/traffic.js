@@ -1,4 +1,5 @@
 'use strict';
+'require qmodem.tips as tips';
 'require view';
 'require uci';
 'require poll';
@@ -47,13 +48,7 @@ return view.extend({
 		var autoLogin=E('span',{},_('正在检查登录状态…')),autoAvailable=E('span'),autoLast=E('span',{},'—');
 		var autoLoaded='',autoPending=false,autoGeneration=0,monitorActive=true;
 		var fieldId=0;
-		function description(text) { return E('div',{'class':'cbi-value-description',style:'margin-top:0;flex:1 1 260px;'},E('span',{'class':'qmodem-tip-text'},text)); }
-		function nativeField(children,inline) {
-			return E('div',{'class':'cbi-value',style:'display:block;margin:0;padding:0;'},[
-				E('div',{'class':'cbi-value-field',style:'margin:0;width:100%;'+(inline?'display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;':'')},children)
-			]);
-		}
-		function note(text) { return E('div',{style:'margin-top:6px;'},nativeField(description(text),false)); }
+		var description=tips.inlineDescription, nativeField=tips.field, note=tips.note;
 		function row(label,control,table,help) {
 			var id='traffic-field-'+(++fieldId); control.id=id;
 			if(table) {

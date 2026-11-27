@@ -1,4 +1,5 @@
 'use strict';
+'require qmodem.tips as tips';
 'require rpc';
 'require dom';
 'require qmodem.qmodem as qmodem';
@@ -11,7 +12,7 @@ return L.Class.extend({
  create:function(section,onChanged,carrier){
   var alive=true,timer=null,version=0,after=null,baseline=new Set(),deadline=0,identity='';
   carrier=carrier || 'telecom';
-  var state=E('p',{'class':'cbi-value-description'},_('发送验证码后，仅显示本次操作之后收到的运营商短信。')),messages=E('div');
+  var state=tips.description(_('发送验证码后，仅显示本次操作之后收到的运营商短信。')),messages=E('div');
   async function sim(){
    var data=await qmodem.getSimInfo(section),fields={};
    ((data && data.modem_info) || []).forEach(function(item){fields[item.key]=String(item.value || '').trim();});

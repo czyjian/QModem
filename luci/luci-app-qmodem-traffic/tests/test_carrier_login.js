@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../htdocs/luci-static/resources/qmodem/carrier-login.js'),'utf8');
 function element(tag,attrs={},children){return {tag,attrs,children,style:{},value:attrs.value || '',listeners:{},contentWindow:tag==='iframe'?{postMessage(){}}:null,addEventListener(name,handler){this.listeners[name]=handler;},focus(){},select(){}};}
+const tips=new Function('L','E',fs.readFileSync(path.join(__dirname,'../../luci-app-qmodem-next/htdocs/luci-static/resources/qmodem/tips.js'),'utf8'))({Class:{extend:v=>v}},element);
 function flatten(node){if(!node)return[];if(Array.isArray(node))return node.flatMap(flatten);if(typeof node!=='object')return[];return[node,...flatten(node.children)];}
 const flush=async()=>{for(let i=0;i<12;i++)await new Promise(resolve=>setImmediate(resolve));};
 function setup(){
@@ -11,8 +12,8 @@ function setup(){
   const window={crypto:require('node:crypto').webcrypto,setTimeout,clearTimeout,setInterval,clearInterval,addEventListener(name,fn){events[name]=fn;},removeEventListener(name,fn){if(events[name]===fn)delete events[name];}};
   const rpc={declare(spec){if(spec.object==='system')return async()=>({localtime:1000});if(spec.method==='sync')return async()=>({status:'success'});return async()=>{queries++;return{status:'success',mode:'database_push',messages:sms.shift() || []};};}};
   const qmodem={getSimInfo:async()=>({modem_info:[{key:'SIM Status',value:'ready'},{key:'IMSI',value:sim},{key:'SIM Number',value:'8613800000000'}]})};
-  const api=new Function('L','E','_','ui','dom','rpc','qmodem','window','fetch',source)(
-    {Class:{extend:v=>v},url:v=>'/cgi-bin/luci/'+v},element,v=>v,ui,{content:(node,children)=>{node.children=children;}},rpc,qmodem,window,
+  const api=new Function('tips','L','E','_','ui','dom','rpc','qmodem','window','fetch',source)(
+    tips,{Class:{extend:v=>v},url:v=>'/cgi-bin/luci/'+v},element,v=>v,ui,{content:(node,children)=>{node.children=children;}},rpc,qmodem,window,
     async(url,options)=>{requests.push({url,payload:JSON.parse(options.body)});return{ok:true,json:async()=>responses.shift()};});
   return {api,events,requests,responses,sms,open(){return api.open('2_1',()=>successes++);},get modal(){return modal;},get queries(){return queries;},get successes(){return successes;},set sim(value){sim=value;},nodes(){return flatten(modal?.children);},button(text){return flatten(modal?.children).find(n=>n.tag==='button' && n.children===text);}};
 }
@@ -44,13 +45,13 @@ function setup(){
   first.events.message({origin:'https://evil.invalid',source:frame.contentWindow,data:{code:'0000',resultToken:'untrusted'}});await flush();assert.equal(first.requests.length,1);
   first.events.message({origin:'https://img.client.10010.com',source:{},data:{code:'0000',resultToken:'wrong-window'}});await flush();assert.equal(first.requests.length,1);
   first.events.message({origin:'https://img.client.10010.com',source:frame.contentWindow,data:{code:'0000',resultToken:'valid-manual-result'}});await flush();
-  assert.equal(first.modal.title,'运营商登录');assert.equal(first.requests[1].payload.operatorVerificationId,'test-challenge');assert.equal(first.requests[1].payload.operatorResultToken,'valid-manual-result');
+  assert.equal(first.modal.title,'中国联通登录');assert.equal(first.requests[1].payload.operatorVerificationId,'test-challenge');assert.equal(first.requests[1].payload.operatorResultToken,'valid-manual-result');
   const text=JSON.stringify(first.modal);assert(text.includes('654321'));assert(!text.includes('old secret'));
   const code=first.nodes().find(n=>n.attrs.autocomplete==='one-time-code');assert.equal(code.value,'','SMS is displayed for the user, not automatically submitted');
   code.value='654321';first.button('登录').attrs.click();await flush();assert.equal(first.successes,1);assert.equal(first.modal,null);assert.equal(first.events.message,undefined);session.close();
 
   const cancel=setup(),cancelSession=cancel.open();await flush();cancel.sms.push([]);cancel.responses.push({status:'need_verification',verification:{id:'cancel-me',browserSupported:true,url:'https://img.client.10010.com/loginRisk/index.html',context:{mobile:'encrypted'}}});
-  cancel.button('发送验证码').attrs.click();await flush();cancel.button('取消验证').attrs.click();await flush();assert.equal(cancel.modal.title,'运营商登录');assert.equal(cancel.requests.length,1);cancelSession.close();assert.equal(cancel.modal,null);
+  cancel.button('发送验证码').attrs.click();await flush();cancel.button('取消验证').attrs.click();await flush();assert.equal(cancel.modal.title,'中国联通登录');assert.equal(cancel.requests.length,1);cancelSession.close();assert.equal(cancel.modal,null);
 
   const swap=setup(),swapSession=swap.open();await flush();swap.sim='460019999999999';const codeInput=swap.nodes().find(n=>n.attrs.autocomplete==='one-time-code');codeInput.value='123456';swap.button('登录').attrs.click();await flush();assert.equal(swap.requests.length,0,'do not login using a SIM that changed while the dialog was open');assert(JSON.stringify(swap.modal).includes('SIM 卡已更换'));swapSession.close();
   console.log('PASS: native login, post-send SMS filtering, manual verification origin/window checks, cancellation, SIM binding and cleanup');
