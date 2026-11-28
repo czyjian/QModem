@@ -26,7 +26,7 @@ env:
 
 jobs:
   job_auto_tag:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # main owns pre-release tags; stable owns final release tags.
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stable') && github.event_name == 'push'
     outputs:
@@ -113,7 +113,7 @@ jobs:
         echo "tag_created=true" >> $GITHUB_OUTPUT
 
   job_prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [job_auto_tag]
     if: always()  # 总是运行，不管 auto_tag 是否运行或是否成功
     outputs:
@@ -200,7 +200,7 @@ jobs:
       fail-fast: false
       matrix:
         build_arch: ['arm64_ipk',"arm64_apk","x64_apk","x64_ipk","mmips_ipk","mmips_apk" ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - name: Install packages
@@ -382,7 +382,7 @@ jobs:
   job_release_artifacts:
     name: Release Artifacts
     needs: [job_build_qmodem, job_prepare]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # job_prepare recognizes both direct tag pushes and tags created by
     # job_auto_tag during a stable branch run.
     if: ${{ always() && needs.job_prepare.result == 'success' && needs.job_build_qmodem.result == 'success' && needs.job_prepare.outputs.push_type == 'tag' }}
