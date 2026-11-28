@@ -67,26 +67,17 @@ compare_package_versions() {
  else return 1; fi
 }
 remote_component() {
- component="$1"; repo="$2"; local_json="$3"; revision=$(printf '%s' "$local_json" | jq -r '.revision')
- # Fixed HTTPS origins only, bounded timeout, certificate validation enabled.
- head=$(curl -fsS --connect-timeout 1 --max-time 2 -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$repo/commits/main" 2>/dev/null) || head='{}'
- latest=$(printf '%s' "$head" | jq -r '.sha//""' 2>/dev/null)
- if ! printf '%s' "$latest" | grep -Eq '^[0-9a-f]{40}$'; then
-  jq -cn --arg name "$component" '{name:$name,state:"failed"}'; return
+ component="$1"; repo="$2"; local_json="$3"
+ release=$(curl -sS --connect-timeout 3 --max-time 10 -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null) || release='{}'
+ tag=$(printf '%s' "$release" | jq -r '.tag_name//""' 2>/dev/null)
+ available=${tag#v}
+ installed=$(printf '%s' "$local_json" | jq -r '.version')
+ relation=failed
+ if printf '%s' "$available" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([_.-](rc|beta|alpha)[0-9]+)?(-r[0-9]+)?$'; then
+  relation=$(compare_package_versions "$installed" "$available") || relation=failed
+ elif [ -z "$tag" ] && printf '%s' "$release" | jq -e '.message=="Not Found"' >/dev/null 2>&1; then relation=unpublished
  fi
- latest=$(printf '%s' "$head" | jq -r '.sha'); relation=unrecorded; available=''
- if [ "$revision" = "$latest" ]; then relation=identical
- elif printf '%s' "$revision" | grep -Eq '^[0-9a-f]{40}$'; then
-  comparison=$(curl -fsS --connect-timeout 1 --max-time 2 -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$repo/compare/$revision...$latest" 2>/dev/null) || comparison='{}'
-  relation=$(printf '%s' "$comparison" | jq -r '.status//"failed"')
- elif [ "$component" = qmodem ]; then
-  available=$(legacy_package_version "$repo" "$latest") || available=''
-  installed=$(printf '%s' "$local_json" | jq -r '.version')
-  if [ -n "$available" ] && [ -n "$installed" ]; then
-   relation=$(compare_package_versions "$installed" "$available") || relation=failed
-  else relation=failed; fi
- fi
- jq -cn --arg name "$component" --arg relation "$relation" --arg available "$available" --argjson head "$head" '{name:$name,state:$relation,available_version:$available,revision:$head.sha,date:$head.commit.committer.date,url:$head.html_url}'
+ jq -cn --arg name "$component" --arg relation "$relation" --arg available "$available" --arg url "https://github.com/$repo/releases" '{name:$name,state:$relation,available_version:$available,url:$url}'
 }
 # Single shared snapshot; no network traffic on page load or periodic dashboard refresh.
 q=$(local_component qmodem qmodem /usr/share/qmodem/versions/qmodem.json)
@@ -100,7 +91,7 @@ remote='null'
 if [ "$2" = check ]; then
  exec 9>/var/run/qmodem-update.lock
  if flock -n 9; then
-  now=$(date +%s); cached=$(jq -r 'if .schema==2 then .checked_at//0 else 0 end' /tmp/qmodem-update-check.json 2>/dev/null); cached=${cached:-0}
+  now=$(date +%s); cached=$(jq -r 'if .schema==3 then .checked_at//0 else 0 end' /tmp/qmodem-update-check.json 2>/dev/null); cached=${cached:-0}
   if [ "$now" -ge "$cached" ] && [ $((now-cached)) -lt 300 ]; then remote=$(cat /tmp/qmodem-update-check.json)
   else
    qresult=/var/run/qmodem-update-q.$$; tresult=/var/run/qmodem-update-t.$$
@@ -109,7 +100,7 @@ if [ "$2" = check ]; then
    remote_component theme czyjian/luci-theme-shadcn "$t" >"$tresult" & tpid=$!
    wait "$qpid"; wait "$tpid"
    qr=$(cat "$qresult"); tr=$(cat "$tresult")
-   remote=$(jq -cn --argjson q "$qr" --argjson t "$tr" --argjson time "$now" '{schema:2,checked_at:$time,components:[$q,$t]}')
+   remote=$(jq -cn --argjson q "$qr" --argjson t "$tr" --argjson time "$now" '{schema:3,checked_at:$time,components:[$q,$t]}')
    if printf '%s' "$remote" | jq -e 'all(.components[]; .state!="failed")' >/dev/null 2>&1; then
     printf '%s\n' "$remote" >/tmp/qmodem-update-check.json.tmp && mv /tmp/qmodem-update-check.json.tmp /tmp/qmodem-update-check.json
    fi

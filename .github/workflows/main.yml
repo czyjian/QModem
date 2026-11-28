@@ -67,17 +67,12 @@ jobs:
           exit 1
         fi
 
-        case "${GITHUB_REF#refs/heads/}:$version" in
-          main:*[_-][0-9a-zA-Z]*) ;;
-          stable:[0-9]*.[0-9]*.[0-9]*) ;;
-          *)
-            echo "QMODEM_VERSION does not match its release branch: ${GITHUB_REF#refs/heads/}:$version" >&2
-            exit 1
-            ;;
-        esac
-        
-        # 生成tag名称
-        tag_name="v$version"
+        release=$(sed -n 's/^QMODEM_RELEASE:=//p' version.mk | xargs)
+        if ! [[ "$release" =~ ^[0-9]+$ ]]; then
+          echo "A numeric QMODEM_RELEASE is required for a release" >&2
+          exit 1
+        fi
+        tag_name="v$version-r$release"
         echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
         echo "Generated tag name: $tag_name"
     
@@ -156,7 +151,7 @@ jobs:
           git init tag-check
           cd tag-check
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags origin main stable \
+          git fetch --no-tags origin main \
             "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
           tag_commit="$(git rev-list -n 1 "refs/tags/${GITHUB_REF_NAME}")"
           case "${GITHUB_REF_NAME}" in
@@ -167,8 +162,8 @@ jobs:
               }
               ;;
             v[0-9]*.[0-9]*.[0-9]*)
-              git merge-base --is-ancestor "$tag_commit" origin/stable || {
-                echo "stable tags must point to stable" >&2
+              git merge-base --is-ancestor "$tag_commit" origin/main || {
+                echo "release tags must point to main" >&2
                 exit 1
               }
               ;;
