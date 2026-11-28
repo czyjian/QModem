@@ -7,6 +7,10 @@ on:
         required: false
         default: '["arm64_ipk","arm64_apk","x64_apk","x64_ipk","mmips_ipk","mmips_apk"]'
         type: string
+      diagnostic_only:
+        description: Collect SDK package metadata without compiling
+        type: boolean
+        default: false
   push:
     branches:
       - '*'
@@ -331,7 +335,22 @@ jobs:
           sed -i '/^CONFIG_PACKAGE_gpio-button-hotplug=/d' .config
           echo 'CONFIG_PACKAGE_gpio-button-hotplug=n' >> .config
 
+      - name: Collect SDK metadata
+        run: |
+          mkdir -p sdk-diagnostics
+          cp sdk/.config sdk-diagnostics/config
+          cp sdk/tmp/.packageinfo sdk-diagnostics/packageinfo
+          cp qmodem/application/qmodem_unicom/Makefile sdk-diagnostics/carrier-Makefile
+          cp sdk/include/package*.mk sdk-diagnostics/
+          find sdk/bin -type f -name '*qmodem*' > sdk-diagnostics/packages.txt
+          grep -n -A35 -B5 'Package: qmodem-carrier-service' sdk/tmp/.packageinfo || true
+          grep -E 'CONFIG_PACKAGE_(qmodem|node|luci-app-qmodem-traffic)' sdk/.config || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SDK-metadata-${{ matrix.build_arch }}
+          path: sdk-diagnostics/
       - name: Compile QModem
+        if: ${{ !inputs.diagnostic_only }}
         id: compile
         run: |
           set -euo pipefail
