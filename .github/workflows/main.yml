@@ -342,7 +342,7 @@ jobs:
           cp sdk/tmp/.packageinfo sdk-diagnostics/packageinfo
           cp qmodem/application/qmodem_unicom/Makefile sdk-diagnostics/carrier-Makefile
           cp sdk/include/package*.mk sdk-diagnostics/
-          find sdk/bin -type f -name '*qmodem*' > sdk-diagnostics/packages.txt
+          if [ -d sdk/bin ]; then find sdk/bin -type f -name '*qmodem*' > sdk-diagnostics/packages.txt; fi
           grep -n -A35 -B5 'Package: qmodem-carrier-service' sdk/tmp/.packageinfo || true
           grep -E 'CONFIG_PACKAGE_(qmodem|node|luci-app-qmodem-traffic)' sdk/.config || true
       - uses: actions/upload-artifact@v4
@@ -388,6 +388,11 @@ jobs:
               ;;
           esac
           package_dir="bin/packages/${{ env.SDK_ARCH }}/qmodem"
+          # nonshared packages are emitted into bin/targets/*/*/packages,
+          # not the per-feed package directory. Include the carrier runtime.
+          if [ "$traffic_addon" = true ]; then
+            find bin/targets -type f \( -name 'qmodem-carrier-service-*.apk' -o -name 'qmodem-carrier-service_*.ipk' \)               -exec cp -t "$package_dir" {} +
+          fi
           required_packages=(
             qmodem qmodem-smsd sms-forwarder-next qmodem-uplink-manager luci-app-qmodem-uplink
             luci-app-qmodem-next luci-i18n-qmodem-next-zh-cn
