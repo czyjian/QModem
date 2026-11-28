@@ -8,8 +8,8 @@ const dom={content:(node,children)=>node.children=children};
 const flush=async()=>{for(let i=0;i<20;i++)await new Promise(r=>setImmediate(r));};
 const nodes=n=>!n || typeof n!=='object' ? [] : Array.isArray(n) ? n.flatMap(nodes) : [n,...nodes(n.children)];
 const sms={node:element('fieldset',{},'本次验证码短信'),reset(){},close(){}};
-const api=new Function('L','E','_','ui','dom','telecomSms','window','fetch',fs.readFileSync(base+'telecom-test.js','utf8'))(
- {Class:{extend:x=>x},url:x=>x},element,x=>x,ui,dom,{create:()=>sms},{addEventListener(){},removeEventListener(){}},
+const api=new Function('qmodem','L','E','_','ui','dom','telecomSms','window','fetch',fs.readFileSync(base+'telecom-test.js','utf8'))(
+ {getSimInfo:async()=>({modem_info:[]})},{Class:{extend:x=>x},url:x=>x},element,x=>x,ui,dom,{create:()=>sms},{addEventListener(){},removeEventListener(){}},
  async(url,options)=>{const body=JSON.parse(options.body);requests.push(body);return {ok:true,json:async()=>body.action==='shared_status' ? {ok:true,logged_in:false} : body.action==='login' ? {ok:true,session_id:'fixture'} : {ok:true,total_mb:2048,remaining_mb:1024}};}
 );
 (async()=>{

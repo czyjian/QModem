@@ -6,8 +6,8 @@ const all=n=>!n || typeof n!=='object'?[]:Array.isArray(n)?n.flatMap(all):[n,...
 let modal=null,callbacks=0,snapshots=0,starts=0,failSend=false;
 const requests=[],sms={node:E('fieldset',{},'本次验证码短信'),reset(){},close(){},snapshot:async()=>{snapshots++;return {};},start:()=>starts++};
 const ui={showModal:(title,children)=>modal={title,children},hideModal:()=>modal=null};
-const api=new Function('L','E','_','ui','dom','smsMonitor','window','fetch',source)(
- {Class:{extend:x=>x},url:x=>x},E,x=>x,ui,{content:(n,c)=>n.children=c},{create:(s,cb,carrier)=>{assert.equal(carrier,'mobile');return sms;}},{addEventListener(){},removeEventListener(){},setInterval(){return 1;},clearInterval(){}},async(url,options)=>{const body=JSON.parse(options.body);requests.push(body);return {ok:true,json:async()=>body.action==='send' && failSend?{ok:false,code:'SMS_1',msg:'请等待60秒',can_retry:true,retry_after:60}:body.action==='challenge'?{ok:true,session_id:'fixture',image:'data:image/png;base64,Zml4dHVyZQ=='}:{ok:true}};});
+const api=new Function('qmodem','L','E','_','ui','dom','smsMonitor','window','fetch',source)(
+ {getSimInfo:async()=>({modem_info:[]})},{Class:{extend:x=>x},url:x=>x},E,x=>x,ui,{content:(n,c)=>n.children=c},{create:(s,cb,carrier)=>{assert.equal(carrier,'mobile');return sms;}},{addEventListener(){},removeEventListener(){},setInterval(){return 1;},clearInterval(){}},async(url,options)=>{const body=JSON.parse(options.body);requests.push(body);return {ok:true,json:async()=>body.action==='send' && failSend?{ok:false,code:'SMS_1',msg:'请等待60秒',can_retry:true,retry_after:60}:body.action==='challenge'?{ok:true,session_id:'fixture',image:'data:image/png;base64,Zml4dHVyZQ=='}:{ok:true}};});
 const flush=async()=>{for(let i=0;i<12;i++)await new Promise(r=>setImmediate(r));};
 const button=text=>all(modal.children).find(n=>n.tag==='button' && n.children===text);
 const input=label=>all(modal.children).find(n=>n.tag==='input' && n.attrs['aria-label']===label);
