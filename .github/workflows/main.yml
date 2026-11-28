@@ -343,10 +343,11 @@ jobs:
           arch_package=$(cat ../qmodem/.github/workflows/qmodem_package_arch)
           compile_package() {
             local package="$1"
-            if ! make "package/$package/compile" -j"$(nproc)"; then
+            shift
+            if ! make "package/$package/compile" "$@" -j"$(nproc)"; then
               echo "::group::Verbose build failure: $package"
               # Keep the original failure even if a transient retry succeeds.
-              make "package/$package/compile" -j1 V=s || true
+              make "package/$package/compile" "$@" -j1 V=s || true
               echo "::endgroup::"
               return 1
             fi
@@ -362,8 +363,8 @@ jobs:
           traffic_addon=false
           case "${{ matrix.build_arch }}" in
             x64_apk|arm64_apk)
-              compile_package qmodem_unicom
-              compile_package luci-app-qmodem-traffic
+              compile_package qmodem_unicom CONFIG_PACKAGE_qmodem-carrier-service=m CONFIG_PACKAGE_node=m
+              compile_package luci-app-qmodem-traffic CONFIG_PACKAGE_luci-app-qmodem-traffic=m
               traffic_addon=true
               ;;
           esac
