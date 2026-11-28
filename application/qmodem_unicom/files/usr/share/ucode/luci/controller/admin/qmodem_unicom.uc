@@ -51,7 +51,7 @@ return {
 		let identity = sim.IMSI || sim.ICCID;
 		if (type(identity) != 'string' || !match(identity, /^[0-9]{10,32}$/)) return fail(409, '无法确认当前 SIM 卡身份');
 		// Never trust a browser-provided SIM binding when sharing credentials.
-		payload._sim = {section,identity};
+		payload._sim = {section,identity,phone:sim['SIM Number']};
 		body = sprintf('%J',payload);
 		let tmp = mkstemp('/tmp/qmodem-unicom.XXXXXX');
 		if (!tmp) return fail(500, '无法创建请求缓冲区');

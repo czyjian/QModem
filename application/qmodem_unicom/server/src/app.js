@@ -1,3 +1,4 @@
+import { bindSimPhone, normalizeSimPhone } from './sim-phone.js';
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { timingSafeEqual } from "node:crypto";
@@ -65,7 +66,9 @@ export function buildApp(config, overrides = {}) {
   const upstream = overrides.upstream ?? createUnicomUpstream(config.upstream);
   const captcha = overrides.captcha ?? createCaptchaGuard(config.captcha);
   const limiter = overrides.limiter ?? createRateLimiter();
-  const store = overrides.store ?? (config.sessionStorePath ? createSessionStore(config.sessionStorePath) : null);
+  const store = bindSimPhone(overrides.store ?? (config.sessionStorePath ? createSessionStore(config.sessionStorePath) : null), entry => entry?.credentials?.phone);
+  const telecomStore = bindSimPhone(overrides.telecomStore ?? createTelecomStore(config.sessionStorePath ? config.sessionStorePath+'.telecom' : ''), entry => entry?.credentials?.phonenum);
+  const mobileStore = bindSimPhone(overrides.mobileStore ?? createMobileStore(config.sessionStorePath ? config.sessionStorePath+'.mobile' : ''), entry => entry?.credentials?.phone);
 
   app.addHook("onResponse", async (request, reply) => {
     if (request.method !== "POST") return;
@@ -89,18 +92,28 @@ export function buildApp(config, overrides = {}) {
   app.setErrorHandler((error, request, reply) => {
     const status = error.statusCode >= 400 && error.statusCode < 500 ? error.statusCode : 500;
     if (status === 500) request.log.error({ code: error.code }, "请求处理失败");
+    if (error.code === 'SIM_PHONE_MISMATCH') return reply.code(409).send({ok:false,logged_in:false,code:error.code,msg:error.message});
     const msg = status === 413 ? "请求正文过大" : status < 500 ? "请求格式错误" : "服务内部错误";
     return reply.code(status).send({ ok: false, status: "error", code: status < 500 ? "BAD_REQUEST" : "INTERNAL_ERROR", msg });
   });
 
   if (config.accessToken) registerAccessGuard(app, config.accessToken);
 
+  app.addHook('preHandler', async (request, reply) => {
+    if (request.method !== 'POST') return;
+    const sim = request.body?._sim;
+    for (const saved of [store, telecomStore, mobileStore]) saved?.get(sim);
+    const current = normalizeSimPhone(sim?.phone), login = normalizeSimPhone(request.body?.phone);
+    if (current && login && current !== login)
+      return reply.code(409).send({ok:false,logged_in:false,code:'SIM_PHONE_MISMATCH',msg:'登录手机号与当前 SIM 卡号码不一致，请使用当前 SIM 卡重新登录'});
+  });
+
   app.get("/healthz", async () => ({ ok: true }));
   registerGetToken(app, { upstream, captcha, limiter, config, store });
   registerProxy(app, { upstream, store });
   registerShared(app, { upstream, store });
-  registerTelecomTest(app, {limiter,upstream:overrides.telecomUpstream,store:overrides.telecomStore ?? createTelecomStore(config.sessionStorePath ? config.sessionStorePath+'.telecom' : '')});
-  registerMobile(app,{limiter,upstream:overrides.mobileUpstream,store:overrides.mobileStore ?? createMobileStore(config.sessionStorePath ? config.sessionStorePath+'.mobile' : '')});
+  registerTelecomTest(app, {limiter,upstream:overrides.telecomUpstream,store:telecomStore});
+  registerMobile(app,{limiter,upstream:overrides.mobileUpstream,store:mobileStore});
 
   return app;
 }

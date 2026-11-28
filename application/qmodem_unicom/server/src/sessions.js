@@ -1,3 +1,4 @@
+import { phoneFingerprint } from './sim-phone.js';
 import { createHash } from 'node:crypto';
 import { readFileSync, mkdirSync, writeFileSync, renameSync, chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -33,7 +34,7 @@ export function createSessionStore(path = '') {
     const cookie = session.cookie || '';
     if (!parseCookieHeader(cookie)) throw new Error('登录会话格式错误');
     // Passwords, SMS codes and verification challenges never enter this file.
-    const entry = { ecsToken: token, cookie, mobile: /^1\d{10}$/.test(phone) ? phone.slice(0,3) + '****' + phone.slice(-4) : '', updatedAt: Date.now() };
+    const entry = { ecsToken: token, cookie, phoneHash: phoneFingerprint(phone), mobile: /^1\d{10}$/.test(phone) ? phone.slice(0,3) + '****' + phone.slice(-4) : '', updatedAt: Date.now() };
     const previous = sessions;
     sessions = { ...sessions, [key]: entry };
     const keys = Object.keys(sessions).sort((a,b) => sessions[b].updatedAt - sessions[a].updatedAt);

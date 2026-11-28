@@ -72,7 +72,7 @@ calibration_probe()
     fi
     usage='{}'
     if [ -z "$reason" ]; then
-        payload=$(jq -nc --arg section "$section" --arg identity "$identity" --argjson fresh "$fresh" --arg action "$action" '{action:$action,refresh:$fresh,_sim:{section:$section,identity:$identity}}')
+        payload=$(jq -nc --arg section "$section" --arg identity "$identity" --arg phone "$phone" --argjson fresh "$fresh" --arg action "$action" '{action:$action,refresh:$fresh,_sim:{section:$section,identity:$identity,phone:$phone}}')
         if ! usage=$(printf '%s' "$payload" | curl --silent --fail --max-time 22 --noproxy '*' -H 'Content-Type: application/json' --data-binary @- "http://127.0.0.1:8788/$endpoint/" 2>/dev/null); then
             usage='{}'; reason='流量查询服务暂不可用'
         elif ! printf '%s' "$usage" | jq -e 'type=="object"' >/dev/null 2>&1; then
@@ -196,7 +196,7 @@ calibration_watch_sim()
         46003*|46005*|46011*|46012*) carrier=telecom_test; action=shared_status;;
     esac
     [ -n "$carrier" ] || return 0
-    response=$(jq -nc --arg section "$section" --arg identity "$identity" --arg action "$action" '{action:$action,_sim:{section:$section,identity:$identity}}' |
+    response=$(jq -nc --arg section "$section" --arg identity "$identity" --arg action "$action" '{action:$action,_sim:{section:$section,identity:$identity,phone:$phone}}' |
         curl --silent --fail --max-time 5 --noproxy '*' -H 'Content-Type: application/json' --data-binary @- "http://127.0.0.1:8788/$carrier/" 2>/dev/null) || return 0
     [ "$(printf '%s' "$response" | jq -r '.logged_in // false')" = true ] || return 0
     revision=$(printf '%s' "$response" | jq -r '.session_revision // 0')
