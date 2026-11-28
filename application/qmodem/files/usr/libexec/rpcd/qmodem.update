@@ -56,10 +56,13 @@ legacy_package_version() {
 }
 compare_package_versions() {
  installed="$1"; available="$2"
- if command -v apk >/dev/null 2>&1; then
+ if [ -s /lib/apk/db/installed ] && command -v apk >/dev/null 2>&1; then
   order=$(apk version -t "$installed" "$available" 2>/dev/null) || return 1
   case "$order" in '<') echo ahead;; '=') echo identical;; '>') echo behind;; *) return 1;; esac
- elif command -v opkg >/dev/null 2>&1; then
+ elif [ -s /usr/lib/opkg/status ] && command -v opkg >/dev/null 2>&1; then
+  # Older IPK SDKs use -N; newer SDKs and Release tags use -rN.
+  installed=$(printf '%s' "$installed" | sed -E 's/-([0-9]+)$/-r\1/')
+  available=$(printf '%s' "$available" | sed -E 's/-([0-9]+)$/-r\1/')
   if opkg compare-versions "$installed" lt "$available"; then echo ahead
   elif opkg compare-versions "$installed" eq "$available"; then echo identical
   elif opkg compare-versions "$installed" gt "$available"; then echo behind
