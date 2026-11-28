@@ -16,7 +16,7 @@ define Package/qmodem-carrier-service
   SECTION:=net
   CATEGORY:=Network
   TITLE:=QModem carrier usage query service
-  EXTRA_DEPENDS:=node (>=22.23.2)
+  EXTRA_DEPENDS:=node$(call GetABISuffix,node) (>=22.23.2)
   DEPENDS:=+qmodem +node +curl +ca-bundle +ca-certificates +luci-base +ucode +ucode-mod-fs
 endef
 
