@@ -1,6 +1,12 @@
 name: "Auto compile with OpenWrt SDK"
 on:
   workflow_dispatch:
+    inputs:
+      build_targets:
+        description: JSON array of SDK targets
+        required: false
+        default: '["arm64_ipk","arm64_apk","x64_apk","x64_ipk","mmips_ipk","mmips_apk"]'
+        type: string
   push:
     branches:
       - '*'
@@ -199,7 +205,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_arch: ['arm64_ipk',"arm64_apk","x64_apk","x64_ipk","mmips_ipk","mmips_apk" ]
+        build_arch: ${{ fromJSON(inputs.build_targets || '["arm64_ipk","arm64_apk","x64_apk","x64_ipk","mmips_ipk","mmips_apk"]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -312,6 +318,12 @@ jobs:
           echo "CONFIG_AUTOREMOVE=n" >> .config
           echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
           cat ../qmodem/.github/workflows/openwrt_package.config >> .config
+          case "${{ matrix.build_arch }}" in
+            x64_apk|arm64_apk)
+              echo 'CONFIG_PACKAGE_qmodem-carrier-service=m' >> .config
+              echo 'CONFIG_PACKAGE_luci-app-qmodem-traffic=m' >> .config
+              ;;
+          esac
           make defconfig
           make clean
           # make clean may regenerate package selections; enforce the
